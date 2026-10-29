@@ -1,11 +1,10 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, { Easing, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Hamster } from "@/art/hamster";
-import { Paw } from "@/art/icons";
+import { Crown, Paw } from "@/art/icons";
 import { ItemThumb } from "@/art/items";
 import { REWARDS } from "@/game/achievements";
 import { KID_LEVEL_NAME, KID_STAGE_NAME } from "@/i18n/ja";
@@ -76,7 +75,7 @@ function CheeringHamster({ good, wear, reduce }: { good: boolean; wear: string |
 }
 
 function NoteGlyph({ icon }: { icon: NoteIcon }) {
-  if (icon === "crown") return <MaterialCommunityIcons name="crown" size={20} color={colors.primary} />;
+  if (icon === "crown") return <Crown size={20} color={colors.primary} />;
   const name = ({ sparkles: "sparkles", next: "arrow-forward", retry: "refresh", trophy: "trophy" } as const)[icon];
   return <Ionicons name={name} size={20} color={colors.primary} />;
 }

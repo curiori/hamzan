@@ -21,3 +21,13 @@ export function SeedIcon({ size = 20 }: { size?: number }) {
     </Svg>
   );
 }
+
+/** Mastered level (drawn here so the app does not ship a whole icon font for one glyph) */
+export function Crown({ size = 20, color = "#b45309" }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+      <Path d="M3 8l4.6 4.2L12 5l4.4 7.2L21 8l-2 10H5z" fill={color} stroke={color} strokeWidth={1.4} strokeLinejoin="round" />
+      <Path d="M5 21h14" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}

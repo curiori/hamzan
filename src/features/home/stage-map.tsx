@@ -1,8 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { memo } from "react";
 import { Pressable, StyleSheet, View, type ViewStyle } from "react-native";
 import { Hamster } from "@/art/hamster";
+import { Crown } from "@/art/icons";
 import { frontier, lpOf, pendingStar3, statusOf, type LevelStatus } from "@/domain/progression";
 import { LEVELS, STAGES } from "@/domain/spec";
 import { KID_LEVEL_NAME, KID_STAGE_NAME, MODE_LABEL } from "@/i18n/ja";
@@ -61,7 +61,7 @@ const LevelTile = memo(function LevelTile({
           {status === "locked" ? (
             <Ionicons name="lock-closed" size={14} color={colors.foreground} />
           ) : status === "mastered" ? (
-            <MaterialCommunityIcons name="crown" size={16} color={colors.amber700} />
+            <Crown size={16} color={colors.amber700} />
           ) : (
             <AppText weight="bold" style={styles.badgeText}>
               {id}
