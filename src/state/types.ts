@@ -103,6 +103,8 @@ export interface SetRun {
   interrupted: boolean;
   fixedSet?: boolean;
   sessionPart?: number;
+  /** the day whose session plan sessionPart belongs to (a set can end after midnight) */
+  sessionDate?: LocalDate;
   stage?: number;
   placementPhase?: "stageCheck" | "mini";
   activeSec: number;

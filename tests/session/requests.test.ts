@@ -4,7 +4,7 @@ import { miniLevel, startPlacement } from "../../src/domain/placement";
 import { freshProgress } from "../../src/domain/progression";
 import { planDailySession } from "../../src/domain/session";
 import { LEVEL, RULE_NUMBERS, SPEC, STAGES } from "../../src/domain/spec";
-import { challengePlan, levelPlan, nextSessionPlan, placementPlan } from "../../src/session/requests";
+import { challengePlan, levelPlan, nextSessionPlan, placementPlan, sessionPartPlan } from "../../src/session/requests";
 import { newProfile } from "../../src/state/profile";
 import type { SessionDay } from "../../src/state/types";
 
@@ -35,6 +35,14 @@ describe("session requests", () => {
     const { plan, skipped } = nextSessionPlan(day, p, DATE, false);
     expect(skipped).toEqual([0]);
     expect(plan?.ctx).toMatchObject({ kind: "main", sessionPart: 1, inSession: true });
+  });
+
+  test("every session part carries the date of its session", () => {
+    const p = fresh();
+    p.reviews = [{ levelId: "0-1", intervalIndex: 0, dueDate: DATE, consecutiveFails: 0 }];
+    const parts = [{ kind: "warmup" }, { kind: "slot", slot: "frontier" }, { kind: "stageCheck", stage: 0 }, { kind: "review", levelIds: ["0-1"] }] as const;
+    parts.forEach((part, i) => expect(sessionPartPlan(part, i, p, DATE, false)?.ctx.sessionDate).toBe(DATE));
+    expect(levelPlan(p, "1-1", "S", DATE, "extra").ctx.sessionDate).toBeUndefined();
   });
 
   test("a review part with no matching review items is skipped", () => {

@@ -157,12 +157,15 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
   }
   if (run.interrupted) attemptResult = "interrupted";
 
-  if (run.sessionPart !== undefined && p.sessions[date]) {
-    const d = p.sessions[date];
-    const done = Math.max(d.done, run.sessionPart + 1);
-    const goal = d.goal || done >= d.plan.length;
-    summary.goalReached = goal && !d.goal;
-    p.sessions[date] = { ...d, done, goal };
+  if (run.sessionPart !== undefined) {
+    const day = run.sessionDate ?? date;
+    const d = p.sessions[day];
+    if (d) {
+      const done = Math.max(d.done, run.sessionPart + 1);
+      const goal = d.goal || done >= d.plan.length;
+      summary.goalReached = goal && !d.goal;
+      p.sessions[day] = { ...d, done, goal };
+    }
   }
 
   p.sets = [

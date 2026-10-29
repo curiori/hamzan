@@ -1,15 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { StateStorage } from "zustand/middleware";
 
-/** AsyncStorage as a zustand StateStorage. Failures keep the app running in memory. */
+/** AsyncStorage as a zustand StateStorage. Read errors propagate so the store can tell "unreadable" from "empty";
+ * write failures keep the app running in memory. */
 export const asyncStorage: StateStorage = {
-  getItem: async (key) => {
-    try {
-      return await AsyncStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  },
+  getItem: (key) => AsyncStorage.getItem(key),
   setItem: async (key, value) => {
     try {
       await AsyncStorage.setItem(key, value);

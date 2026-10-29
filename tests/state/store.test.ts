@@ -55,6 +55,67 @@ describe("app store", () => {
     expect(store.getState().profiles).toEqual([]);
   });
 
+  test("unreadable stored data is kept and the app stops saving", async () => {
+    const { data, storage } = memoryStorage({ delayMs: 1 });
+    data.set(STORAGE_KEY, "{not json");
+    const store = createAppStore(storage, { now: () => NOW });
+    await sleep(30);
+    store.getState().addProfile("あに", 5);
+    await sleep(10);
+    expect(store.getState().loadError).toBe(true);
+    expect(data.get(STORAGE_KEY)).toBe("{not json");
+  });
+
+  test("a storage read error keeps the stored data", async () => {
+    const { data } = memoryStorage();
+    data.set(STORAGE_KEY, saved());
+    const failing: StateStorage = {
+      getItem: () => Promise.reject(new Error("disk")),
+      setItem: async (k, v) => void data.set(k, v),
+      removeItem: async (k) => void data.delete(k),
+    };
+    const store = createAppStore(failing, { now: () => NOW });
+    await sleep(30);
+    store.getState().addProfile("いもうと", 3);
+    await sleep(10);
+    expect(store.getState().hydrated).toBe(true);
+    expect(store.getState().loadError).toBe(true);
+    expect(data.get(STORAGE_KEY)).toBe(saved());
+  });
+
+  test("data saved with another version is kept", async () => {
+    const { data, storage } = memoryStorage({ delayMs: 1 });
+    const newer = JSON.stringify({ ...JSON.parse(saved()), version: 2 });
+    data.set(STORAGE_KEY, newer);
+    const store = createAppStore(storage, { now: () => NOW });
+    await sleep(30);
+    store.getState().addProfile("いもうと", 3);
+    await sleep(10);
+    expect(store.getState().loadError).toBe(true);
+    expect(data.get(STORAGE_KEY)).toBe(newer);
+  });
+
+  test("a successful load does not rewrite storage", async () => {
+    const { data } = memoryStorage();
+    data.set(STORAGE_KEY, saved());
+    let writes = 0;
+    const counting: StateStorage = {
+      getItem: (k) => data.get(k) ?? null,
+      setItem: (k, v) => {
+        writes++;
+        data.set(k, v);
+      },
+      removeItem: (k) => void data.delete(k),
+    };
+    const store = createAppStore(counting, { now: () => NOW });
+    await sleep(10);
+    expect(store.getState().hydrated).toBe(true);
+    expect(store.getState().loadError).toBe(false);
+    expect(writes).toBe(0);
+    store.getState().addProfile("いもうと", 3);
+    expect(writes).toBe(1);
+  });
+
   test("saveInputTest writes to the given profile, not the active one", () => {
     const store = createAppStore(memoryStorage().storage, { now: () => NOW });
     const a = store.getState().addProfile("あに", 5);
@@ -75,13 +136,14 @@ describe("app store", () => {
     expect(store.getState().checkPin("4321")).toBe(false);
   });
 
-  test("ensureSession creates today's plan once", () => {
+  test("ensureSession creates today's plan once and returns its date", () => {
     const store = createAppStore(memoryStorage().storage, { now: () => NOW });
     store.getState().addProfile("あに", 5);
     const first = store.getState().ensureSession();
-    expect(first?.plan[0]).toEqual({ kind: "warmup" });
+    expect(first?.date).toBe(todayOf(0, NOW));
+    expect(first?.day.plan[0]).toEqual({ kind: "warmup" });
     store.getState().skipSessionPart(0);
-    expect(store.getState().ensureSession()?.done).toBe(1);
+    expect(store.getState().ensureSession()?.day.done).toBe(1);
   });
 
   test("deleting the active profile activates the next one", () => {

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
+import type { LocalDate } from "@/domain/dates";
 import { applyPlacementResult, startPlacement, type PlacementState } from "@/domain/placement";
 import { planDailySession } from "@/domain/session";
 import { LEVEL } from "@/domain/spec";
@@ -19,6 +20,8 @@ export interface AppState {
   dev: DevSettings;
   /** the stored state has been read (not persisted) */
   hydrated: boolean;
+  /** the stored state could not be read; nothing is saved until the next launch, so the stored records survive (not persisted) */
+  loadError: boolean;
   setPin: (pin: string) => void;
   checkPin: (pin: string) => boolean;
   addProfile: (nickname: string, grade: number, activate?: boolean) => string;
@@ -31,7 +34,7 @@ export interface AppState {
   /** test tool: finish the diagnosis as if it ended at levelId (null = everything ★2) */
   skipPlacementTo: (levelId: string | null) => void;
   ackPlacement: () => void;
-  ensureSession: () => SessionDay | null;
+  ensureSession: () => { day: SessionDay; date: LocalDate } | null;
   skipSessionPart: (index: number) => void;
   recordSet: (run: SetRun) => SetSummary;
   setDev: (patch: Partial<DevSettings>) => void;
@@ -42,12 +45,26 @@ export const activeProfile = (s: Pick<AppState, "profiles" | "activeId">): Profi
 export function createAppStore(storage: StateStorage, deps: { now?: () => number; random?: () => number } = {}) {
   const now = deps.now ?? Date.now;
   const random = deps.random ?? Math.random;
-  let markHydrated = () => {};
+  let markHydrated = (_failed: boolean) => {};
+  // Writes are allowed only after the stored state was read successfully: a failed or unknown read
+  // must never be followed by a write that replaces every child's records with an empty state.
+  let writable = false;
+  let loadResult: { failed: boolean } | null = null;
+  const guarded: StateStorage = {
+    getItem: (key) => storage.getItem(key),
+    setItem: (key, value) => (writable ? storage.setItem(key, value) : undefined),
+    removeItem: (key) => (writable ? storage.removeItem(key) : undefined),
+  };
+  const finishLoad = (failed: boolean) => {
+    loadResult = { failed };
+    markHydrated(failed);
+    writable = !failed;
+  };
 
-  return create<AppState>()(
+  const store = create<AppState>()(
     persist(
       (set, get) => {
-        markHydrated = () => set({ hydrated: true });
+        markHydrated = (failed) => set({ hydrated: true, loadError: failed });
         const today = () => todayOf(get().dev.dayOffset, now());
         const patchProfile = (id: string, fn: (p: Profile) => Profile) =>
           set((s) => ({ profiles: s.profiles.map((p) => (p.id === id ? fn(p) : p)) }));
@@ -62,6 +79,7 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
           activeId: null,
           dev: { ...DEFAULT_DEV },
           hydrated: false,
+          loadError: false,
 
           setPin: (pin) => {
             const salt = makeSalt(random);
@@ -125,14 +143,14 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
             if (!p) return null;
             const date = today();
             const existing = p.sessions[date];
-            if (existing) return existing;
+            if (existing) return { day: existing, date };
             const day: SessionDay = {
               plan: planDailySession({ progress: p.progress, reviews: p.reviews, stageChecks: p.stageChecks, date, unlockAll: s.dev.unlockAll }),
               done: 0,
               goal: false,
             };
             patchActive((q) => ({ ...q, sessions: { ...q.sessions, [date]: day } }));
-            return day;
+            return { day, date };
           },
           skipSessionPart: (index) => {
             const date = today();
@@ -158,11 +176,23 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
       {
         name: STORAGE_KEY,
         version: 1,
-        storage: createJSONStorage(() => storage),
+        storage: createJSONStorage(() => guarded),
         partialize: (s) => ({ pin: s.pin, profiles: s.profiles, activeId: s.activeId, dev: s.dev }),
+        // only version 1 exists; data from any other version is left untouched (the read counts as failed)
+        migrate: (_persisted, version) => {
+          throw new Error(`saved data version ${version} is not supported`);
+        },
         // runs after a successful or failed read, so the app never waits forever on broken data
-        onRehydrateStorage: () => () => markHydrated(),
+        onRehydrateStorage: () => (_state, error) => finishLoad(!!error),
       },
     ),
   );
+  // A synchronous failed read happens inside create(), whose initial state then replaces the flags.
+  if (loadResult && !store.getState().hydrated) {
+    const failed = (loadResult as { failed: boolean }).failed;
+    writable = false;
+    store.setState({ hydrated: true, loadError: failed });
+    writable = !failed;
+  }
+  return store;
 }

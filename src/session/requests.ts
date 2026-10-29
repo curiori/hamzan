@@ -27,6 +27,8 @@ export interface PlayContext {
   mode: Mode;
   fixed?: boolean;
   sessionPart?: number;
+  /** the day of the session plan this part belongs to */
+  sessionDate?: LocalDate;
   stage?: number;
   placementPhase?: "stageCheck" | "mini";
   inSession: boolean;
@@ -49,7 +51,16 @@ export function levelPlan(p: Profile, levelId: string, mode: Mode, date: LocalDa
       mode,
       problems: buildSet(levelId, lv.setSize, seed, weakFacts(p, levelId, date)),
     },
-    ctx: { kind, levelId, mode, fixed, sessionPart, inSession: sessionPart !== undefined, title: KID_LEVEL_NAME[levelId] },
+    ctx: {
+      kind,
+      levelId,
+      mode,
+      fixed,
+      sessionPart,
+      sessionDate: sessionPart !== undefined ? date : undefined,
+      inSession: sessionPart !== undefined,
+      title: KID_LEVEL_NAME[levelId],
+    },
   };
 }
 
@@ -64,7 +75,7 @@ export function sessionPartPlan(part: SessionPart, idx: number, p: Profile, date
     const seconds = SPEC.rules.dailySession.warmup.seconds;
     return {
       req: { key: `w${date}`, title: "ウォームアップ", subtitle: `${seconds}びょう・はんていなし`, mode: "S", problems, warmupSec: seconds },
-      ctx: { kind: "warmup", levelId: null, mode: "S", sessionPart: idx, inSession: true, title: "ウォームアップ" },
+      ctx: { kind: "warmup", levelId: null, mode: "S", sessionPart: idx, sessionDate: date, inSession: true, title: "ウォームアップ" },
     };
   }
   if (part.kind === "slot") {
@@ -83,7 +94,7 @@ export function sessionPartPlan(part: SessionPart, idx: number, p: Profile, date
         mode: "S",
         problems: buildMixed(sc.levels, spread(sc.levels, sc.problems, seed), seed),
       },
-      ctx: { kind: "stage_check", levelId: null, mode: "S", stage: part.stage, sessionPart: idx, inSession: true, title: "ステージチェック" },
+      ctx: { kind: "stage_check", levelId: null, mode: "S", stage: part.stage, sessionPart: idx, sessionDate: date, inSession: true, title: "ステージチェック" },
     };
   }
   const levels = part.levelIds.filter((id) => p.reviews.some((r) => r.levelId === id));
@@ -97,7 +108,7 @@ export function sessionPartPlan(part: SessionPart, idx: number, p: Profile, date
       mode: "S",
       problems: buildMixed(levels, levels.map(() => SPEC.rules.spacedReview.problemsPerLevel), seed),
     },
-    ctx: { kind: "review", levelId: null, mode: "S", sessionPart: idx, inSession: true, title: "ふくしゅう" },
+    ctx: { kind: "review", levelId: null, mode: "S", sessionPart: idx, sessionDate: date, inSession: true, title: "ふくしゅう" },
   };
 }
 

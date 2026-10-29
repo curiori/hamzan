@@ -112,10 +112,22 @@ describe("recordSet", () => {
     const p = profileWith({ "1-1": { mode: "S", practiced: true } });
     const yesterday = addDays(DATE, -1);
     p.sessions[yesterday] = { plan: [{ kind: "warmup" }, { kind: "slot", slot: "frontier" }], done: 0, goal: false };
-    const { profile, summary } = recordSet(p, { ...sSet(), sessionPart: 0 }, ctx());
+    const { profile, summary } = recordSet(p, { ...sSet(), sessionPart: 0, sessionDate: yesterday }, ctx());
     expect(profile.sessions[DATE]).toBeUndefined();
-    expect(profile.sessions[yesterday]).toEqual(p.sessions[yesterday]);
+    expect(profile.sessions[yesterday]).toEqual({ ...p.sessions[yesterday], done: 1 });
     expect(summary.goalReached).toBe(false);
+  });
+
+  test("a set from yesterday's session finishes yesterday even when today's session exists", () => {
+    const p = profileWith({ "1-1": { mode: "S", practiced: true } });
+    const yesterday = addDays(DATE, -1);
+    const plan = [{ kind: "warmup" as const }, { kind: "slot" as const, slot: "frontier" as const }];
+    p.sessions[yesterday] = { plan, done: 1, goal: false };
+    p.sessions[DATE] = { plan, done: 0, goal: false };
+    const { profile, summary } = recordSet(p, { ...sSet(), sessionPart: 1, sessionDate: yesterday }, ctx());
+    expect(profile.sessions[DATE]).toEqual({ plan, done: 0, goal: false });
+    expect(profile.sessions[yesterday]).toEqual({ plan, done: 2, goal: true });
+    expect(summary.goalReached).toBe(true);
   });
 
   test("the first clean set unlocks the bowl reward", () => {
