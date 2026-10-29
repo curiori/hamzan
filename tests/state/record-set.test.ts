@@ -1,0 +1,162 @@
+import { describe, expect, test } from "bun:test";
+import { addDays } from "../../src/domain/dates";
+import type { Answer } from "../../src/domain/problem";
+import { freshProgress, type LevelProgress } from "../../src/domain/progression";
+import { scheduleOnMastery } from "../../src/domain/review";
+import { buildSet } from "../../src/domain/setBuilder";
+import { LEVEL, RULE_NUMBERS, SPEC } from "../../src/domain/spec";
+import { newProfile } from "../../src/state/profile";
+import { recordSet } from "../../src/state/record-set";
+import type { FactStat, Profile, ProblemResult, SetAttempt, SetRun } from "../../src/state/types";
+
+const DATE = "2026-10-29";
+const NOW = Date.UTC(2026, 9, 29, 3);
+const ctx = (date = DATE) => ({ date, now: NOW });
+
+const wrongAnswer = (a: Answer): Answer =>
+  a.kind === "number" ? { kind: "number", value: a.value + 1 } : a.kind === "divRem" ? { ...a, remainder: a.remainder + 1 } : { kind: "bool", value: !a.value };
+
+function results(levelId: string, n: number, opts: { wrong?: number[]; latencyMs?: number; seed?: number } = {}): ProblemResult[] {
+  return buildSet(levelId, n, opts.seed ?? 7).map((inst, i) => {
+    const wrong = opts.wrong?.includes(i) ?? false;
+    return { inst, correct: !wrong, given: wrong ? wrongAnswer(inst.answer) : null, latencyMs: opts.latencyMs ?? 100 };
+  });
+}
+
+function mkRun(r: Pick<SetRun, "kind" | "mode" | "levelId" | "results"> & Partial<SetRun>): SetRun {
+  return { interrupted: false, activeSec: 10, ...r };
+}
+
+function profileWith(levels: Record<string, Partial<LevelProgress>> = {}): Profile {
+  const p = newProfile("t", 4, { id: "p1", now: NOW });
+  for (const [id, lp] of Object.entries(levels)) p.progress[id] = { ...freshProgress(LEVEL[id]), ...lp };
+  return p;
+}
+
+const sSet = (levelId = "1-1", opts: Parameters<typeof results>[2] = {}) =>
+  mkRun({ kind: "main", mode: "S", levelId, results: results(levelId, LEVEL[levelId].setSize, opts) });
+
+describe("recordSet", () => {
+  test("an S set with no mistakes under T★3 gives star3 and the first ★2", () => {
+    const { profile, summary } = recordSet(profileWith({ "1-1": { mode: "S", practiced: true } }), sSet(), ctx());
+    expect(summary.result).toBe("star3");
+    expect(summary.stars).toBe(3);
+    expect(summary.events).toContain("star2");
+    expect(profile.progress["1-1"].star2At).toBe(DATE);
+  });
+
+  test("one wrong answer gives retry and records the mistake", () => {
+    const { profile, summary } = recordSet(profileWith({ "1-1": { mode: "S", practiced: true } }), sSet("1-1", { wrong: [0] }), ctx());
+    expect(summary.result).toBe("retry");
+    expect(summary.stars).toBe(0);
+    expect(summary.errors).toBe(1);
+    expect(profile.errors.map((e) => e.levelId)).toEqual(["1-1"]);
+  });
+
+  test("an interrupted set keeps progress but is logged as interrupted", () => {
+    const p = profileWith({ "1-1": { mode: "S", practiced: true } });
+    const { profile, summary } = recordSet(p, { ...sSet(), interrupted: true }, ctx());
+    expect(summary.result).toBe("interrupted");
+    expect(profile.progress["1-1"]).toEqual(p.progress["1-1"]);
+    expect(profile.sets.at(-1)?.result).toBe("interrupted");
+  });
+
+  test("★3 on different dates masters the level and schedules the first review", () => {
+    let p = profileWith({ "1-1": { mode: "S", practiced: true } });
+    const days = SPEC.rules.stars.mastery.star3OnDistinctLocalDates;
+    let date = DATE;
+    for (let d = 0; d < days; d++) {
+      date = addDays(DATE, d);
+      p = recordSet(p, sSet(), ctx(date)).profile;
+    }
+    expect(p.progress["1-1"].masteredAt).toBe(date);
+    expect(p.reviews).toEqual([scheduleOnMastery("1-1", date)]);
+  });
+
+  test("failed reviews in a row demote the level", () => {
+    let p = profileWith({ "1-1": { mode: "S", practiced: true, star2At: DATE, star3Dates: [DATE], masteredAt: DATE, bestStars: 3 } });
+    p.reviews = [scheduleOnMastery("1-1", DATE)];
+    const n = SPEC.rules.spacedReview.problemsPerLevel;
+    const fails = SPEC.rules.spacedReview.demoteAfterConsecutiveFails;
+    let last = null as ReturnType<typeof recordSet> | null;
+    for (let i = 0; i < fails; i++) {
+      last = recordSet(p, mkRun({ kind: "review", mode: "S", levelId: null, results: results("1-1", n, { wrong: [0] }) }), ctx(addDays(DATE, i + 1)));
+      p = last.profile;
+    }
+    expect(last?.summary.reviews).toEqual([{ levelId: "1-1", passed: false, demoted: true }]);
+    expect(p.progress["1-1"].masteredAt).toBeNull();
+    expect(p.reviews).toEqual([]);
+  });
+
+  test("a failed stage check marks the most-missed ★2 level as priority", () => {
+    const star2 = { mode: "S" as const, practiced: true, star2At: DATE };
+    const p = profileWith(Object.fromEntries(["0-1", "0-2", "0-3", "0-4", "0-5"].map((id) => [id, star2])));
+    const rs = [...results("0-1", 5, { wrong: [0] }), ...results("0-2", 5, { wrong: [0, 1] })];
+    const { profile, summary } = recordSet(p, mkRun({ kind: "stage_check", mode: "S", levelId: null, stage: 0, results: rs }), ctx());
+    expect(summary.stageCheck).toEqual({ stage: 0, passed: false });
+    expect(profile.stageChecks[0]).toEqual({ date: DATE, passed: false });
+    expect(profile.progress["0-2"].priority).toBe(true);
+    expect(profile.progress["0-1"].priority).toBe(false);
+  });
+
+  test("finishing the last session part reaches the goal once", () => {
+    const p = profileWith({ "1-1": { mode: "S", practiced: true } });
+    p.sessions[DATE] = { plan: [{ kind: "warmup" }, { kind: "slot", slot: "frontier" }], done: 1, goal: false };
+    const first = recordSet(p, { ...sSet(), sessionPart: 1 }, ctx());
+    expect(first.summary.goalReached).toBe(true);
+    expect(first.profile.sessions[DATE]).toEqual({ plan: p.sessions[DATE].plan, done: 2, goal: true });
+    expect(recordSet(first.profile, { ...sSet(), sessionPart: 1 }, ctx()).summary.goalReached).toBe(false);
+  });
+
+  test("a session part from yesterday does not advance today's session", () => {
+    const p = profileWith({ "1-1": { mode: "S", practiced: true } });
+    const yesterday = addDays(DATE, -1);
+    p.sessions[yesterday] = { plan: [{ kind: "warmup" }, { kind: "slot", slot: "frontier" }], done: 0, goal: false };
+    const { profile, summary } = recordSet(p, { ...sSet(), sessionPart: 0 }, ctx());
+    expect(profile.sessions[DATE]).toBeUndefined();
+    expect(profile.sessions[yesterday]).toEqual(p.sessions[yesterday]);
+    expect(summary.goalReached).toBe(false);
+  });
+
+  test("the first clean set unlocks the bowl reward", () => {
+    const p = profileWith({ "0-1": { mode: "H", practiced: true } });
+    const run = mkRun({ kind: "main", mode: "H", levelId: "0-1", results: results("0-1", LEVEL["0-1"].setSize) });
+    expect(recordSet(p, run, ctx()).summary.newRewards).toEqual(["bowl"]);
+  });
+
+  test("history is capped: 600 sets, 4000 facts, errors within 60 days", () => {
+    const p = profileWith({ "1-1": { mode: "S", practiced: true } });
+    const attempt: SetAttempt = { id: "old", kind: "extra", levelId: "1-1", mode: "S", date: "2026-01-01", startedAt: 0, n: 1, errors: 1, perProblemSec: 1, target2: 1, target3: 1, result: "retry" };
+    p.sets = Array.from({ length: 600 }, (_, i) => ({ ...attempt, id: `old${i}` }));
+    const fact: FactStat = { levelId: "9-9", problem: { shape: "half", n: 2 }, attempts: 1, errors: 0, errorDates: [], lastErrorDate: null, lastSlowDate: null, lastLatencyMs: null, lastSeen: "2026-01-01" };
+    for (let i = 0; i < 4000; i++) p.facts[`old:${i}`] = fact;
+    const problem = { shape: "half" as const, n: 4 };
+    p.errors = [
+      { date: addDays(DATE, -61), levelId: "1-1", factKey: "x", type: "fact", problem },
+      { date: addDays(DATE, -60), levelId: "1-1", factKey: "y", type: "fact", problem },
+    ];
+    const run = sSet();
+    const { profile } = recordSet(p, run, ctx());
+    expect(profile.sets.length).toBe(600);
+    expect(profile.sets.at(-1)?.levelId).toBe("1-1");
+    expect(Object.keys(profile.facts).length).toBe(4000);
+    for (const r of run.results) expect(profile.facts[r.inst.factKey]).toBeDefined();
+    expect(profile.errors.map((e) => e.factKey)).toEqual(["y"]);
+  });
+
+  test("recordSet leaves its input untouched", () => {
+    const p = profileWith({ "1-1": { mode: "S", practiced: true } });
+    p.sessions[DATE] = { plan: [{ kind: "slot", slot: "frontier" }], done: 0, goal: false };
+    const before = JSON.stringify(p);
+    recordSet(p, { ...sSet("1-1", { wrong: [1] }), sessionPart: 0 }, ctx());
+    expect(JSON.stringify(p)).toBe(before);
+  });
+
+  test("a stage check passes with at most stageCheckMaxMisses misses", () => {
+    const star2 = { mode: "S" as const, practiced: true, star2At: DATE };
+    const p = profileWith(Object.fromEntries(["0-1", "0-2", "0-3", "0-4", "0-5"].map((id) => [id, star2])));
+    const rs = results("0-1", 6, { wrong: Array.from({ length: RULE_NUMBERS.stageCheckMaxMisses }, (_, i) => i) });
+    const { summary } = recordSet(p, mkRun({ kind: "stage_check", mode: "S", levelId: null, stage: 0, results: rs }), ctx());
+    expect(summary.stageCheck).toEqual({ stage: 0, passed: true });
+  });
+});
