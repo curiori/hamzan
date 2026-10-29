@@ -51,6 +51,7 @@ export default function RootLayout() {
         ) : (
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
             <Stack.Screen name="play" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
             <Stack.Screen name="result" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
           </Stack>

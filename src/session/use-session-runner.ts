@@ -69,7 +69,7 @@ export function useSessionRunner() {
     [router],
   );
 
-  /** Leave a set without recording it. */
+  /** Leave a set without recording it, or leave a result: back to the screen that opened the set (the map or the diagnosis). */
   const quit = useCallback(() => {
     if (router.canGoBack()) router.back();
     else router.replace("/");

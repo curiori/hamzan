@@ -15,6 +15,10 @@ export default function ResultRoute() {
   const runner = useSessionRunner();
   if (!summary || !ctx || !profile) return <Notice text="けっかが ありません" actionLabel="ホームへ" onAction={runner.goHome} />;
 
+  // a diagnosis set goes back to the diagnosis screen, which opened it
+  if (ctx.kind === "placement")
+    return <ResultScreen summary={summary} title={ctx.title} wear={profile.wearing} nextLabel="つぎへ" onNext={runner.quit} onRetry={null} onHome={runner.quit} />;
+
   const day = profile.sessions[ctx.sessionDate ?? todayOf(dayOffset)];
   const moreInSession = ctx.inSession && !!day && day.done < day.plan.length;
   const levelId = ctx.kind === "extra" || ctx.kind === "main" ? ctx.levelId : null;

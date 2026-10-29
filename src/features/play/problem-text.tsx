@@ -49,7 +49,7 @@ export function ProblemText({ inst, hint, size }: { inst: ProblemInstance; hint?
     </AppText>
   );
   return (
-    <View accessible accessibilityRole="text" accessibilityLabel={speech(p)} style={styles.row}>
+    <View accessible accessibilityRole="text" accessibilityLabel={speech(p)} testID="problem" style={styles.row}>
       {parts.map((part, i) => {
         if (/^\d+$/.test(part)) {
           termIndex += 1;

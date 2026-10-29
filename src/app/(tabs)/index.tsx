@@ -27,30 +27,26 @@ const LAUNCH: [string, Mode][] = [
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const profile = useAppStore((s) => activeProfile(s));
-  const addProfile = useAppStore((s) => s.addProfile);
   const dayOffset = useAppStore((s) => s.dev.dayOffset);
   const runner = useSessionRunner();
+  if (!profile) return null;
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}>
       <AppText weight="bold" style={styles.title}>
         ちず（じゅんびちゅう）
       </AppText>
-      {!profile ? (
-        <Button label="テスト用の こどもを つくる" onPress={() => addProfile("テスト", 3)} />
-      ) : (
-        <View style={styles.list}>
-          <Button label="きょうの れんしゅう" onPress={() => runner.startNextPart()} />
-          {LAUNCH.map(([id, mode]) => (
-            <Button
-              key={`${id}${mode}`}
-              variant="outline"
-              label={`${id} ${MODE_LABEL[mode]}`}
-              onPress={() => runner.startPlan(levelPlan(profile, id, mode, todayOf(dayOffset), "extra"))}
-            />
-          ))}
-        </View>
-      )}
+      <View style={styles.list}>
+        <Button label="きょうの れんしゅう" onPress={() => runner.startNextPart()} />
+        {LAUNCH.map(([id, mode]) => (
+          <Button
+            key={`${id}${mode}`}
+            variant="outline"
+            label={`${id} ${MODE_LABEL[mode]}`}
+            onPress={() => runner.startPlan(levelPlan(profile, id, mode, todayOf(dayOffset), "extra"))}
+          />
+        ))}
+      </View>
     </ScrollView>
   );
 }
