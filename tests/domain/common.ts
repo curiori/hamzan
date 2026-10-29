@@ -138,18 +138,24 @@ export interface PyReference {
   rng: { seed: number; random: number[]; randint: number[]; choice: number[]; shuffle: number[] };
 }
 
-/** runs py_reference.py (reference_generators.py / reference_scaffolds.py); null when python3 is unavailable */
+/** runs py_reference.py (reference_generators.py / reference_scaffolds.py) with python3, else python; null when neither runs */
 export function pythonReference(n: number, seeds: number[], withScaffold: boolean): PyReference | null {
-  const args = ["python3", "py_reference.py", String(n), seeds.join(","), ...(withScaffold ? ["scaffold"] : [])];
-  try {
-    const res = Bun.spawnSync(args, { cwd: import.meta.dir, env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" } });
+  const rest = ["py_reference.py", String(n), seeds.join(","), ...(withScaffold ? ["scaffold"] : [])];
+  // PYTHONUTF8: Windows writes stdout in the ANSI code page by default, which garbles the Japanese display strings
+  const env = { ...process.env, PYTHONDONTWRITEBYTECODE: "1", PYTHONUTF8: "1" };
+  for (const python of ["python3", "python"]) {
+    let res: ReturnType<typeof Bun.spawnSync>;
+    try {
+      res = Bun.spawnSync([python, ...rest], { cwd: import.meta.dir, env });
+    } catch (e) {
+      console.log(`  ${python} not available: ${String(e)}`);
+      continue;
+    }
     if (res.exitCode !== 0) {
-      console.log(`  python3 failed: ${res.stderr.toString().slice(0, 500)}`);
-      return null;
+      console.log(`  ${python} failed: ${res.stderr.toString().slice(0, 500)}`);
+      continue;
     }
     return JSON.parse(res.stdout.toString()) as PyReference;
-  } catch (e) {
-    console.log(`  python3 not available: ${String(e)}`);
-    return null;
   }
+  return null;
 }
