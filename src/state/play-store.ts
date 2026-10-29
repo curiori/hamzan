@@ -3,7 +3,8 @@ import type { PlayContext, PlayPlan } from "@/session/requests";
 import type { SetSummary } from "./types";
 
 // The set being played and the summary of the last finished set. Lives in memory only; the play and
-// result screens read it, so nothing has to travel through route parameters.
+// result screens read it, so nothing has to travel through route parameters. The plan stays after the
+// set ends, so the play screen keeps its last picture while the result screen slides in.
 
 export interface PlayState {
   plan: PlayPlan | null;
@@ -19,6 +20,6 @@ export const usePlayStore = create<PlayState>()((set) => ({
   summary: null,
   resultCtx: null,
   begin: (plan) => set({ plan, summary: null, resultCtx: null }),
-  showResult: (summary, ctx) => set({ plan: null, summary, resultCtx: ctx }),
+  showResult: (summary, ctx) => set({ summary, resultCtx: ctx }),
   clear: () => set({ plan: null, summary: null, resultCtx: null }),
 }));

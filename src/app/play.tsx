@@ -1,13 +1,13 @@
-import { StyleSheet, View } from "react-native";
-import { AppText } from "@/ui/text";
+import { PlayScreen } from "@/features/play/play-screen";
+import { useSessionRunner } from "@/session/use-session-runner";
+import { usePlayStore } from "@/state/play-store";
+import { activeProfile, useAppStore } from "@/state/store";
+import { Notice } from "@/ui/notice";
 
-// Placeholder until the play screen is ported (plan B task 4).
 export default function PlayRoute() {
-  return (
-    <View style={styles.root}>
-      <AppText weight="bold">じゅんびちゅう</AppText>
-    </View>
-  );
+  const plan = usePlayStore((s) => s.plan);
+  const profile = useAppStore((s) => activeProfile(s));
+  const runner = useSessionRunner();
+  if (!plan || !profile) return <Notice text="ひらける もんだいが ありません" actionLabel="ホームへ" onAction={runner.goHome} />;
+  return <PlayScreen key={plan.req.key} req={plan.req} settings={profile.settings} wear={profile.wearing} onFinish={runner.finish} onQuit={runner.quit} />;
 }
-
-const styles = StyleSheet.create({ root: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#ffffff" } });

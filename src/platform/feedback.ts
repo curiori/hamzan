@@ -54,3 +54,12 @@ export function cue(kind: Cue, opts: { sound: boolean; vibration: boolean }): vo
     }
   }
 }
+
+/** Loads the sounds ahead of the first answer, so the first cue is not late. */
+export function preloadCues(): void {
+  try {
+    (Object.keys(SOURCES) as Cue[]).forEach(playerFor);
+  } catch {
+    // audio unavailable
+  }
+}

@@ -25,7 +25,6 @@ export function useSessionRunner() {
   );
 
   const goHome = useCallback(() => {
-    usePlayStore.getState().clear();
     if (router.canDismiss()) router.dismissAll();
     else router.replace("/");
   }, [router]);
@@ -47,8 +46,9 @@ export function useSessionRunner() {
 
   const finish = useCallback(
     (o: PlayOutcome) => {
-      const { plan } = usePlayStore.getState();
-      if (!plan) return;
+      const { plan, summary: shown } = usePlayStore.getState();
+      // a set is recorded once; the summary is cleared when the next set begins
+      if (!plan || shown) return;
       const { ctx } = plan;
       const summary = useAppStore.getState().recordSet({
         kind: ctx.kind,
@@ -71,7 +71,6 @@ export function useSessionRunner() {
 
   /** Leave a set without recording it. */
   const quit = useCallback(() => {
-    usePlayStore.getState().clear();
     if (router.canGoBack()) router.back();
     else router.replace("/");
   }, [router]);

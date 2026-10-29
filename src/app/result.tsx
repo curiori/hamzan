@@ -1,13 +1,41 @@
-import { StyleSheet, View } from "react-native";
-import { AppText } from "@/ui/text";
+import { hasStar2, lpOf } from "@/domain/progression";
+import { ResultScreen } from "@/features/result/result-screen";
+import { levelPlan } from "@/session/requests";
+import { useSessionRunner } from "@/session/use-session-runner";
+import { usePlayStore } from "@/state/play-store";
+import { todayOf } from "@/state/profile";
+import { activeProfile, useAppStore } from "@/state/store";
+import { Notice } from "@/ui/notice";
 
-// Placeholder until the result screen is ported (plan B task 4).
 export default function ResultRoute() {
+  const summary = usePlayStore((s) => s.summary);
+  const ctx = usePlayStore((s) => s.resultCtx);
+  const profile = useAppStore((s) => activeProfile(s));
+  const dayOffset = useAppStore((s) => s.dev.dayOffset);
+  const runner = useSessionRunner();
+  if (!summary || !ctx || !profile) return <Notice text="けっかが ありません" actionLabel="ホームへ" onAction={runner.goHome} />;
+
+  const day = profile.sessions[ctx.sessionDate ?? todayOf(dayOffset)];
+  const moreInSession = ctx.inSession && !!day && day.done < day.plan.length;
+  const levelId = ctx.kind === "extra" || ctx.kind === "main" ? ctx.levelId : null;
+  const retry = levelId
+    ? () => {
+        const p = activeProfile(useAppStore.getState());
+        if (!p) return;
+        const lp = lpOf(p.progress, levelId);
+        runner.startPlan(levelPlan(p, levelId, hasStar2(lp) ? "S" : lp.mode, todayOf(dayOffset), "extra"), true);
+      }
+    : null;
+
   return (
-    <View style={styles.root}>
-      <AppText weight="bold">じゅんびちゅう</AppText>
-    </View>
+    <ResultScreen
+      summary={summary}
+      title={ctx.title}
+      wear={profile.wearing}
+      nextLabel={moreInSession ? "つぎへ" : null}
+      onNext={() => runner.startNextPart(true)}
+      onRetry={retry}
+      onHome={runner.goHome}
+    />
   );
 }
-
-const styles = StyleSheet.create({ root: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#ffffff" } });
