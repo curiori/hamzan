@@ -1,0 +1,3183 @@
+{
+  "specVersion": "1.0.0",
+  "title": "暗算カリキュラム（整数の四則）v1 — アプリ実装用仕様",
+  "createdAt": "2026-10-28",
+  "sourceOfTruth": "このJSONが学習ルールの正。出題条件の詳細は reference_generators.py の各関数が正。",
+  "timeModel": {
+    "formula": "T = read + think * K + write * D（1問あたりの秒）。0.1秒単位で四捨五入",
+    "star2": {
+      "read": 0.5,
+      "think": 0.9,
+      "write": 0.5
+    },
+    "star3": {
+      "read": 0.3,
+      "think": 0.45,
+      "write": 0.3
+    },
+    "individualWrite": "入力テストで測った write_child（秒/桁）があれば、★2・★3とも write を write_child に置き換える",
+    "inputSpeedTest": {
+      "items": 20,
+      "itemDigits": 2,
+      "method": "2桁の数を1つずつ表示し、そのまま数字キーで入力してもらう。1桁あたりの秒数の中央値を write_child とする",
+      "clampSec": [
+        0.2,
+        1.5
+      ],
+      "retestAfterDays": 30
+    },
+    "setTargetDisplay": "セット全体の目安＝T×問題数を5秒単位で切り上げて表示（判定は1問あたりで行う）",
+    "mixedTarget": "複数レベルの問題が混ざるセット（ステージチェック・復習ミックス）では、各問題のレベルのTの平均を使う"
+  },
+  "stages": [
+    {
+      "id": 0,
+      "name": "数の感覚",
+      "aim": "10・100のまとまり、ダブル、位取りを即答できる。全ステージの土台。",
+      "grade": "小1",
+      "levelIds": [
+        "0-1",
+        "0-2",
+        "0-3",
+        "0-4",
+        "0-5"
+      ],
+      "stageCheck": {
+        "levels": [
+          "0-1",
+          "0-2",
+          "0-3",
+          "0-4",
+          "0-5"
+        ],
+        "problems": 20
+      }
+    },
+    {
+      "id": 1,
+      "name": "たし算・ひき算の基本（20まで）",
+      "aim": "20までの加減を、技で理解してから考えずに答えられるようにする。",
+      "grade": "小1〜小2",
+      "levelIds": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5",
+        "1-6",
+        "1-7",
+        "1-8",
+        "1-9",
+        "1-10"
+      ],
+      "stageCheck": {
+        "levels": [
+          "1-5",
+          "1-9",
+          "1-10"
+        ],
+        "problems": 30
+      }
+    },
+    {
+      "id": 2,
+      "name": "九九とわり算の基本",
+      "aim": "九九を段の関係で覚え、九九の逆・あまりのあるわり算まで即答する。",
+      "grade": "小2〜小3",
+      "levelIds": [
+        "2-1",
+        "2-2",
+        "2-3",
+        "2-4",
+        "2-5",
+        "2-6",
+        "2-7",
+        "2-8",
+        "2-9"
+      ],
+      "stageCheck": {
+        "levels": [
+          "2-5",
+          "2-7",
+          "2-8"
+        ],
+        "problems": 30
+      }
+    },
+    {
+      "id": 3,
+      "name": "2桁の暗算",
+      "aim": "2桁の加減、2桁×1桁、2桁÷1桁を、上の位から崩して暗算する。",
+      "grade": "小3〜小4",
+      "levelIds": [
+        "3-1",
+        "3-2",
+        "3-3",
+        "3-4",
+        "3-5",
+        "3-6",
+        "3-7",
+        "3-8",
+        "3-9",
+        "3-10",
+        "3-11",
+        "3-12",
+        "3-13",
+        "3-14"
+      ],
+      "stageCheck": {
+        "levels": [
+          "3-2",
+          "3-3",
+          "3-4",
+          "3-5",
+          "3-6",
+          "3-7",
+          "3-8",
+          "3-9",
+          "3-10",
+          "3-11",
+          "3-12",
+          "3-13"
+        ],
+        "problems": 20
+      }
+    },
+    {
+      "id": 4,
+      "name": "3桁と大きな数",
+      "aim": "3桁の加減、3桁×1桁、3桁÷1桁、0の多い計算を暗算する。",
+      "grade": "小4",
+      "levelIds": [
+        "4-1",
+        "4-2",
+        "4-3",
+        "4-4",
+        "4-5",
+        "4-6",
+        "4-7",
+        "4-8",
+        "4-9",
+        "4-10",
+        "4-11",
+        "4-12"
+      ],
+      "stageCheck": {
+        "levels": [
+          "4-1",
+          "4-2",
+          "4-3",
+          "4-4",
+          "4-5",
+          "4-6",
+          "4-7",
+          "4-8",
+          "4-9",
+          "4-10",
+          "4-11"
+        ],
+        "problems": 10
+      }
+    },
+    {
+      "id": 5,
+      "name": "受験の技",
+      "aim": "補正・ずらし・倍半・×25などで、計算そのものを短くする。",
+      "grade": "小4〜小5",
+      "levelIds": [
+        "5-1",
+        "5-2",
+        "5-3",
+        "5-4",
+        "5-5",
+        "5-6",
+        "5-7",
+        "5-8",
+        "5-9",
+        "5-10",
+        "5-11"
+      ],
+      "stageCheck": {
+        "levels": [
+          "5-1",
+          "5-2",
+          "5-3",
+          "5-4",
+          "5-5",
+          "5-6",
+          "5-7",
+          "5-8",
+          "5-9",
+          "5-10"
+        ],
+        "problems": 10
+      }
+    }
+  ],
+  "levels": [
+    {
+      "id": "0-1",
+      "order": 0,
+      "stage": 0,
+      "operation": "数の感覚",
+      "name": "10の組",
+      "skill": "10になる2つの数をすぐ言う",
+      "example": "3と□で10 → 7",
+      "generationRule": "a=1〜9。「aと□で10」。",
+      "generatorRef": "reference_generators.py::g0_1",
+      "problemShapes": [
+        "complementTo"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_TEN_FRAME",
+      "scaffoldText": "H：10マスの絵で空きを数える",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.0,
+      "prerequisites": [],
+      "enumerable": true,
+      "approxDistinctProblems": 9,
+      "referenceTag": "NB",
+      "reference": "10・20の組（英国の number bonds、シンガポールの part-whole）"
+    },
+    {
+      "id": "0-2",
+      "order": 1,
+      "stage": 0,
+      "operation": "数の感覚",
+      "name": "10といくつ",
+      "skill": "十いくつ＝10とばら",
+      "example": "10＋6＝16、14は10と□ → 4",
+      "generationRule": "b=1〜9。「10＋b」と「(10＋b)は10と□」を半々。",
+      "generatorRef": "reference_generators.py::g0_2",
+      "problemShapes": [
+        "binary",
+        "decompose"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_TEN_FRAME",
+      "scaffoldText": "H：10のかたまりとばらの絵",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.5,
+      "prerequisites": [
+        "0-1"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 18,
+      "referenceTag": "NB",
+      "reference": "10・20の組（英国の number bonds、シンガポールの part-whole）"
+    },
+    {
+      "id": "0-3",
+      "order": 2,
+      "stage": 0,
+      "operation": "数の感覚",
+      "name": "ダブルと半分",
+      "skill": "同じ数を2つ合わせる・半分にする",
+      "example": "7＋7＝14、16の半分＝8",
+      "generationRule": "a=1〜10。a＋aと、2〜20の偶数の半分を半々。",
+      "generatorRef": "reference_generators.py::g0_3",
+      "problemShapes": [
+        "binary",
+        "half"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_PAIRS",
+      "scaffoldText": "H：同じ数を2列に並べた絵",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.5,
+      "prerequisites": [
+        "0-1"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 20,
+      "referenceTag": "VDW",
+      "reference": "計算の方略（Van de Walle：ダブル、ダブル＋1）"
+    },
+    {
+      "id": "0-4",
+      "order": 3,
+      "stage": 0,
+      "operation": "数の感覚",
+      "name": "0をつける・とる（位取り）",
+      "skill": "×10・×100は0をつける、÷10は0をとる",
+      "example": "37×10＝370、450÷10＝45",
+      "generationRule": "a=2〜99。a×10、a×100（a≤9）、(10a)÷10を混ぜる。",
+      "generatorRef": "reference_generators.py::g0_4",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_PLACE_VALUE",
+      "scaffoldText": "H：百・十・一の位の表に書く",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 2.7,
+      "prerequisites": [
+        "0-2"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 204,
+      "referenceTag": "PV",
+      "reference": "位取り（学習指導要領）"
+    },
+    {
+      "id": "0-5",
+      "order": 4,
+      "stage": 0,
+      "operation": "数の感覚",
+      "name": "何十で100",
+      "skill": "100になる何十の組",
+      "example": "30と□で100 → 70",
+      "generationRule": "a=10〜90（10刻み）。「aと□で100」。",
+      "generatorRef": "reference_generators.py::g0_5",
+      "problemShapes": [
+        "complementTo"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_TENS_BLOCKS",
+      "scaffoldText": "H：10のかたまり10こ",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 2.0,
+      "prerequisites": [
+        "0-1",
+        "0-4"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 9,
+      "referenceTag": "NB",
+      "reference": "10・20の組（英国の number bonds、シンガポールの part-whole）"
+    },
+    {
+      "id": "1-1",
+      "order": 5,
+      "stage": 1,
+      "operation": "たし算",
+      "name": "＋0・＋1・＋2",
+      "skill": "1つ・2つ先の数",
+      "example": "6＋2＝8、1＋7＝8",
+      "generationRule": "a=0〜9、b=0・1・2。順番の入れ替えも出す。",
+      "generatorRef": "reference_generators.py::g1_1",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_NUMBER_LINE",
+      "scaffoldText": "H：数の線で1つ・2つ進む",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.1,
+      "prerequisites": [
+        "0-1"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 51,
+      "referenceTag": "KUMON",
+      "reference": "小さな段差（公文式の3A：たす1〜たす3、2A：たす4〜たす10）"
+    },
+    {
+      "id": "1-2",
+      "order": 6,
+      "stage": 1,
+      "operation": "たし算",
+      "name": "10までのたし算",
+      "skill": "答えが10までのたし算",
+      "example": "4＋5＝9、3＋7＝10",
+      "generationRule": "a,b=1〜9、a＋b≤10。",
+      "generatorRef": "reference_generators.py::g1_2",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_TEN_FRAME",
+      "scaffoldText": "H：10マスの絵",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.1,
+      "prerequisites": [
+        "1-1"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 45,
+      "referenceTag": "KUMON",
+      "reference": "小さな段差（公文式の3A：たす1〜たす3、2A：たす4〜たす10）"
+    },
+    {
+      "id": "1-3",
+      "order": 7,
+      "stage": 1,
+      "operation": "たし算",
+      "name": "ダブルとダブル＋1",
+      "skill": "6＋7は6＋6より1大きい",
+      "example": "6＋7＝6＋6＋1＝13",
+      "generationRule": "a=2〜8。a＋a、a＋(a＋1)、(a＋1)＋aを混ぜる。",
+      "generatorRef": "reference_generators.py::g1_3",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "NEAR_DOUBLE",
+      "scaffoldText": "H：6＋7＝6＋6＋□",
+      "setSize": 30,
+      "K": 1.5,
+      "D": 1.8,
+      "prerequisites": [
+        "0-3",
+        "1-2"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 21,
+      "referenceTag": "VDW",
+      "reference": "計算の方略（Van de Walle：ダブル、ダブル＋1）"
+    },
+    {
+      "id": "1-4",
+      "order": 8,
+      "stage": 1,
+      "operation": "たし算",
+      "name": "10をつくる（くり上がり）",
+      "skill": "大きい方に足して10を作り、残りを足す",
+      "example": "8＋5＝8＋2＋3＝13",
+      "generationRule": "a,b=2〜9、a＋b=11〜18。",
+      "generatorRef": "reference_generators.py::g1_4",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "MAKE_TEN",
+      "scaffoldText": "H：8＋5＝8＋2＋□＝10＋□",
+      "setSize": 20,
+      "K": 2.0,
+      "D": 2.0,
+      "prerequisites": [
+        "0-1",
+        "0-2",
+        "1-2"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 36,
+      "referenceTag": "SCH",
+      "reference": "学校の指導（さくらんぼ計算・10のかたまり、減加法）"
+    },
+    {
+      "id": "1-5",
+      "order": 9,
+      "stage": 1,
+      "operation": "たし算",
+      "name": "1桁のたし算ミックス",
+      "skill": "考えずに答える（自動化）",
+      "example": "7＋9＝16",
+      "generationRule": "a,b=0〜9の全100題からランダム。苦手を多めに。",
+      "generatorRef": "reference_generators.py::g1_5",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "S"
+      ],
+      "scaffoldKind": "NONE",
+      "scaffoldText": "—",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.5,
+      "prerequisites": [
+        "1-3",
+        "1-4"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 100,
+      "referenceTag": "AUTO",
+      "reference": "自動化（Baroody の第3段階、XtraMath・Reflex）"
+    },
+    {
+      "id": "1-6",
+      "order": 10,
+      "stage": 1,
+      "operation": "ひき算",
+      "name": "10までのひき算",
+      "skill": "10までの数からひく",
+      "example": "9－4＝5、10－3＝7",
+      "generationRule": "a=1〜10、b=0〜a。",
+      "generatorRef": "reference_generators.py::g1_6",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_TEN_FRAME",
+      "scaffoldText": "H：10マスの絵",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.0,
+      "prerequisites": [
+        "0-1"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 65,
+      "referenceTag": "KUMON",
+      "reference": "小さな段差（公文式の3A：たす1〜たす3、2A：たす4〜たす10）"
+    },
+    {
+      "id": "1-7",
+      "order": 11,
+      "stage": 1,
+      "operation": "ひき算",
+      "name": "10を使ってひく（くり下がり）",
+      "skill": "10から引いて残りを足す、または一の位を引いてから残りを引く",
+      "example": "13－8＝10－8＋3＝5",
+      "generationRule": "a=11〜18、b=2〜9、aの一の位＜b。",
+      "generatorRef": "reference_generators.py::g1_7",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "SUB_FROM_TEN",
+      "scaffoldText": "H：13－8＝10－8＋□",
+      "setSize": 20,
+      "K": 2.0,
+      "D": 1.0,
+      "prerequisites": [
+        "1-6",
+        "0-2"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 36,
+      "referenceTag": "SCH",
+      "reference": "学校の指導（さくらんぼ計算・10のかたまり、減加法）"
+    },
+    {
+      "id": "1-8",
+      "order": 12,
+      "stage": 1,
+      "operation": "ひき算",
+      "name": "たし算で考えるひき算",
+      "skill": "13－8は「8にいくつ足すと13」",
+      "example": "8＋□＝13 → 5",
+      "generationRule": "1-7と同じ組を「b＋□＝a」の形で。",
+      "generatorRef": "reference_generators.py::g1_8",
+      "problemShapes": [
+        "missingAddend"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_NUMBER_LINE",
+      "scaffoldText": "H：8から13まで数の線で数える",
+      "setSize": 30,
+      "K": 1.5,
+      "D": 1.0,
+      "prerequisites": [
+        "1-5"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 36,
+      "referenceTag": "INV",
+      "reference": "空欄の位置を変える・たし算／かけ算で考える（Reflex、Van de Walle の think-addition）"
+    },
+    {
+      "id": "1-9",
+      "order": 13,
+      "stage": 1,
+      "operation": "ひき算",
+      "name": "20までのひき算ミックス",
+      "skill": "考えずに答える（自動化）",
+      "example": "15－7＝8",
+      "generationRule": "答えが0〜9になる全組からランダム。",
+      "generatorRef": "reference_generators.py::g1_9",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "S"
+      ],
+      "scaffoldKind": "NONE",
+      "scaffoldText": "—",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.0,
+      "prerequisites": [
+        "1-7",
+        "1-8"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 100,
+      "referenceTag": "AUTO",
+      "reference": "自動化（Baroody の第3段階、XtraMath・Reflex）"
+    },
+    {
+      "id": "1-10",
+      "order": 14,
+      "stage": 1,
+      "operation": "総合",
+      "name": "20までのたし算・ひき算ミックス",
+      "skill": "記号を見て切り替える",
+      "example": "8＋6＝14、14－6＝8",
+      "generationRule": "1-5と1-9を半々でランダム。",
+      "generatorRef": "reference_generators.py::g1_10",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "S"
+      ],
+      "scaffoldKind": "NONE",
+      "scaffoldText": "—",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.3,
+      "prerequisites": [
+        "1-5",
+        "1-9"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 200,
+      "referenceTag": "MIX",
+      "reference": "交互練習（Taylor & Rohrer 2010）、塾のらせん型の復習"
+    },
+    {
+      "id": "2-1",
+      "order": 15,
+      "stage": 2,
+      "operation": "かけ算",
+      "name": "2・5・10の段",
+      "skill": "基準になる段。10の段は0をつける",
+      "example": "7×5＝35、6×10＝60",
+      "generationRule": "a=1〜9、b=2・5・10。順番の入れ替えあり。",
+      "generatorRef": "reference_generators.py::g2_1",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_SKIP_COUNT",
+      "scaffoldText": "H：5の段は時計の分、10の段は0をつける",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.8,
+      "prerequisites": [
+        "1-5"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 50,
+      "referenceTag": "TAB",
+      "reference": "九九の段の順番と関係（シンガポール：P2で2・3・4・5・10の段、P3で6〜9の段。Van de Walle の Nifty Nines など）",
+      "tableFactors": [
+        2,
+        5,
+        10
+      ]
+    },
+    {
+      "id": "2-2",
+      "order": 16,
+      "stage": 2,
+      "operation": "かけ算",
+      "name": "3・4の段",
+      "skill": "4の段は2の段の2倍",
+      "example": "7×4＝14×2＝28",
+      "generationRule": "a=1〜9、b=3・4。入れ替えあり。",
+      "generatorRef": "reference_generators.py::g2_2",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "MULT_FROM_KNOWN",
+      "scaffoldText": "H：7×4＝7×2×2",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.8,
+      "prerequisites": [
+        "2-1"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 32,
+      "referenceTag": "TAB",
+      "reference": "九九の段の順番と関係（シンガポール：P2で2・3・4・5・10の段、P3で6〜9の段。Van de Walle の Nifty Nines など）",
+      "tableFactors": [
+        3,
+        4
+      ]
+    },
+    {
+      "id": "2-3",
+      "order": 17,
+      "stage": 2,
+      "operation": "かけ算",
+      "name": "6・7の段",
+      "skill": "6の段は5の段＋1つ分",
+      "example": "7×6＝35＋7＝42",
+      "generationRule": "a=1〜9、b=6・7。入れ替えあり。",
+      "generatorRef": "reference_generators.py::g2_3",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "MULT_FROM_KNOWN",
+      "scaffoldText": "H：7×6＝7×5＋□",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.9,
+      "prerequisites": [
+        "2-1",
+        "2-2"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 32,
+      "referenceTag": "TAB",
+      "reference": "九九の段の順番と関係（シンガポール：P2で2・3・4・5・10の段、P3で6〜9の段。Van de Walle の Nifty Nines など）",
+      "tableFactors": [
+        6,
+        7
+      ]
+    },
+    {
+      "id": "2-4",
+      "order": 18,
+      "stage": 2,
+      "operation": "かけ算",
+      "name": "8・9の段",
+      "skill": "9の段は10の段－1つ分、8の段は4の段の2倍",
+      "example": "7×9＝70－7＝63",
+      "generationRule": "a=1〜9、b=8・9。入れ替えあり。",
+      "generatorRef": "reference_generators.py::g2_4",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "MULT_FROM_KNOWN",
+      "scaffoldText": "H：7×9＝7×10－□",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.9,
+      "prerequisites": [
+        "2-1",
+        "2-2"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 32,
+      "referenceTag": "TAB",
+      "reference": "九九の段の順番と関係（シンガポール：P2で2・3・4・5・10の段、P3で6〜9の段。Van de Walle の Nifty Nines など）",
+      "tableFactors": [
+        8,
+        9
+      ]
+    },
+    {
+      "id": "2-5",
+      "order": 19,
+      "stage": 2,
+      "operation": "かけ算",
+      "name": "九九ランダム",
+      "skill": "全81題を即答（自動化）。7×6と6×7は同じ",
+      "example": "8×7＝56",
+      "generationRule": "a,b=1〜9。6〜9の段と苦手を多めに。",
+      "generatorRef": "reference_generators.py::g2_5",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "S"
+      ],
+      "scaffoldKind": "NONE",
+      "scaffoldText": "—",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 1.9,
+      "prerequisites": [
+        "2-2",
+        "2-3",
+        "2-4"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 72,
+      "referenceTag": "AUTO",
+      "reference": "自動化（Baroody の第3段階、XtraMath・Reflex）"
+    },
+    {
+      "id": "2-6",
+      "order": 20,
+      "stage": 2,
+      "operation": "かけ算",
+      "name": "かけ算の□",
+      "skill": "7×□＝56を九九から探す（わり算の準備）",
+      "example": "7×□＝56 → 8",
+      "generationRule": "a,b=2〜9。「a×□＝積」「□×b＝積」。",
+      "generatorRef": "reference_generators.py::g2_6",
+      "problemShapes": [
+        "missingFactor"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_SKIP_COUNT",
+      "scaffoldText": "H：7の段を唱えて探す",
+      "setSize": 30,
+      "K": 1.2,
+      "D": 1.0,
+      "prerequisites": [
+        "2-5"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 128,
+      "referenceTag": "INV",
+      "reference": "空欄の位置を変える・たし算／かけ算で考える（Reflex、Van de Walle の think-addition）"
+    },
+    {
+      "id": "2-7",
+      "order": 21,
+      "stage": 2,
+      "operation": "わり算",
+      "name": "九九の逆",
+      "skill": "56÷7は「7×□＝56」",
+      "example": "56÷7＝8",
+      "generationRule": "割る数2〜9、商1〜9、割り切れる。",
+      "generatorRef": "reference_generators.py::g2_7",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "VISUAL_SKIP_COUNT",
+      "scaffoldText": "H：56÷7 → 7×□＝56",
+      "setSize": 30,
+      "K": 1.2,
+      "D": 1.0,
+      "prerequisites": [
+        "2-6"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 72,
+      "referenceTag": "INV",
+      "reference": "空欄の位置を変える・たし算／かけ算で考える（Reflex、Van de Walle の think-addition）"
+    },
+    {
+      "id": "2-8",
+      "order": 22,
+      "stage": 2,
+      "operation": "わり算",
+      "name": "あまりのあるわり算",
+      "skill": "割る数の段で、超えない一番大きい数を探す。あまりは割る数より小さい",
+      "example": "58÷7 → 7×8＝56 → 8あまり2",
+      "generationRule": "割る数2〜9、商1〜9、あまり1〜(割る数－1)。",
+      "generatorRef": "reference_generators.py::g2_8",
+      "problemShapes": [
+        "divRem"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "REMAINDER",
+      "scaffoldText": "H：7×□＝56、58－56＝□",
+      "setSize": 20,
+      "K": 2.0,
+      "D": 2.0,
+      "prerequisites": [
+        "2-7"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 324,
+      "referenceTag": "HYAKU",
+      "reference": "段ごと → ランダム → あまり（百ます計算の十ます → 百ます → 百わり）"
+    },
+    {
+      "id": "2-9",
+      "order": 23,
+      "stage": 2,
+      "operation": "総合",
+      "name": "九九ミックス",
+      "skill": "×・÷・あまりの切り替え",
+      "example": "6×8、48÷6、50÷6",
+      "generationRule": "2-5・2-7・2-8を4：4：2で。",
+      "generatorRef": "reference_generators.py::g2_9",
+      "problemShapes": [
+        "binary",
+        "divRem"
+      ],
+      "modes": [
+        "S"
+      ],
+      "scaffoldKind": "NONE",
+      "scaffoldText": "—",
+      "setSize": 20,
+      "K": 1.4,
+      "D": 1.6,
+      "prerequisites": [
+        "2-5",
+        "2-7",
+        "2-8"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 468,
+      "referenceTag": "MIX",
+      "reference": "交互練習（Taylor & Rohrer 2010）、塾のらせん型の復習"
+    },
+    {
+      "id": "3-1",
+      "order": 24,
+      "stage": 3,
+      "operation": "たし算・ひき算",
+      "name": "何十のたし算・ひき算",
+      "skill": "10のかたまりで計算する",
+      "example": "40＋30＝70、47－7＝40",
+      "generationRule": "何十±何十、何十±1桁（くり上がり・くり下がりなし）。",
+      "generatorRef": "reference_generators.py::g3_1",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "ZERO_ADDSUB",
+      "scaffoldText": "H：40＋30 → 4＋3＝7 → 70",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 2.0,
+      "prerequisites": [
+        "0-4",
+        "1-10"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 360,
+      "referenceTag": "PV",
+      "reference": "位取り（学習指導要領）"
+    },
+    {
+      "id": "3-2",
+      "order": 25,
+      "stage": 3,
+      "operation": "たし算",
+      "name": "2桁＋1桁（くり上がり）",
+      "skill": "次の何十まで足して、残りを足す",
+      "example": "47＋8＝47＋3＋5＝55",
+      "generationRule": "2桁(11〜98)＋1桁(2〜9)。くり上がりあり70%。",
+      "generatorRef": "reference_generators.py::g3_2",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "NEXT_TEN_ADD",
+      "scaffoldText": "H：47＋8＝47＋3＋□＝50＋□",
+      "setSize": 20,
+      "K": 2.0,
+      "D": 2.0,
+      "prerequisites": [
+        "1-4",
+        "3-1"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 1398,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "3-3",
+      "order": 26,
+      "stage": 3,
+      "operation": "ひき算",
+      "name": "2桁－1桁（くり下がり）",
+      "skill": "何十まで引いて、残りを引く",
+      "example": "52－7＝52－2－5＝45",
+      "generationRule": "2桁(11〜99)－1桁(2〜9)、答え10以上。くり下がりあり70%。",
+      "generatorRef": "reference_generators.py::g3_3",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "NEXT_TEN_SUB",
+      "scaffoldText": "H：52－7＝52－2－□＝50－□",
+      "setSize": 20,
+      "K": 2.0,
+      "D": 2.0,
+      "prerequisites": [
+        "1-7",
+        "3-1"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 676,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "3-4",
+      "order": 27,
+      "stage": 3,
+      "operation": "たし算・ひき算",
+      "name": "2桁±何十",
+      "skill": "十の位だけ動かす",
+      "example": "47＋30＝77、83－50＝33",
+      "generationRule": "2桁(11〜99)±何十(10〜90)。答え10以上。",
+      "generatorRef": "reference_generators.py::g3_4",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "TENS_ONLY",
+      "scaffoldText": "H：十の位だけ 4＋3",
+      "setSize": 30,
+      "K": 1.0,
+      "D": 2.3,
+      "prerequisites": [
+        "3-1"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 1885,
+      "referenceTag": "PV",
+      "reference": "位取り（学習指導要領）"
+    },
+    {
+      "id": "3-5",
+      "order": 28,
+      "stage": 3,
+      "operation": "たし算",
+      "name": "2桁＋2桁",
+      "skill": "片方はそのまま、もう片方を十の位→一の位の順に足す",
+      "example": "47＋38 → 77 → 85",
+      "generationRule": "2桁＋2桁(11〜99)。くり上がりあり60%。",
+      "generatorRef": "reference_generators.py::g3_5",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "JUMP_ADD",
+      "scaffoldText": "H：47＋38＝47＋30＋8 → 77＋8　M：途中の77を書く",
+      "setSize": 20,
+      "K": 3.0,
+      "D": 2.5,
+      "prerequisites": [
+        "3-2",
+        "3-4"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 6261,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "3-6",
+      "order": 29,
+      "stage": 3,
+      "operation": "ひき算",
+      "name": "2桁－2桁",
+      "skill": "片方はそのまま、十の位を引いてから一の位を引く",
+      "example": "73－28 → 53 → 45",
+      "generationRule": "2桁－2桁。くり下がりあり60%。",
+      "generatorRef": "reference_generators.py::g3_6",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "JUMP_SUB",
+      "scaffoldText": "H：73－28＝73－20－8 → 53－8　M：53を書く",
+      "setSize": 20,
+      "K": 3.3,
+      "D": 2.0,
+      "prerequisites": [
+        "3-3",
+        "3-4"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 3161,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "3-7",
+      "order": 30,
+      "stage": 3,
+      "operation": "ひき算",
+      "name": "100の補数",
+      "skill": "十の位は9から、一の位は10から引く",
+      "example": "100－37＝63",
+      "generationRule": "100－a（a=11〜99、一の位が0でない数80%）と「aと□で100」。",
+      "generatorRef": "reference_generators.py::g3_7",
+      "problemShapes": [
+        "binary",
+        "complementTo"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "COMPLEMENT",
+      "scaffoldText": "H：十の位 9－3、一の位 10－7",
+      "setSize": 20,
+      "K": 2.0,
+      "D": 2.0,
+      "prerequisites": [
+        "0-5",
+        "1-6"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 180,
+      "referenceTag": "SOR",
+      "reference": "補数（珠算）"
+    },
+    {
+      "id": "3-8",
+      "order": 31,
+      "stage": 3,
+      "operation": "かけ算",
+      "name": "何十・何百のかけ算",
+      "skill": "0を外して九九、最後に0をつける",
+      "example": "40×7＝280、300×6＝1800",
+      "generationRule": "何十(10〜90)または何百(100〜900)×1桁(2〜9)。入れ替えあり。",
+      "generatorRef": "reference_generators.py::g3_8",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "ZERO_MUL",
+      "scaffoldText": "H：40×7 → 4×7＝28 → 0をつける",
+      "setSize": 30,
+      "K": 1.2,
+      "D": 3.2,
+      "prerequisites": [
+        "2-5",
+        "0-4"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 256,
+      "referenceTag": "PV",
+      "reference": "位取り（学習指導要領）"
+    },
+    {
+      "id": "3-9",
+      "order": 32,
+      "stage": 3,
+      "operation": "かけ算",
+      "name": "十いくつ×1桁",
+      "skill": "10の分と残りに分けてかけ、足す",
+      "example": "17×6＝60＋42＝102",
+      "generationRule": "11〜19×2〜9。入れ替えあり。",
+      "generatorRef": "reference_generators.py::g3_9",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "PARTIAL_PRODUCT",
+      "scaffoldText": "H：17×6＝10×6＋7×6　M：60と42を書く",
+      "setSize": 20,
+      "K": 2.5,
+      "D": 2.6,
+      "prerequisites": [
+        "3-8",
+        "3-2"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 144,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "3-10",
+      "order": 33,
+      "stage": 3,
+      "operation": "かけ算",
+      "name": "2桁×1桁",
+      "skill": "十の位→一の位の順にかけて足す",
+      "example": "38×7＝210＋56＝266",
+      "generationRule": "21〜99×2〜9。入れ替えあり。",
+      "generatorRef": "reference_generators.py::g3_10",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "PARTIAL_PRODUCT",
+      "scaffoldText": "H：38×7＝30×7＋8×7　M：210と56を書く",
+      "setSize": 10,
+      "K": 3.5,
+      "D": 3.0,
+      "prerequisites": [
+        "3-9",
+        "3-5"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 1152,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "3-11",
+      "order": 34,
+      "stage": 3,
+      "operation": "わり算",
+      "name": "何十・何百÷1桁",
+      "skill": "0を外して九九の逆、0を戻す",
+      "example": "240÷6＝40、3500÷7＝500",
+      "generationRule": "割る数2〜9、商は何十(10〜90)か何百(100〜900)。",
+      "generatorRef": "reference_generators.py::g3_11",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "ZERO_DIV",
+      "scaffoldText": "H：240÷6 → 24÷6＝4 → 0をつける",
+      "setSize": 30,
+      "K": 1.3,
+      "D": 2.5,
+      "prerequisites": [
+        "2-7",
+        "0-4"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 144,
+      "referenceTag": "PV",
+      "reference": "位取り（学習指導要領）"
+    },
+    {
+      "id": "3-12",
+      "order": 35,
+      "stage": 3,
+      "operation": "わり算",
+      "name": "2桁÷1桁（わり切れる）",
+      "skill": "割りやすい数に分けて割る",
+      "example": "72÷4＝40÷4＋32÷4＝18",
+      "generationRule": "割る数2〜9、商11〜49、割られる数99以下。",
+      "generatorRef": "reference_generators.py::g3_12",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "PARTIAL_QUOTIENT",
+      "scaffoldText": "H：72÷4＝40÷4＋32÷4　M：10と8を書く",
+      "setSize": 20,
+      "K": 3.0,
+      "D": 2.0,
+      "prerequisites": [
+        "3-11",
+        "2-7"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 82,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "3-13",
+      "order": 36,
+      "stage": 3,
+      "operation": "わり算",
+      "name": "2桁÷1桁（あまりあり）",
+      "skill": "分けて割り、最後にあまりを確かめる",
+      "example": "79÷6＝13あまり1",
+      "generationRule": "割る数2〜9、商10〜49、割られる数99以下、あまりあり。",
+      "generatorRef": "reference_generators.py::g3_13",
+      "problemShapes": [
+        "divRem"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "PARTIAL_QUOTIENT",
+      "scaffoldText": "H：60÷6＝10、19÷6＝3あまり1",
+      "setSize": 10,
+      "K": 3.5,
+      "D": 3.0,
+      "prerequisites": [
+        "3-12",
+        "2-8"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 254,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "3-14",
+      "order": 37,
+      "stage": 3,
+      "operation": "総合",
+      "name": "ステージ3ミックス",
+      "skill": "問題を見て技を選ぶ",
+      "example": "3-2〜3-13の問題",
+      "generationRule": "3-2〜3-13からランダム。直近の苦手を多めに。",
+      "generatorRef": "reference_generators.py::g3_14",
+      "problemShapes": [
+        "binary",
+        "complementTo",
+        "divRem"
+      ],
+      "modes": [
+        "S"
+      ],
+      "scaffoldKind": "NONE",
+      "scaffoldText": "—",
+      "setSize": 20,
+      "K": 2.6,
+      "D": 2.5,
+      "prerequisites": [
+        "3-2",
+        "3-3",
+        "3-4",
+        "3-5",
+        "3-6",
+        "3-7",
+        "3-8",
+        "3-9",
+        "3-10",
+        "3-11",
+        "3-12",
+        "3-13"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 7010,
+      "referenceTag": "MIX",
+      "reference": "交互練習（Taylor & Rohrer 2010）、塾のらせん型の復習"
+    },
+    {
+      "id": "4-1",
+      "order": 38,
+      "stage": 4,
+      "operation": "たし算",
+      "name": "3桁＋2桁",
+      "skill": "片方はそのまま、何十→一の位の順に足す",
+      "example": "356＋78 → 426 → 434",
+      "generationRule": "3桁(101〜999)＋2桁(11〜99)。",
+      "generatorRef": "reference_generators.py::g4_1",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "JUMP_ADD",
+      "scaffoldText": "H：356＋78＝356＋70＋8　M：426を書く",
+      "setSize": 10,
+      "K": 3.5,
+      "D": 3.0,
+      "prerequisites": [
+        "3-5"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 18338,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "4-2",
+      "order": 39,
+      "stage": 4,
+      "operation": "ひき算",
+      "name": "3桁－2桁",
+      "skill": "片方はそのまま、何十→一の位の順に引く",
+      "example": "423－57 → 373 → 366",
+      "generationRule": "3桁(101〜999)－2桁(11〜99)。",
+      "generatorRef": "reference_generators.py::g4_2",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "JUMP_SUB",
+      "scaffoldText": "H：423－57＝423－50－7　M：373を書く",
+      "setSize": 10,
+      "K": 3.8,
+      "D": 3.0,
+      "prerequisites": [
+        "3-6"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 17709,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "4-3",
+      "order": 40,
+      "stage": 4,
+      "operation": "たし算",
+      "name": "3桁＋3桁",
+      "skill": "百→十→一の順に足していく",
+      "example": "356＋278 → 556 → 626 → 634",
+      "generationRule": "3桁＋3桁(101〜899)。",
+      "generatorRef": "reference_generators.py::g4_3",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "JUMP_ADD",
+      "scaffoldText": "H：356＋200＋70＋8　M：556と626を書く",
+      "setSize": 10,
+      "K": 4.5,
+      "D": 3.5,
+      "prerequisites": [
+        "4-1"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 19695,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "4-4",
+      "order": 41,
+      "stage": 4,
+      "operation": "ひき算",
+      "name": "3桁－3桁",
+      "skill": "百→十→一の順に引いていく",
+      "example": "623－278 → 423 → 353 → 345",
+      "generationRule": "3桁－3桁、答え1以上。",
+      "generatorRef": "reference_generators.py::g4_4",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "JUMP_SUB",
+      "scaffoldText": "H：623－200－70－8　M：423と353を書く",
+      "setSize": 10,
+      "K": 4.8,
+      "D": 3.0,
+      "prerequisites": [
+        "4-2"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 19345,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "4-5",
+      "order": 42,
+      "stage": 4,
+      "operation": "ひき算",
+      "name": "1000の補数",
+      "skill": "百・十の位は9から、一の位は10から引く",
+      "example": "1000－376＝624",
+      "generationRule": "1000－a（a=101〜999、一の位が0でない数80%）と「aと□で1000」。",
+      "generatorRef": "reference_generators.py::g4_5",
+      "problemShapes": [
+        "binary",
+        "complementTo"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "COMPLEMENT",
+      "scaffoldText": "H：9－3、9－7、10－6",
+      "setSize": 20,
+      "K": 3.0,
+      "D": 3.0,
+      "prerequisites": [
+        "3-7"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 1782,
+      "referenceTag": "SOR",
+      "reference": "補数（珠算）"
+    },
+    {
+      "id": "4-6",
+      "order": 43,
+      "stage": 4,
+      "operation": "総合",
+      "name": "3〜4個の数の計算",
+      "skill": "ちょうど何十・100になる組を先に、順番を入れ替える",
+      "example": "27＋46＋73＝100＋46、83－27＋17＝73",
+      "generationRule": "2桁を3〜4個。和がちょうど何十・100になる組を必ず1つ入れる。",
+      "generatorRef": "reference_generators.py::g4_6",
+      "problemShapes": [
+        "chain"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "PAIR_FIRST",
+      "scaffoldText": "H：組になる数を線で結ぶ",
+      "setSize": 10,
+      "K": 5.0,
+      "D": 3.0,
+      "prerequisites": [
+        "3-5",
+        "3-6",
+        "3-7"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 14798,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "4-7",
+      "order": 44,
+      "stage": 4,
+      "operation": "かけ算",
+      "name": "0の多いかけ算",
+      "skill": "0を外して九九、0の数をまとめて戻す",
+      "example": "40×70＝2800、300×60＝18000",
+      "generationRule": "(1桁×10または100)×(1桁×10または100)、0の合計2〜3こ。",
+      "generatorRef": "reference_generators.py::g4_7",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "ZERO_MUL",
+      "scaffoldText": "H：4×7＝28、0は2こ",
+      "setSize": 20,
+      "K": 1.5,
+      "D": 4.2,
+      "prerequisites": [
+        "3-8"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 192,
+      "referenceTag": "PV",
+      "reference": "位取り（学習指導要領）"
+    },
+    {
+      "id": "4-8",
+      "order": 45,
+      "stage": 4,
+      "operation": "かけ算",
+      "name": "3桁×1桁",
+      "skill": "上の位から順にかけて足していく",
+      "example": "236×4 → 800 → 920 → 944",
+      "generationRule": "101〜999×2〜9。",
+      "generatorRef": "reference_generators.py::g4_8",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "PARTIAL_PRODUCT",
+      "scaffoldText": "H：200×4＋30×4＋6×4　M：800と920を書く",
+      "setSize": 10,
+      "K": 5.0,
+      "D": 3.5,
+      "prerequisites": [
+        "3-10"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 9401,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "4-9",
+      "order": 46,
+      "stage": 4,
+      "operation": "わり算",
+      "name": "3桁÷1桁（わり切れる）",
+      "skill": "割りやすい大きなかたまりに分ける",
+      "example": "312÷4＝280÷4＋32÷4＝78",
+      "generationRule": "割る数2〜9、割られる数100〜999、割り切れる。",
+      "generatorRef": "reference_generators.py::g4_9",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "PARTIAL_QUOTIENT",
+      "scaffoldText": "H：312＝280＋32 と分ける　M：70と8を書く",
+      "setSize": 10,
+      "K": 4.0,
+      "D": 2.5,
+      "prerequisites": [
+        "3-12"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 1138,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "4-10",
+      "order": 47,
+      "stage": 4,
+      "operation": "わり算",
+      "name": "3桁÷1桁（あまりあり）",
+      "skill": "かたまりに分けて割り、あまりを確かめる",
+      "example": "325÷4＝81あまり1",
+      "generationRule": "割る数2〜9、割られる数100〜999、あまりあり。",
+      "generatorRef": "reference_generators.py::g4_10",
+      "problemShapes": [
+        "divRem"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "PARTIAL_QUOTIENT",
+      "scaffoldText": "H：320÷4＝80、5÷4＝1あまり1",
+      "setSize": 10,
+      "K": 4.5,
+      "D": 3.5,
+      "prerequisites": [
+        "4-9",
+        "3-13"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 5398,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "4-11",
+      "order": 48,
+      "stage": 4,
+      "operation": "わり算",
+      "name": "何百・何千÷何十",
+      "skill": "0を同じ数だけ消してから割る",
+      "example": "3600÷40＝360÷4＝90",
+      "generationRule": "割る数20〜90（何十）、割られる数は何百・何千、割り切れる。",
+      "generatorRef": "reference_generators.py::g4_11",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "ZERO_CANCEL_DIV",
+      "scaffoldText": "H：0を1こずつ消す",
+      "setSize": 20,
+      "K": 1.8,
+      "D": 2.5,
+      "prerequisites": [
+        "3-11",
+        "4-7"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 142,
+      "referenceTag": "PV",
+      "reference": "位取り（学習指導要領）"
+    },
+    {
+      "id": "4-12",
+      "order": 49,
+      "stage": 4,
+      "operation": "総合",
+      "name": "ステージ4ミックス",
+      "skill": "問題を見て技を選ぶ",
+      "example": "4-1〜4-11の問題",
+      "generationRule": "4-1〜4-11からランダム。",
+      "generatorRef": "reference_generators.py::g4_12",
+      "problemShapes": [
+        "binary",
+        "complementTo",
+        "chain",
+        "divRem"
+      ],
+      "modes": [
+        "S"
+      ],
+      "scaffoldKind": "NONE",
+      "scaffoldText": "—",
+      "setSize": 10,
+      "K": 4.0,
+      "D": 3.2,
+      "prerequisites": [
+        "4-1",
+        "4-2",
+        "4-3",
+        "4-4",
+        "4-5",
+        "4-6",
+        "4-7",
+        "4-8",
+        "4-9",
+        "4-10",
+        "4-11"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 14619,
+      "referenceTag": "MIX",
+      "reference": "交互練習（Taylor & Rohrer 2010）、塾のらせん型の復習"
+    },
+    {
+      "id": "5-1",
+      "order": 50,
+      "stage": 5,
+      "operation": "受験の技",
+      "name": "ちょうどの数で計算して直す",
+      "skill": "29は30－1と見て計算し、あとで直す",
+      "example": "67＋29＝67＋30－1、39×7＝280－7",
+      "generationRule": "一方が何十・何百の1〜2手前（29, 98, 199など）の加減、2桁×1桁。",
+      "generatorRef": "reference_generators.py::g5_1",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "COMPENSATION",
+      "scaffoldText": "H：67＋29＝67＋30－□",
+      "setSize": 20,
+      "K": 2.5,
+      "D": 2.7,
+      "prerequisites": [
+        "3-5",
+        "3-6",
+        "3-10"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 6299,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "5-2",
+      "order": 51,
+      "stage": 5,
+      "operation": "受験の技",
+      "name": "差は変わらない・近い数の差",
+      "skill": "両方に同じ数を足しても差は同じ／近い数は数えて求める",
+      "example": "93－48＝95－50、803－796＝7",
+      "generationRule": "ひく数の一の位が7〜9の2桁の差、または何百・何千をまたぐ近い数の差。",
+      "generatorRef": "reference_generators.py::g5_2",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "CONSTANT_DIFF",
+      "scaffoldText": "H：両方に2を足す／796→800→803",
+      "setSize": 20,
+      "K": 2.0,
+      "D": 2.0,
+      "prerequisites": [
+        "3-6"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 5569,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "5-3",
+      "order": 52,
+      "stage": 5,
+      "operation": "受験の技",
+      "name": "90・180・360からひく",
+      "skill": "角度でよく使うひき算",
+      "example": "180－47＝133、360－125＝235",
+      "generationRule": "90・180・360－a。",
+      "generatorRef": "reference_generators.py::g5_3",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "JUMP_SUB",
+      "scaffoldText": "H：180－40－7",
+      "setSize": 20,
+      "K": 2.2,
+      "D": 2.6,
+      "prerequisites": [
+        "4-5",
+        "3-7"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 567,
+      "referenceTag": "JUKEN",
+      "reference": "中学受験の頻出（角度、倍数の見分け方）"
+    },
+    {
+      "id": "5-4",
+      "order": 53,
+      "stage": 5,
+      "operation": "受験の技",
+      "name": "×5・×25・×50",
+      "skill": "×5は×10÷2、×25は×100÷4、×50は×100÷2",
+      "example": "48×5＝240、36×25＝900",
+      "generationRule": "×5：12〜98、×25：4の倍数中心、×50：偶数。",
+      "generatorRef": "reference_generators.py::g5_4",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "TIMES_5_25_50",
+      "scaffoldText": "H：48×10÷2",
+      "setSize": 20,
+      "K": 2.0,
+      "D": 3.2,
+      "prerequisites": [
+        "0-3",
+        "3-10"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 430,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "5-5",
+      "order": 54,
+      "stage": 5,
+      "operation": "受験の技",
+      "name": "÷5・÷25",
+      "skill": "÷5は×2÷10、÷25は×4÷100",
+      "example": "340÷5＝68、1500÷25＝60",
+      "generationRule": "÷5：5の倍数35〜495、÷25：25の倍数100〜2475。",
+      "generatorRef": "reference_generators.py::g5_5",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "DIV_5_25",
+      "scaffoldText": "H：340×2÷10",
+      "setSize": 20,
+      "K": 2.0,
+      "D": 2.3,
+      "prerequisites": [
+        "5-4",
+        "3-12"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 189,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "5-6",
+      "order": 55,
+      "stage": 5,
+      "operation": "受験の技",
+      "name": "×9・×99・×11",
+      "skill": "×9は×10－1つ分、×99は×100－1つ分、×11は×10＋1つ分",
+      "example": "47×9＝470－47＝423、43×11＝473",
+      "generationRule": "12〜98×9・99・11。",
+      "generatorRef": "reference_generators.py::g5_6",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "COMPENSATION",
+      "scaffoldText": "H：47×9＝470－□",
+      "setSize": 20,
+      "K": 2.5,
+      "D": 3.5,
+      "prerequisites": [
+        "3-10",
+        "4-4"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 522,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "5-7",
+      "order": 56,
+      "stage": 5,
+      "operation": "受験の技",
+      "name": "片方を半分、片方を2倍",
+      "skill": "かけ算は片方を半分、片方を2倍にしても答えは同じ",
+      "example": "16×35＝8×70＝560",
+      "generationRule": "偶数(12〜48)×一の位が5の数(15〜95)。",
+      "generatorRef": "reference_generators.py::g5_7",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "DOUBLE_HALVE",
+      "scaffoldText": "H：16を半分、35を2倍",
+      "setSize": 20,
+      "K": 2.5,
+      "D": 3.0,
+      "prerequisites": [
+        "0-3",
+        "3-10"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 342,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "5-8",
+      "order": 57,
+      "stage": 5,
+      "operation": "受験の技",
+      "name": "十の位が1どうしのかけ算",
+      "skill": "13×14は(13＋4)×10＋3×4",
+      "example": "13×14＝170＋12＝182",
+      "generationRule": "11〜19×11〜19。",
+      "generatorRef": "reference_generators.py::g5_8",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "M",
+        "S"
+      ],
+      "scaffoldKind": "TEENS_PRODUCT",
+      "scaffoldText": "H：(13＋4)×10＋3×4　M：170と12を書く",
+      "setSize": 20,
+      "K": 3.0,
+      "D": 3.0,
+      "prerequisites": [
+        "3-9",
+        "3-5"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 81,
+      "referenceTag": "TRICK",
+      "reference": "速算の型（成り立ちをヒントで示す。AIIT のインド式計算のコラム）"
+    },
+    {
+      "id": "5-9",
+      "order": 58,
+      "stage": 5,
+      "operation": "受験の技",
+      "name": "2桁でわる（商1桁）",
+      "skill": "上の位で見当をつけ、かけて確かめる",
+      "example": "91÷13 → 13×7＝91 → 7",
+      "generationRule": "割る数11〜29（13・17・19・23・29を多め）、商2〜9、割り切れる。",
+      "generatorRef": "reference_generators.py::g5_9",
+      "problemShapes": [
+        "binary"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "ESTIMATE_DIVIDE",
+      "scaffoldText": "H：90÷13は7くらい → 13×7で確かめる",
+      "setSize": 20,
+      "K": 3.0,
+      "D": 1.0,
+      "prerequisites": [
+        "3-10",
+        "4-9"
+      ],
+      "enumerable": true,
+      "approxDistinctProblems": 120,
+      "referenceTag": "NT",
+      "reference": "暗算の方略（Number Talks：10をつくる、かたまりで足す、部分積、部分商、補正、2倍と半分）"
+    },
+    {
+      "id": "5-10",
+      "order": 59,
+      "stage": 5,
+      "operation": "受験の技",
+      "name": "わり切れるか見分ける",
+      "skill": "2・5は一の位、4は下2桁、8は下3桁、3・9は各位の和、6は2と3",
+      "example": "1236は3の倍数？ → 1＋2＋3＋6＝12 → ○",
+      "generationRule": "3〜4桁の数と、2・3・4・5・6・8・9。○か×で答える。",
+      "generatorRef": "reference_generators.py::g5_10",
+      "problemShapes": [
+        "divisibility"
+      ],
+      "modes": [
+        "H",
+        "S"
+      ],
+      "scaffoldKind": "DIVISIBILITY_RULE",
+      "scaffoldText": "H：判定のきまりを表で見せる",
+      "setSize": 20,
+      "K": 2.0,
+      "D": 1.0,
+      "prerequisites": [
+        "2-5",
+        "3-12"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 16210,
+      "referenceTag": "JUKEN",
+      "reference": "中学受験の頻出（角度、倍数の見分け方）"
+    },
+    {
+      "id": "5-11",
+      "order": 60,
+      "stage": 5,
+      "operation": "総合",
+      "name": "受験ミックス",
+      "skill": "どの技を使うか自分で選ぶ",
+      "example": "5-1〜5-10、4-6、4-11の問題",
+      "generationRule": "5-1〜5-10・4-6・4-11からランダム。",
+      "generatorRef": "reference_generators.py::g5_11",
+      "problemShapes": [
+        "binary",
+        "divisibility",
+        "chain"
+      ],
+      "modes": [
+        "S"
+      ],
+      "scaffoldKind": "NONE",
+      "scaffoldText": "—",
+      "setSize": 10,
+      "K": 3.0,
+      "D": 3.0,
+      "prerequisites": [
+        "5-1",
+        "5-2",
+        "5-3",
+        "5-4",
+        "5-5",
+        "5-6",
+        "5-7",
+        "5-8",
+        "5-9",
+        "5-10"
+      ],
+      "enumerable": false,
+      "approxDistinctProblems": 7788,
+      "referenceTag": "MIX",
+      "reference": "交互練習（Taylor & Rohrer 2010）、塾のらせん型の復習"
+    }
+  ],
+  "problemShapes": {
+    "binary": {
+      "fields": "a, op ('+','-','×','÷'), b",
+      "display": "{a}{op}{b}＝",
+      "answer": "number（÷は割り切れる）"
+    },
+    "complementTo": {
+      "fields": "a, total（10・100・1000）",
+      "display": "{a}と□で{total}",
+      "answer": "total - a"
+    },
+    "decompose": {
+      "fields": "n（11〜19）",
+      "display": "{n}は10と□",
+      "answer": "n - 10"
+    },
+    "half": {
+      "fields": "n（偶数）",
+      "display": "{n}の半分＝",
+      "answer": "n / 2"
+    },
+    "missingAddend": {
+      "fields": "b, total",
+      "display": "{b}＋□＝{total}",
+      "answer": "total - b"
+    },
+    "missingFactor": {
+      "fields": "known, product, unknownPosition（left | right）",
+      "display": "{known}×□＝{product} または □×{known}＝{product}",
+      "answer": "product / known"
+    },
+    "divRem": {
+      "fields": "dividend, divisor",
+      "display": "{dividend}÷{divisor}＝",
+      "answer": "{ quotient, remainder }（remainder は 1以上 divisor 未満）"
+    },
+    "chain": {
+      "fields": "terms: number[], ops: ('+'|'-')[]（3〜4項）",
+      "display": "{t1}{op1}{t2}{op2}{t3}…＝",
+      "answer": "左から計算した値"
+    },
+    "divisibility": {
+      "fields": "n, k（2・3・4・5・6・8・9）",
+      "display": "{n}は{k}の倍数？",
+      "answer": "boolean（○ / ×）"
+    }
+  },
+  "scaffoldKinds": {
+    "NONE": {
+      "use": "ミックス・自動化のレベル。スピードのみ。",
+      "steps": [],
+      "examples": []
+    },
+    "VISUAL_TEN_FRAME": {
+      "use": "見た目の補助だけを表示し、答えだけ入力する（途中の空欄はない）。10マスの図。0-1はa個を塗った10マス、0-2は10のかたまりとばら、1-2はa個とb個、1-6はa個からb個を消す。",
+      "steps": [],
+      "examples": []
+    },
+    "VISUAL_PAIRS": {
+      "use": "見た目の補助だけを表示し、答えだけ入力する（途中の空欄はない）。ダブルは同じ数を2列、半分はn個を2列に分けた図。",
+      "steps": [],
+      "examples": []
+    },
+    "VISUAL_PLACE_VALUE": {
+      "use": "見た目の補助だけを表示し、答えだけ入力する（途中の空欄はない）。百・十・一の位の表。×10・×100は数字が左へ、÷10は右へ動く。",
+      "steps": [],
+      "examples": []
+    },
+    "VISUAL_TENS_BLOCKS": {
+      "use": "見た目の補助だけを表示し、答えだけ入力する（途中の空欄はない）。10のかたまりを10個並べ、a/10個に色をつける。",
+      "steps": [],
+      "examples": []
+    },
+    "VISUAL_NUMBER_LINE": {
+      "use": "見た目の補助だけを表示し、答えだけ入力する（途中の空欄はない）。数の線。1-1は大きい方の数から＋1・＋2のジャンプ、1-8はbからtotalまで1つずつ数える。",
+      "steps": [],
+      "examples": []
+    },
+    "VISUAL_SKIP_COUNT": {
+      "use": "見た目の補助だけを表示し、答えだけ入力する（途中の空欄はない）。段の答えを並べて表示（例 7, 14, 21, …, 63）。2-1の×10は「0をつける」の図。2-6・2-7は分かっている数（割る数）の段。",
+      "steps": [],
+      "examples": []
+    },
+    "NEAR_DOUBLE": {
+      "use": "1-3。a＋b で |a−b|≤1。",
+      "hint": "{s}＋{s}＝□ → □＋1＝□（s=小さい方）。a=bのときは答えだけ。",
+      "steps": [
+        "2*s",
+        "2*s+1"
+      ],
+      "examples": [
+        {
+          "problem": "6＋7",
+          "steps": [
+            12,
+            13
+          ]
+        }
+      ]
+    },
+    "MAKE_TEN": {
+      "use": "1-4。a＋b（和11〜18）。big=大きい方、small=小さい方。",
+      "hint": "{big}＋{small} → {big}＋□＝10 → 10＋□＝□",
+      "steps": [
+        "need=10-big",
+        "rest=small-need",
+        "10+rest"
+      ],
+      "examples": [
+        {
+          "problem": "8＋5",
+          "steps": [
+            2,
+            3,
+            13
+          ]
+        },
+        {
+          "problem": "2＋9",
+          "steps": [
+            1,
+            1,
+            11
+          ]
+        }
+      ]
+    },
+    "SUB_FROM_TEN": {
+      "use": "1-7。a−b（aは11〜18、aの一の位＜b）。減加法。",
+      "hint": "{a}－{b} → 10－{b}＝□ → □＋{a-10}＝□",
+      "steps": [
+        "10-b",
+        "(10-b)+(a-10)"
+      ],
+      "examples": [
+        {
+          "problem": "13－8",
+          "steps": [
+            2,
+            5
+          ]
+        }
+      ]
+    },
+    "MULT_FROM_KNOWN": {
+      "use": "2-2〜2-4。表の因数 t は、そのレベルの段（2-2:{3,4} 2-3:{6,7} 2-4:{8,9}）に入っている方。両方入っていれば大きい方。もう一方を x とする。",
+      "hint": "t=3：{x}×2＝□ → □＋{x}＝□／t=4：{x}×2＝□ → □×2＝□／t=6：{x}×5＝□ → □＋{x}＝□／t=7：{x}×5＝□、{x}×2＝□ → □＋□＝□／t=8：{x}×4＝□ → □×2＝□／t=9：{x}×10＝□ → □－{x}＝□",
+      "steps": [
+        "t=3: [x*2, x*3]",
+        "t=4: [x*2, x*4]",
+        "t=6: [x*5, x*6]",
+        "t=7: [x*5, x*2, x*7]",
+        "t=8: [x*4, x*8]",
+        "t=9: [x*10, x*9]"
+      ],
+      "examples": [
+        {
+          "level": "2-2",
+          "problem": "7×4",
+          "steps": [
+            14,
+            28
+          ]
+        },
+        {
+          "level": "2-3",
+          "problem": "8×7",
+          "steps": [
+            40,
+            16,
+            56
+          ]
+        },
+        {
+          "level": "2-4",
+          "problem": "7×9",
+          "steps": [
+            70,
+            63
+          ]
+        }
+      ],
+      "note": "同じ問題でもレベルで型が変わる（7×9は2-3なら t=7、2-4なら t=9）。型はレベルの段で決める"
+    },
+    "REMAINDER": {
+      "use": "2-8。n÷d（商1桁、あまりあり）。",
+      "hint": "{n}÷{d} → {d}×□＝□（{n}をこえない一番大きい数） → {n}－□＝□（あまり）",
+      "steps": [
+        "q=floor(n/d)",
+        "d*q",
+        "m=n-d*q"
+      ],
+      "answer": "q あまり m（空欄から自動で組み立てる）",
+      "examples": [
+        {
+          "problem": "58÷7",
+          "steps": [
+            8,
+            56,
+            2
+          ]
+        }
+      ]
+    },
+    "ZERO_ADDSUB": {
+      "use": "3-1。何十±何十は0を外して計算する。何十＋1桁・何十何－1桁（一の位が消える）は答えだけ。",
+      "hint": "{A}＋{B} → {A/10}＋{B/10}＝□ → □",
+      "steps": [
+        "何十±何十: [A/10 ± B/10, answer]",
+        "その他: [answer]"
+      ],
+      "examples": [
+        {
+          "problem": "40＋30",
+          "steps": [
+            7,
+            70
+          ]
+        },
+        {
+          "problem": "47－7",
+          "steps": [
+            40
+          ]
+        }
+      ]
+    },
+    "TENS_ONLY": {
+      "use": "3-4。2桁±何十。十の位だけ動かす。",
+      "hint": "十の位だけ {tens(a)}±{t/10}＝□ → □",
+      "steps": [
+        "floor(a/10) ± t/10",
+        "answer"
+      ],
+      "examples": [
+        {
+          "problem": "47＋30",
+          "steps": [
+            7,
+            77
+          ]
+        },
+        {
+          "problem": "87＋40",
+          "steps": [
+            12,
+            127
+          ]
+        }
+      ]
+    },
+    "ZERO_MUL": {
+      "use": "3-8・4-7。0を外してかけ、0の数をまとめて戻す。",
+      "hint": "{cA}×{cB}＝□、0は□こ → □",
+      "steps": [
+        "coreA*coreB",
+        "zerosA+zerosB",
+        "answer"
+      ],
+      "examples": [
+        {
+          "problem": "40×70",
+          "steps": [
+            28,
+            2,
+            2800
+          ]
+        },
+        {
+          "problem": "50×200",
+          "steps": [
+            10,
+            3,
+            10000
+          ]
+        }
+      ]
+    },
+    "ZERO_DIV": {
+      "use": "3-11。n÷d（商が何十・何百）。k=商の末尾の0の数。",
+      "hint": "{n}÷{d} → {n/10^k}÷{d}＝□ → 0を{k}こつける → □",
+      "steps": [
+        "(n/10^k)/d",
+        "answer"
+      ],
+      "examples": [
+        {
+          "problem": "240÷6",
+          "steps": [
+            4,
+            40
+          ]
+        },
+        {
+          "problem": "3500÷7",
+          "steps": [
+            5,
+            500
+          ]
+        }
+      ]
+    },
+    "ZERO_CANCEL_DIV": {
+      "use": "4-11。何百・何千÷何十。0を1こずつ消してから割る。",
+      "hint": "{n}÷{D} → {n/10}÷{D/10}＝□",
+      "steps": [
+        "answer"
+      ],
+      "examples": [
+        {
+          "problem": "3600÷40",
+          "steps": [
+            90
+          ]
+        }
+      ]
+    },
+    "NEXT_TEN_ADD": {
+      "use": "3-2。2桁a＋1桁b（順番が逆でも2桁の方を基準）。",
+      "hint": "くり上がり：{a}＋{b} → {a}＋□＝{次の何十} → {次の何十}＋□＝□／なし：一の位 {a%10}＋{b}＝□ → □",
+      "steps": [
+        "くり上がり: [10-a%10, b-(10-a%10), answer]",
+        "なし: [a%10+b, answer]"
+      ],
+      "examples": [
+        {
+          "problem": "47＋8",
+          "steps": [
+            3,
+            5,
+            55
+          ]
+        },
+        {
+          "problem": "82＋2",
+          "steps": [
+            4,
+            84
+          ]
+        }
+      ]
+    },
+    "NEXT_TEN_SUB": {
+      "use": "3-3。2桁a－1桁b。",
+      "hint": "くり下がり：{a}－{b} → {a}－□＝{前の何十} → {前の何十}－□＝□／aの一の位が0：10－{b}＝□ → {a-10}＋□＝□／なし：一の位 {a%10}－{b}＝□ → □",
+      "steps": [
+        "くり下がり: [a%10, b-a%10, answer]",
+        "a%10=0: [10-b, answer]",
+        "なし: [a%10-b, answer]"
+      ],
+      "examples": [
+        {
+          "problem": "52－7",
+          "steps": [
+            2,
+            5,
+            45
+          ]
+        },
+        {
+          "problem": "30－4",
+          "steps": [
+            6,
+            26
+          ]
+        }
+      ]
+    },
+    "JUMP_ADD": {
+      "use": "3-5・4-1・4-3。大きい方の数はそのまま、もう一方を上の位から（0でない位だけ）足していく。",
+      "hint": "{keep}＋{p1}＝□ → □＋{p2}＝□（→ □＋{p3}＝□）",
+      "steps": [
+        "running totals（最後が答え）"
+      ],
+      "memo": "最後以外の途中の合計（最大2つ）",
+      "examples": [
+        {
+          "problem": "47＋38",
+          "steps": [
+            77,
+            85
+          ],
+          "memo": [
+            77
+          ]
+        },
+        {
+          "problem": "356＋278",
+          "steps": [
+            556,
+            626,
+            634
+          ],
+          "memo": [
+            556,
+            626
+          ]
+        }
+      ]
+    },
+    "JUMP_SUB": {
+      "use": "3-6・4-2・4-4・5-3。ひかれる数はそのまま、ひく数を上の位から（0でない位だけ）引いていく。",
+      "hint": "{a}－{p1}＝□ → □－{p2}＝□（→ □－{p3}＝□）",
+      "steps": [
+        "running differences（最後が答え）"
+      ],
+      "memo": "最後以外の途中の差（最大2つ）",
+      "examples": [
+        {
+          "problem": "73－28",
+          "steps": [
+            53,
+            45
+          ],
+          "memo": [
+            53
+          ]
+        },
+        {
+          "problem": "623－278",
+          "steps": [
+            423,
+            353,
+            345
+          ],
+          "memo": [
+            423,
+            353
+          ]
+        },
+        {
+          "problem": "180－47",
+          "steps": [
+            140,
+            133
+          ]
+        }
+      ]
+    },
+    "COMPLEMENT": {
+      "use": "3-7・4-5（100・1000の補数、「aと□で100」も）。a と total の末尾の0を同じ数だけ外し（z個）、残った a を total の桁数−1桁にそろえ、最後の桁以外は 9−d、最後の桁は 10−d。答えは並べた数×10^z。",
+      "hint": "{total}－{a} → 9－{d1}＝□、10－{d2}＝□ → □",
+      "steps": [
+        "各桁の結果",
+        "answer"
+      ],
+      "examples": [
+        {
+          "problem": "100－37",
+          "steps": [
+            6,
+            3,
+            63
+          ]
+        },
+        {
+          "problem": "1000－376",
+          "steps": [
+            6,
+            2,
+            4,
+            624
+          ]
+        },
+        {
+          "problem": "100－40",
+          "steps": [
+            6,
+            60
+          ]
+        },
+        {
+          "problem": "1000－910",
+          "steps": [
+            0,
+            9,
+            90
+          ]
+        }
+      ]
+    },
+    "PARTIAL_PRODUCT": {
+      "use": "3-9・3-10・4-8。多桁の数 m を位ごと（0でない位）に分け、1桁 k とかけて足す。",
+      "hint": "{m}×{k} → {part1}×{k}＝□、{part2}×{k}＝□（、…） → □",
+      "steps": [
+        "各部分積",
+        "answer"
+      ],
+      "memo": "部分が2つなら [部分積1, 部分積2]、3つなら [部分積1, 部分積1＋部分積2]。0でない位が1つだけ（例 300×4）なら答えだけ",
+      "examples": [
+        {
+          "problem": "17×6",
+          "steps": [
+            60,
+            42,
+            102
+          ],
+          "memo": [
+            60,
+            42
+          ]
+        },
+        {
+          "problem": "236×4",
+          "steps": [
+            800,
+            120,
+            24,
+            944
+          ],
+          "memo": [
+            800,
+            920
+          ]
+        }
+      ]
+    },
+    "PARTIAL_QUOTIENT": {
+      "use": "3-12・3-13・4-9・4-10。p=100,10,1の順に c=floor(rem/(d×p)) を求め、c>0なら c×d×p を割って商 c×p を記録し、rem から引く。最後に残った rem があまり。",
+      "hint": "{n}÷{d} → {chunk1}÷{d}＝□、{chunk2}÷{d}＝□（最後は {rem}÷{d}＝□あまり□） → □（あまり□）",
+      "steps": [
+        "各部分の商（c×p）",
+        "あまりがあれば remainder",
+        "answer"
+      ],
+      "memo": "部分の商（最大2つ）",
+      "examples": [
+        {
+          "problem": "72÷4",
+          "steps": [
+            10,
+            8,
+            18
+          ],
+          "memo": [
+            10,
+            8
+          ]
+        },
+        {
+          "problem": "79÷6",
+          "steps": [
+            10,
+            3,
+            "13あまり1"
+          ],
+          "note": "最後の部分は 19÷6＝3あまり1 と表示"
+        },
+        {
+          "problem": "312÷4",
+          "steps": [
+            70,
+            8,
+            78
+          ]
+        },
+        {
+          "problem": "941÷4",
+          "steps": [
+            200,
+            30,
+            5,
+            "235あまり1"
+          ]
+        }
+      ]
+    },
+    "PAIR_FIRST": {
+      "use": "4-6。和がちょうど何百（なければ何十）になる組を先に計算する。a－b＋c 型は －b＋c をまとめる。",
+      "hint": "組を同じ色で示す → (組)＝□ → □＋(残り)＝□",
+      "steps": [
+        "組1の和",
+        "（組2の和）",
+        "answer"
+      ],
+      "examples": [
+        {
+          "problem": "27＋46＋73",
+          "steps": [
+            100,
+            146
+          ]
+        },
+        {
+          "problem": "32＋18＋14＋86",
+          "steps": [
+            100,
+            50,
+            150
+          ]
+        },
+        {
+          "problem": "83－27＋17",
+          "steps": [
+            10,
+            73
+          ],
+          "note": "－27＋17 は －10"
+        }
+      ]
+    },
+    "COMPENSATION": {
+      "use": "5-1・5-6。何十・何百の1〜2手前の数 x＝R－e を R として計算し、あとで直す。×9・×99・×11も同じ考え方。",
+      "hint": "たし算：{a}＋{R}＝□ → □－{e}＝□／ひき算：{a}－{R}＝□ → □＋{e}＝□／かけ算：{R}×{b}＝□ → □－{e}×{b}＝□／×9：{a}×10＝□ → □－{a}＝□／×99：{a}×100＝□ → □－{a}＝□／×11：{a}×10＝□ → □＋{a}＝□",
+      "steps": [
+        "たし算・ひき算: [R計算, answer]",
+        "かけ算: [R*b, e*b, answer]",
+        "×9/×99/×11: [a*10 or a*100, answer]"
+      ],
+      "examples": [
+        {
+          "problem": "67＋29",
+          "steps": [
+            97,
+            96
+          ]
+        },
+        {
+          "problem": "73－28",
+          "steps": [
+            43,
+            45
+          ]
+        },
+        {
+          "problem": "39×7",
+          "steps": [
+            280,
+            7,
+            273
+          ]
+        },
+        {
+          "level": "5-6",
+          "problem": "47×9",
+          "steps": [
+            470,
+            423
+          ]
+        },
+        {
+          "level": "5-6",
+          "problem": "43×11",
+          "steps": [
+            430,
+            473
+          ]
+        }
+      ],
+      "note": "近い方の数の決め方：一の位が8・9で、R−x が1〜2になる数。両方当てはまれば大きい方。かけ算は多桁の方。"
+    },
+    "CONSTANT_DIFF": {
+      "use": "5-2。ひく数の一の位が7〜9なら両方に同じ数を足してひく数を何十にする。何百・何千をまたぐ近い数は、間の何百（B）までと、Bからを数える。",
+      "hint": "ずらす：{a}－{b} → 両方に{s}をたす → □－□＝□／近い数：{b}→{B}は□、{B}→{a}は□ → □",
+      "steps": [
+        "ずらす: [a+s, b+s, answer]",
+        "近い数: [B-b, a-B, answer]"
+      ],
+      "examples": [
+        {
+          "problem": "93－48",
+          "steps": [
+            95,
+            50,
+            45
+          ]
+        },
+        {
+          "problem": "803－796",
+          "steps": [
+            4,
+            3,
+            7
+          ]
+        }
+      ]
+    },
+    "TIMES_5_25_50": {
+      "use": "5-4。",
+      "hint": "×5：{a}×10＝□ → □÷2＝□／×25：{a}×100＝□ → □÷4＝□／×50：{a}×100＝□ → □÷2＝□",
+      "steps": [
+        "a*10 or a*100",
+        "answer"
+      ],
+      "examples": [
+        {
+          "problem": "48×5",
+          "steps": [
+            480,
+            240
+          ]
+        },
+        {
+          "problem": "36×25",
+          "steps": [
+            3600,
+            900
+          ]
+        }
+      ]
+    },
+    "DIV_5_25": {
+      "use": "5-5。",
+      "hint": "÷5：{n}×2＝□ → □÷10＝□／÷25：{n}×4＝□ → □÷100＝□",
+      "steps": [
+        "n*2 or n*4",
+        "answer"
+      ],
+      "examples": [
+        {
+          "problem": "340÷5",
+          "steps": [
+            680,
+            68
+          ]
+        },
+        {
+          "problem": "1500÷25",
+          "steps": [
+            6000,
+            60
+          ]
+        }
+      ]
+    },
+    "DOUBLE_HALVE": {
+      "use": "5-7。偶数 e と一の位が5の数 f。",
+      "hint": "{e}÷2＝□、{f}×2＝□ → □×□＝□",
+      "steps": [
+        "e/2",
+        "f*2",
+        "answer"
+      ],
+      "examples": [
+        {
+          "problem": "16×35",
+          "steps": [
+            8,
+            70,
+            560
+          ]
+        }
+      ]
+    },
+    "TEENS_PRODUCT": {
+      "use": "5-8。a=10+x、b=10+y。",
+      "hint": "({a}＋{y})×10＝□、{x}×{y}＝□ → □＋□＝□",
+      "steps": [
+        "(a+y)*10",
+        "x*y",
+        "answer"
+      ],
+      "memo": "[(a+y)*10, x*y]",
+      "examples": [
+        {
+          "problem": "13×14",
+          "steps": [
+            170,
+            12,
+            182
+          ]
+        },
+        {
+          "problem": "19×11",
+          "steps": [
+            200,
+            9,
+            209
+          ]
+        }
+      ]
+    },
+    "ESTIMATE_DIVIDE": {
+      "use": "5-9。n÷d（商1桁、割り切れる）。ヒントモードでは、見当の数を入れて d×見当 を確かめる。積が n でなければ別の数を試せる（ミスとして数えない）。",
+      "hint": "{n}は{d}の何倍くらい？ □ → {d}×□＝□（{n}になればOK）",
+      "steps": [
+        "q",
+        "d*q"
+      ],
+      "examples": [
+        {
+          "problem": "91÷13",
+          "steps": [
+            7,
+            91
+          ]
+        }
+      ]
+    },
+    "DIVISIBILITY_RULE": {
+      "use": "5-10。きまりのカードを表示する。",
+      "hint": "2・5：一の位／4：下2桁／8：下3桁／3・9：各位の数の和／6：2の倍数か、3の倍数か",
+      "steps": [
+        "k=2,5: [n%10, bool]",
+        "k=4: [n%100, bool]",
+        "k=8: [n%1000, bool]",
+        "k=3,9: [各位の和, bool]",
+        "k=6: [2の倍数?, 3の倍数?, bool]"
+      ],
+      "examples": [
+        {
+          "problem": "1236は3の倍数？",
+          "steps": [
+            12,
+            true
+          ]
+        },
+        {
+          "problem": "9662は6の倍数？",
+          "steps": [
+            true,
+            false,
+            false
+          ]
+        }
+      ]
+    }
+  },
+  "modes": {
+    "H": "ヒント：scaffoldKind の型を表示し、空欄を順に埋める。空欄ごとに即時判定。2回まちがえたら正しい値を表示して先へ（その問題はミス扱い）",
+    "M": "メモ：型は表示せず、途中の数（scaffoldKinds の memo）を入れてから答えを入れる",
+    "S": "スピード：答えだけ"
+  },
+  "rules": {
+    "stars": {
+      "star1": "最初の解答がすべて正しい（時間は問わない）",
+      "star2": "★1 かつ 1問あたりの秒 ≤ T★2",
+      "star3": "★1 かつ 1問あたりの秒 ≤ T★3",
+      "mastery": {
+        "star3OnDistinctLocalDates": 2
+      },
+      "retry": "1問でもまちがえたら「やり直し」（★なし）。まちがえた問題はセットの最後にもう一度出す（判定・時間に含めない）。まちがえた直後に正しい答えを約1秒表示（時間に含めない）"
+    },
+    "modeProgression": {
+      "H": {
+        "advanceWhen": "star1",
+        "next": "Mがあれば M、なければ S"
+      },
+      "M": {
+        "advanceWhen": "star1 かつ 1問あたり ≤ 1.5 × T★2",
+        "memoTimeFactor": 1.5,
+        "next": "S"
+      },
+      "S": {
+        "unlockNextWhen": "star2",
+        "continueUntil": "mastery"
+      }
+    },
+    "progression": {
+      "unlock": "前提レベルがすべて★2以上、かつそのステージを使える（課金状態）ならレベルを解放",
+      "activeSlots": {
+        "max": 2,
+        "frontier": "levels の order 順で、解放済みで★2がない最初のレベル",
+        "pendingStar3": "★2はあるがマスターしていないレベルのうち、★2を取った日が最も古いもの"
+      },
+      "fallbackToPrerequisite": {
+        "speedSetsWithoutStar2": 5,
+        "action": "前提レベルのうちマスターしていないものを（order順に）frontier の代わりに練習し、マスターしたら戻る"
+      },
+      "modeStepBack": {
+        "consecutiveSets": 2,
+        "minErrorsPerSet": 2,
+        "action": "1つ前のモードへ（S→M、Mがなければ S→H、M→H）"
+      },
+      "stageCheck": "ステージ内の全レベルが★2以上になったら、次のセッションのメインでステージチェックを1回行う。不合格なら、ミスの多かったレベルを pendingStar3 の優先にする。次のステージのレベルは前提に従って解放される（ステージチェックで止めない）"
+    },
+    "spacedReview": {
+      "intervalsDays": [
+        2,
+        4,
+        7,
+        14,
+        30
+      ],
+      "thenEveryDays": 30,
+      "problemsPerLevel": 10,
+      "mode": "S",
+      "pass": "ミス0 かつ 1問あたり ≤ T★2",
+      "onFail": "2日後に再設定し、間隔は最初（2日）に戻す",
+      "demoteAfterConsecutiveFails": 2,
+      "demoteAction": "マスターを外し、そのレベルを pendingStar3 に戻す",
+      "maxLevelsPerDay": 2,
+      "order": "期限の古い順。あふれたものは翌日へ"
+    },
+    "setGeneration": {
+      "noDuplicateInSet": true,
+      "noCommutedDuplicateInSet": "＋と×は交換した問題（7×6と6×7）も重複とみなす",
+      "requeueWrongAtEnd": true,
+      "fixedSetDaysForNewLevelSpeed": 3,
+      "fixedSetNote": "そのレベルのSモードを始めた最初の3日（異なるローカル日付）は同じ seed のセットを出してタイムの伸びを見せる。4日目以降は毎回新しく作る",
+      "weakFactWeight": 2,
+      "weakFactWindowDays": 14,
+      "weakFactDefinition": "直近14日でまちがえた、または1問の時間がそのレベルの T★2 を超えた factKey",
+      "weightingAppliesTo": "enumerable=true のレベル（すべての問題を列挙して重みづけ抽出）。それ以外は generator のまま",
+      "seed": "seed = hash(profileId, levelId, localDate, setIndex)。固定セットは hash(profileId, levelId, 'fixed')"
+    },
+    "dailySession": {
+      "targetMinutes": [
+        7,
+        10
+      ],
+      "warmup": {
+        "seconds": 60,
+        "timed": false,
+        "source": "今のステージの基本事実（そのステージの enumerable なレベル）と、前日にまちがえた factKey"
+      },
+      "main": "frontier のセット1つ（今のモード）＋ pendingStar3 のSセット1つ。pendingStar3 がなければ frontier を2セット。ステージチェックの日はメインをステージチェックに置き換える",
+      "reviewMix": "期限の来たレベル（最大2）から各10問を混ぜて出し、レベルごとに判定する",
+      "goal": "3つ終えたら「きょうのゴール達成」。追加の練習は自由（判定はする）",
+      "weeklyChallenge": {
+        "everyDays": 7,
+        "problems": 20,
+        "source": "マスター済みのレベルを混ぜて",
+        "graded": false,
+        "note": "自己ベストだけ記録する"
+      }
+    },
+    "placement": {
+      "startStageByGrade": {
+        "1": 0,
+        "2": 1,
+        "3": 2,
+        "4": 2,
+        "5": 3,
+        "6": 3
+      },
+      "stageCheckPass": "ミス1問以内 かつ 1問あたり ≤ T★2（混合の目安）",
+      "stageCheckMastery": "ミス1問以内 かつ 1問あたり ≤ T★3 → そのステージのレベルはマスター扱い",
+      "onPass": "次のステージのチェックへ",
+      "onFail": "そのステージの先頭レベルから、各レベル5問（S）のミニチェック（ミス0 かつ ≤ T★2）で最初につまずくレベルを探す。先頭レベルでつまずいたら1つ前のステージのチェックへ",
+      "startPoint": "つまずいたレベルを frontier にする。ミニチェックでミスがあれば H から、ミスはないが遅ければ S から",
+      "statusOfEarlierLevels": "合格したステージ・つまずいたレベルより前のレベルは★2扱い。マスター扱いのレベルは復習に入れ、期限を14日に分散させる",
+      "maxMinutesPerDay": 8,
+      "expectedDays": "2〜3日"
+    },
+    "errorTypes": [
+      {
+        "id": "placeValue",
+        "name": "位取り・0の数",
+        "detect": "答え＝正解×10・×100・÷10・÷100",
+        "remedy": "0-4、3-8、4-7を短く復習"
+      },
+      {
+        "id": "carry",
+        "name": "くり上がり・くり下がり",
+        "detect": "|答え−正解| が 10・100・1000",
+        "remedy": "同じレベルのメモモードに戻り、途中の数を書く"
+      },
+      {
+        "id": "transposition",
+        "name": "写し・入力",
+        "detect": "同じ数字の並べかえ（36↔63）、または1桁だけ形の似た数字（6↔0、1↔7）",
+        "remedy": "数字をそろえて書く練習。アプリは入力の確認を表示"
+      },
+      {
+        "id": "remainder",
+        "name": "あまりのきまり",
+        "detect": "あまり ≥ 割る数、または 割る数×商＋あまり ≠ 割られる数",
+        "remedy": "2-8のヒントモードで「こえない一番大きい数」を確認"
+      },
+      {
+        "id": "fact",
+        "name": "覚え違い",
+        "detect": "上に当てはまらず、同じ factKey を14日以内に2回以上まちがえた、または1ステップの問題",
+        "remedy": "その事実をウォームアップで毎日出す。カードや口頭で練習"
+      },
+      {
+        "id": "procedure",
+        "name": "手順",
+        "detect": "その他",
+        "remedy": "ヒントモードに戻り、技の型を確認"
+      }
+    ],
+    "errorTypeOrder": [
+      "placeValue",
+      "carry",
+      "transposition",
+      "remainder",
+      "fact",
+      "procedure"
+    ],
+    "timing": {
+      "start": "問題が画面に表示し終わった時点（遷移アニメーション後）",
+      "end": "最後の入力を送信した時点（自動送信または OK キー）",
+      "excluded": [
+        "正誤フィードバックの表示中",
+        "やり直しで出した問題",
+        "アプリがバックグラウンドの間"
+      ],
+      "interrupted": "セット中に60秒を超えてバックグラウンドにいたら、そのセットは判定しない（記録は残す）",
+      "perProblemSec": "最初の解答の時間の合計 ÷ 問題数",
+      "localDate": "端末のローカル日付で「別の日」「1日」を判定する"
+    }
+  },
+  "freemium": {
+    "freeStages": [
+      0,
+      1,
+      2
+    ],
+    "freeTrialLevels": [
+      "3-1",
+      "3-2"
+    ],
+    "premiumStages": [
+      3,
+      4,
+      5
+    ],
+    "premiumFeatures": [
+      "ステージ3〜5",
+      "保護者ダッシュボードの詳細（苦手な事実、ミスの種類、推移）",
+      "プロフィール最大4人"
+    ],
+    "freeProfiles": 1,
+    "premiumProfiles": 4,
+    "products": {
+      "monthly": "TODO_PRODUCT_ID_MONTHLY",
+      "yearly": "TODO_PRODUCT_ID_YEARLY"
+    },
+    "note": "価格・無料試用期間はストア側で設定。アプリ内通貨・有料のランダム報酬・広告は使わない"
+  },
+  "designNotes": [
+    "技ごとにレベルを分ける：桁数や形式ではなく、「10をつくる」「片方はそのまま、もう片方を崩す」「×25は×100÷4」のように、1つの技を1つのレベルにする。どの技でつまずいたかが分かる。〔Number Talks、Van de Walle、Baroody：ダブル＋1と10をつくる方略〕",
+    "足場を少しずつ外す3モード：ヒント（技の型を見せ、空欄だけ埋める）→ メモ（途中の数を書く）→ スピード（答えだけ）。〔解答例のステップを少しずつ消す worked example fading：Renkl ら〕",
+    "正確さが先、時間はあと：ヒントとメモでは時間を問わない。時間を測るのは技を正しく使えるようになってから、1分前後の短いセットで。〔WWC 2021、Reflex、百ます計算の導入〕",
+    "技 → ミックス → 自動化：各ステージは技のレベルのあとにミックスのレベルを置き、最後は思い出すだけで答えられる状態にする。〔Baroody の3段階、交互練習：Taylor & Rohrer 2010〕",
+    "基準は3段階＋間隔復習：★1 正確、★2 合格（次へ進む）、★3 マスター（別の日に2回）。マスター後は2・4・7・14・30日後に復習する。〔公文式の標準完成時間の幅、Rocket Math のノーミス合格、間隔練習：Cepeda ら 2006〕",
+    "速さは「考える時間」で測る：目標タイム＝読む＋考える×ステップ数＋書く×桁数。書くのが遅い子は、書く時間だけを本人の速さに置き換える。〔Rocket Math の書く速さテスト、Reflex の入力時間の除外〕",
+    "毎日7〜10分、混ぜて復習：ウォームアップ・メイン・復習ミックスを毎日少しずつ。同じ内容を間をあけて、らせん状にくり返す。〔IES 2009、XtraMath、SAPIX・四谷大塚のらせん型〕",
+    "暗算は上の位から、覚える数は1つ：片方の数はそのままにして、もう片方を上の位から崩して足す・引く。途中で覚えておく数を1つにする。〔Number Talks の Adding Up in Chunks〕",
+    "受験の技はまとめて最後に：補正・ずらし・×25・2桁でわる・倍数の見分け方などはステージ5で。特殊な速算は、成り立ちをヒントで示せる頻出のものだけにする。〔Number Talks、AIIT のインド式計算のコラム〕"
+  ]
+}
