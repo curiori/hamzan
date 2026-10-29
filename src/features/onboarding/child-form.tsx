@@ -40,43 +40,52 @@ export function ChildForm({ onSubmit }: { onSubmit: (nickname: string, grade: nu
       <AppText weight="bold" style={styles.label}>
         学年
       </AppText>
-      <View style={styles.grades} accessibilityRole="radiogroup" accessibilityLabel="学年">
-        {GRADES.map((g) => (
-          <Pressable
-            key={g}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: grade === g }}
-            accessibilityLabel={`小学${g}年`}
-            onPress={() => setGrade(g)}
-            style={[styles.grade, grade === g && styles.gradeOn]}
-          >
-            <AppText weight="bold" style={grade === g ? styles.gradeTextOn : undefined}>
-              小{g}
-            </AppText>
-          </Pressable>
-        ))}
-      </View>
+      <GradePicker value={grade} onChange={setGrade} />
       <Button size="lg" label="つぎへ" disabled={!name} icon={<Ionicons name="arrow-forward" size={20} color={colors.primaryForeground} />} onPress={submit} />
     </View>
   );
 }
+
+/** School year 1–6 as one row of choices. */
+export function GradePicker({ value, onChange }: { value: number; onChange: (grade: number) => void }) {
+  return (
+    <View style={styles.grades} accessibilityRole="radiogroup" accessibilityLabel="学年">
+      {GRADES.map((g) => (
+        <Pressable
+          key={g}
+          accessibilityRole="radio"
+          accessibilityState={{ checked: value === g }}
+          accessibilityLabel={`小学${g}年`}
+          onPress={() => onChange(g)}
+          style={[styles.grade, value === g && styles.gradeOn]}
+        >
+          <AppText weight="bold" style={value === g ? styles.gradeTextOn : undefined}>
+            小{g}
+          </AppText>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+export const textInputStyle = {
+  height: 48,
+  borderWidth: 1.5,
+  borderColor: colors.border,
+  borderRadius: radius.md,
+  paddingHorizontal: 12,
+  fontSize: 17,
+  fontFamily: fonts.body,
+  color: colors.foreground,
+  backgroundColor: colors.background,
+} as const;
 
 const styles = StyleSheet.create({
   root: { gap: 12 },
   title: { fontSize: 22 },
   note: { fontSize: 14, lineHeight: 21 },
   label: { fontSize: 14, marginTop: 4 },
-  input: {
-    height: 48,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    fontSize: 17,
-    fontFamily: fonts.body,
-    color: colors.foreground,
-    backgroundColor: colors.background,
-  },
+  input: textInputStyle,
   grades: { flexDirection: "row", gap: 6 },
   grade: { flex: 1, height: 48, borderRadius: radius.md, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" },
   gradeOn: { borderColor: colors.primary, backgroundColor: colors.primary },

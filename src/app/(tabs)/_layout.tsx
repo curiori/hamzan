@@ -1,7 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect, Tabs } from 'expo-router';
+import { HeaderActions } from '@/features/home/header-actions';
 import { onboardingStep } from '@/features/onboarding/gate';
 import { activeProfile, useAppStore } from '@/state/store';
+import { colors, fonts } from '@/ui/theme';
 
 export default function TabLayout() {
   const step = useAppStore((s) => onboardingStep(s.pin, activeProfile(s)));
@@ -9,7 +11,15 @@ export default function TabLayout() {
   if (step) return <Redirect href="/onboarding" />;
 
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs
+      screenOptions={{
+        headerTitleAlign: 'left',
+        headerTitleStyle: { fontFamily: fonts.heavy, fontWeight: '800', fontSize: 20, color: colors.foreground },
+        headerRight: () => <HeaderActions />,
+        tabBarActiveTintColor: colors.primary,
+        sceneStyle: { backgroundColor: colors.background },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{ title: 'ちず', tabBarIcon: ({ color, size }) => <Ionicons name="map" color={color} size={size} /> }}
