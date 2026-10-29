@@ -1,12 +1,40 @@
+# dependencies
 node_modules/
-dist/
-.vite-cache/
-.env*.local
-*.log
-.browser-errors.log
-.browser-errors.seq
 
-# The monorepo root .gitignore has a broad `lib/` rule that also matches this
-# template's `src/lib/`. Re-include it so source files aren't silently dropped.
-!src/lib/
-!src/lib/**
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android

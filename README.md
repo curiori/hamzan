@@ -1,58 +1,47 @@
-# ハムざん — 中学受験向け 暗算トレーニング（ソースコード）
+---
+title: ハムざん
+description: 中学受験向けの暗算トレーニングアプリ（Expo 版。iPhone の Expo Go で動かす）
+---
 
-App Builder で作った Web アプリ（React + TypeScript + Vite + Tailwind CSS）のソースコードです。
-2026年10月28日時点の版で、まだ公開していません。
+## ハムざんについて
 
-記録はブラウザの localStorage（キー `hamzan-anzan-v2`）だけに保存し、外部へは送信しません。
+中学受験向けの暗算トレーニングアプリです。Web 版のプロトタイプ（タグ `web-prototype`）を、iPhone の Expo Go で動く Expo アプリへ作り替えています。設計は [docs/superpowers/specs](docs/superpowers/specs/)、実装計画は [docs/superpowers/plans](docs/superpowers/plans/) にあります。
 
-## フォルダの中身
-
-| 場所 | 内容 |
-|---|---|
-| `src/domain/` | 学習エンジン（画面なし・外部ライブラリなし） |
-| `src/domain/curriculum.json` | 仕様（6ステージ・61レベル）。ルールの数値はすべてここから読みます |
-| `src/domain/generators.ts` / `scaffolds.ts` | 61レベルの問題づくり／ヒントの途中の数とメモ |
-| `src/domain/` のほかのファイル | ★の判定、モードとレベルの進み方、復習、セットの作り方、1日のセッション、診断、ミスの分類、時間の目安 |
-| `src/features/` | 画面：問題（`play.tsx`）、結果、ホームとおへや、はじめの設定と診断、保護者画面、ヒントの図、効果音 |
-| `src/pages/home.tsx` | 画面の切り替えと、1日のセッションの進行 |
-| `src/lib/store.ts` | 記録の保存と更新 |
-| `src/lib/rewards.ts` | ハムスターのごほうび（学習の節目で届く） |
-| `src/i18n/ja.ts` | 子ども向けのひらがなのレベル名など |
-| `src/components/hamster-art.tsx` | ハムスターとおへやの絵（SVG） |
-| `tests/domain/` | 学習エンジンのテスト |
-| `tests/domain/reference/` | テストで使う参照ファイル（いただいた仕様一式のうち、仕様・参照実装・見本） |
+記録は端末の中だけに保存し（AsyncStorage のキー `hamzan-ios-v1`）、外部へは送信しません。
 
 ## 動かし方
 
-[Bun](https://bun.sh) を使います。
+[Bun](https://bun.sh) と、iPhone の [Expo Go](https://expo.dev/go)（App Store 版。SDK 54 に対応）を使います。
 
-```
-bun install
-bun run dev      # 開発用サーバー
-bun run build    # 本番用ビルド（dist/ に出力）
-bun run check    # 型チェック・ビルド確認・lint
+```bash
+bun install --network-concurrency 4
+bunx expo start
 ```
 
-App Builder のテンプレートをもとにしているため、package.json には App Builder 用のパッケージも入っています。
-手元の環境でそれらをインストールできない場合でも、`src/domain/` は外部ライブラリを使っていないので、
-そのまま別のプロジェクト（たとえば仕様書の Expo アプリ）に移せます。
+1. PC で `bunx expo login` を実行し、iPhone の Expo Go でも同じ Expo アカウントでサインインする
+2. `bunx expo start` で表示される QR コードを、iPhone のカメラで読む
+3. 同じ Wi-Fi でつながらないときは `bunx expo start --tunnel` を使う
+
+App Store 版の Expo Go は SDK 54 までなので、`expo` の版は上げないでください。
 
 ## テスト
 
-プロジェクトのフォルダで実行します。Python 3 があると、添付の Python 参照実装とも突き合わせます。
-
-```
-bun run tests/domain/golden.ts      # 見本の1,757問と、答え・途中の数・メモが一致するか
-bun run tests/domain/generators.ts  # 61レベルの範囲・除外・比率・答え
-bun run tests/domain/scaffolds.ts   # ヒントの途中式が正しいか
-bun run tests/domain/rules.ts       # ★の判定・進み方・復習・診断など（71件）
+```bash
+bun run typecheck
+bun run lint
+bun test
+bun run test:domain
 ```
 
-## 試すときの便利機能
+`test:domain` は学習エンジンのテストです。見本 1,757 問との一致、61 レベルの問題づくり、ヒントの途中式、★の判定などの規則を確かめます。Python 3 があると、添付の Python 参照実装とも突き合わせます。
 
-「おうちの かたへ」→ PIN →「テスト用」タブで、次のことができます。
+## フォルダの中身
 
-- 日付を1日・7日進める（マスター・復習・チャレンジの確認用）
-- すべてのレベルを開放する
-- 診断を短くする
-- 診断をとばして、選んだレベルから始める
+| 場所              | 内容                                                         |
+|-------------------|--------------------------------------------------------------|
+| src/app/          | 画面（Expo Router）                                          |
+| src/domain/       | 学習エンジン（画面なし、外部ライブラリなし）。仕様は curriculum.json |
+| src/game/         | ごほうび（ショップとおへやも追加予定）                       |
+| src/i18n/ja.ts    | 子ども向けのレベル名など                                     |
+| tests/domain/     | 学習エンジンのテストと参照ファイル                           |
+| docs/superpowers/ | 設計と実装計画                                               |
