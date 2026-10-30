@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { celebrates, headline, isTimed, resultNotes } from "@/features/result/result-text";
+import { celebrates, headline, isTimed, resultNotes, SEED_CAP_NOTE, seedLineText } from "@/features/result/result-text";
+import type { SeedLineKind } from "@/game/economy";
 import type { SetSummary } from "@/state/types";
 
 const summary = (patch: Partial<SetSummary> = {}): SetSummary => ({
@@ -22,7 +23,27 @@ const summary = (patch: Partial<SetSummary> = {}): SetSummary => ({
   challengeBest: null,
   goalReached: false,
   newRewards: [],
+  seeds: { lines: [], total: 0, capped: false },
   ...patch,
+});
+
+describe("seeds", () => {
+  test("seed lines read like the design", () => {
+    expect(seedLineText({ kind: "correct", seeds: 24, count: 24 })).toBe("せいかい +24");
+    expect(seedLineText({ kind: "complete", seeds: 5 })).toBe("さいごまで +5");
+    expect(seedLineText({ kind: "star2", seeds: 10 })).toBe("あたらしい ★2 +10");
+    const kinds: SeedLineKind[] = ["warmup", "goal", "mastered", "stageCheck", "review", "personalBest", "challengeBest"];
+    expect(kinds.map((kind) => seedLineText({ kind, seeds: 1 }))).toEqual([
+      "ウォームアップ +1",
+      "きょうの ゴール +1",
+      "マスター +1",
+      "ステージチェック ごうかく +1",
+      "ふくしゅう ごうかく +1",
+      "じこベスト +1",
+      "チャレンジ じこベスト +1",
+    ]);
+    expect(SEED_CAP_NOTE).toBe("きょうの たねは ここまで。れんしゅうは できるよ");
+  });
 });
 
 describe("headline", () => {

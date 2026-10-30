@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native"
 import Animated, { Easing, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Hamster } from "@/art/hamster";
-import { Crown, Paw } from "@/art/icons";
+import { Crown, Paw, SeedIcon } from "@/art/icons";
 import { ItemThumb } from "@/art/items";
 import { REWARDS } from "@/game/achievements";
 import { KID_LEVEL_NAME, KID_STAGE_NAME } from "@/i18n/ja";
@@ -13,7 +13,7 @@ import { Button } from "@/ui/button";
 import { Star } from "@/ui/stars";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
-import { celebrates, headline, isTimed, resultNotes, type NoteIcon } from "./result-text";
+import { celebrates, headline, isTimed, resultNotes, SEED_CAP_NOTE, seedLineText, type NoteIcon } from "./result-text";
 
 function ConfettiPiece({ x, d, r, k, fall }: { x: number; d: number; r: number; k: number; fall: number }) {
   const t = useSharedValue(0);
@@ -192,6 +192,35 @@ export function ResultScreen({
           </View>
         ) : null}
 
+        {s.seeds.total > 0 || s.seeds.capped ? (
+          <View
+            style={styles.seeds}
+            accessible
+            accessibilityLabel={[`たね ${s.seeds.total}こ`, ...s.seeds.lines.map(seedLineText), ...(s.seeds.capped ? [SEED_CAP_NOTE] : [])].join("。")}
+          >
+            <View style={styles.seedsHead}>
+              <SeedIcon size={22} />
+              <AppText weight="bold" style={styles.seedsTotal}>
+                たね +{s.seeds.total}
+              </AppText>
+            </View>
+            {s.seeds.lines.length > 0 ? (
+              <View style={styles.seedLines}>
+                {s.seeds.lines.map((line) => (
+                  <AppText key={line.kind} weight="bold" style={styles.seedLine}>
+                    {seedLineText(line)}
+                  </AppText>
+                ))}
+              </View>
+            ) : null}
+            {s.seeds.capped ? (
+              <AppText weight="bold" style={styles.seedCap}>
+                {SEED_CAP_NOTE}
+              </AppText>
+            ) : null}
+          </View>
+        ) : null}
+
         {s.newRewards.length > 0 ? (
           <View style={styles.rewards}>
             <View style={styles.rewardsHead}>
@@ -262,6 +291,12 @@ const styles = StyleSheet.create({
   note: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 8 },
   noteText: { flexShrink: 1, fontSize: 15 },
   rewards: { marginTop: 18, alignSelf: "stretch", borderRadius: radius.lg, backgroundColor: colors.amber50, padding: 14 },
+  seeds: { marginTop: 18, alignSelf: "stretch", borderRadius: radius.lg, borderWidth: 1, borderColor: colors.amber200, padding: 14, gap: 8 },
+  seedsHead: { flexDirection: "row", alignItems: "center", gap: 8 },
+  seedsTotal: { fontSize: 18, fontVariant: ["tabular-nums"] },
+  seedLines: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  seedLine: { fontSize: 13, borderRadius: 999, backgroundColor: colors.amber50, paddingHorizontal: 10, paddingVertical: 4, overflow: "hidden", fontVariant: ["tabular-nums"] },
+  seedCap: { fontSize: 13, color: colors.orange800 },
   rewardsHead: { flexDirection: "row", alignItems: "center", gap: 8 },
   rewardList: { marginTop: 8, flexDirection: "row", flexWrap: "wrap", gap: 10 },
   reward: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: radius.md, backgroundColor: colors.card, paddingHorizontal: 10, paddingVertical: 6 },

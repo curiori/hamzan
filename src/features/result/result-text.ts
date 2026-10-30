@@ -1,9 +1,29 @@
+import type { SeedLine, SeedLineKind } from "@/game/economy";
 import { MODE_LABEL } from "@/i18n/ja";
 import type { SetSummary } from "@/state/types";
 
 // Words on the result screen (same rules as the web prototype's result.tsx).
 
 export type NoteIcon = "sparkles" | "crown" | "next" | "retry" | "trophy";
+
+const SEED_LABEL: Record<SeedLineKind, string> = {
+  correct: "せいかい",
+  complete: "さいごまで",
+  warmup: "ウォームアップ",
+  goal: "きょうの ゴール",
+  star2: "あたらしい ★2",
+  mastered: "マスター",
+  stageCheck: "ステージチェック ごうかく",
+  review: "ふくしゅう ごうかく",
+  personalBest: "じこベスト",
+  challengeBest: "チャレンジ じこベスト",
+};
+
+/** One line of the seed breakdown, e.g. "せいかい +24". */
+export const seedLineText = (line: SeedLine) => `${SEED_LABEL[line.kind]} +${line.seeds}`;
+
+/** Shown when free practice reached the day's limit; practice itself goes on. */
+export const SEED_CAP_NOTE = "きょうの たねは ここまで。れんしゅうは できるよ";
 
 export function headline(s: SetSummary): { title: string; good: boolean } {
   if (s.result === "interrupted") return { title: "とちゅうで おやすみ", good: false };
