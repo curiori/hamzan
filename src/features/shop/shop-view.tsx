@@ -1,7 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useEffect, useRef, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { SeedIcon } from "@/art/icons";
 import { ItemThumb } from "@/art/items";
 import { SHOP, shopItem, type ShopItem, type ShopKind } from "@/game/shop";
@@ -9,6 +8,7 @@ import { activeProfile, useAppStore } from "@/state/store";
 import type { Profile } from "@/state/types";
 import { Button } from "@/ui/button";
 import { Chip } from "@/ui/chip";
+import { Sheet } from "@/ui/sheet";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
 import { ItemPreview } from "./item-preview";
@@ -113,7 +113,6 @@ const SETTLE_MS = 350;
 
 /** One item: its preview, then かう → the confirm → what to do with it. Everything stays in this one sheet. */
 function ItemSheet({ item, profile, onClose }: { item: ShopItem | null; profile: Profile; onClose: () => void }) {
-  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const buyItem = useAppStore((s) => s.buyItem);
   const placeNewGood = useAppStore((s) => s.placeNewGood);
@@ -228,42 +227,29 @@ function ItemSheet({ item, profile, onClose }: { item: ShopItem | null; profile:
 
   const note = item ? haveNote(profile, item) : null;
   return (
-    <Modal transparent visible={!!item} animationType="slide" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="とじる" onPress={once(onClose)} />
-        {item ? (
-          <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]} accessibilityViewIsModal>
-            <ScrollView contentContainerStyle={styles.sheetContent}>
-              <View style={styles.head}>
-                <AppText weight="bold" accessibilityRole="header" style={styles.title}>
-                  {item.name}
+    <Sheet visible={!!item} title={item?.name ?? ""} onClose={once(onClose)}>
+      {item ? (
+        <>
+          <ItemPreview item={item} profile={profile} width={Math.min(width - 40, 480)} />
+          <View style={styles.priceLine}>
+            <View style={styles.price} accessible accessibilityLabel={`たね ${item.price}こ`}>
+              <SeedIcon size={20} />
+              <AppText weight="bold" style={styles.sheetPrice}>
+                {item.price}こ
+              </AppText>
+            </View>
+            {note ? (
+              <View style={styles.badge}>
+                <AppText weight="bold" style={styles.badgeText}>
+                  {note}
                 </AppText>
-                <Pressable accessibilityRole="button" accessibilityLabel="とじる" onPress={once(onClose)} hitSlop={8} style={styles.close}>
-                  <Ionicons name="close" size={24} color={colors.foreground} />
-                </Pressable>
               </View>
-              <ItemPreview item={item} profile={profile} width={Math.min(width - 40, 480)} />
-              <View style={styles.priceLine}>
-                <View style={styles.price} accessible accessibilityLabel={`たね ${item.price}こ`}>
-                  <SeedIcon size={20} />
-                  <AppText weight="bold" style={styles.sheetPrice}>
-                    {item.price}こ
-                  </AppText>
-                </View>
-                {note ? (
-                  <View style={styles.badge}>
-                    <AppText weight="bold" style={styles.badgeText}>
-                      {note}
-                    </AppText>
-                  </View>
-                ) : null}
-              </View>
-              {actions(item)}
-            </ScrollView>
+            ) : null}
           </View>
-        ) : null}
-      </View>
-    </Modal>
+          {actions(item)}
+        </>
+      ) : null}
+    </Sheet>
   );
 }
 
@@ -318,12 +304,6 @@ const styles = StyleSheet.create({
   badge: { borderRadius: radius.sm, backgroundColor: colors.green100, paddingHorizontal: 8, paddingVertical: 2 },
   badgeText: { fontSize: 12, color: colors.green700 },
   footnote: { marginTop: 6, fontSize: 13, textAlign: "center", color: colors.mutedForeground },
-  backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.35)" },
-  sheet: { maxHeight: "90%", borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, backgroundColor: colors.background },
-  sheetContent: { padding: 20, gap: 12, width: "100%", maxWidth: 520, alignSelf: "center" },
-  head: { flexDirection: "row", alignItems: "center", gap: 8 },
-  title: { flex: 1, fontSize: 22 },
-  close: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   priceLine: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   sheetPrice: { fontSize: 18, fontVariant: ["tabular-nums"] },
   ask: { gap: 10, borderRadius: radius.lg, backgroundColor: colors.amber50, padding: 12 },

@@ -80,6 +80,24 @@ export const DEFAULT_SLOT: Record<string, SlotId> = {
   lamp: "wall1",
 };
 
+/** Where the hamster sits to eat a snack it was given: in front, near the middle of the floor. */
+export const FRONT: Point = { x: 200, y: 248 };
+
+/** What a screen reader calls each slot while rearranging. */
+export const SLOT_NAME: Record<SlotId, string> = {
+  floorL1: "ゆか おおきい 1",
+  floorL2: "ゆか おおきい 2",
+  floorL3: "ゆか おおきい 3",
+  floorS1: "ゆか ちいさい 1",
+  floorS2: "ゆか ちいさい 2",
+  floorS3: "ゆか ちいさい 3",
+  wall1: "かべ 1",
+  wall2: "かべ 2",
+  ceil1: "てんじょう 1",
+  ceil2: "てんじょう 2",
+  sill: "まどべ",
+};
+
 /** good id in each used slot */
 export type RoomLayout = Partial<Record<SlotId, string>>;
 
@@ -178,6 +196,16 @@ export function placeIn(layout: RoomLayout, slotId: SlotId, goodId: string | nul
 export function storedGoods(layout: RoomLayout, owned: string[], kinds: Record<string, SlotKind> = GOOD_KIND): string[] {
   const placed = new Set(Object.values(layout));
   return owned.filter((id) => kinds[id] && !placed.has(id));
+}
+
+/** Rearranging one slot: the owned goods of its kind, stored (from null) or out in another slot, but not the one already there. */
+export function slotChoices(slotId: SlotId, layout: RoomLayout, owned: string[], kinds: Record<string, SlotKind> = GOOD_KIND): { id: string; from: SlotId | null }[] {
+  const where = new Map<string, SlotId>();
+  for (const s of SLOT_IDS) {
+    const id = layout[s];
+    if (id) where.set(id, s);
+  }
+  return owned.filter((id) => kinds[id] === SLOTS[slotId].kind && layout[slotId] !== id).map((id) => ({ id, from: where.get(id) ?? null }));
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);

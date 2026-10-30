@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { REWARDS } from "@/game/achievements";
-import { createBrain, isNight, MIN_ACTIVITY_MS, MIN_WALK, newlyOwned, stepBrain, type Activity, type Brain, type World } from "@/game/hamster-brain";
-import { autoLayout, FLOOR, placedGoods, type Point } from "@/game/room";
+import { createBrain, EAT_MS, isNight, MIN_ACTIVITY_MS, MIN_WALK, newlyOwned, stepBrain, type Activity, type Brain, type World } from "@/game/hamster-brain";
+import { autoLayout, FLOOR, FRONT, placedGoods, type Point } from "@/game/room";
 
 const allGoods = placedGoods(autoLayout(REWARDS.map((r) => r.id))).map(({ id, spot }) => ({ id, spot }));
 const only = (...ids: string[]) => allGoods.filter((g) => ids.includes(g.id));
@@ -130,6 +130,35 @@ describe("choosing what to do", () => {
     const next = stepBrain(b, w, { type: "done" }, b.now.kind === "walk" ? b.now.to : HOME);
     expect(next.now).not.toMatchObject({ kind: "play", good: "wheel" });
     expect(next.plan.some((a) => a.kind === "play" && a.good === "wheel")).toBe(false);
+  });
+});
+
+describe("snacks", () => {
+  test("a snack brings the hamster to the front to eat it", () => {
+    const w = world();
+    const b = createBrain(37, w, HOME, calm);
+    const fed = stepBrain(b, w, { type: "feed", snack: "apple" }, { x: 60, y: 200 });
+    expect(fed.now).toEqual({ kind: "walk", to: FRONT, dash: false, carry: false });
+    expect(fed.plan).toEqual([{ kind: "eat", snack: "apple", ms: EAT_MS }]);
+    // already by the front it eats at once
+    const near = stepBrain(b, w, { type: "feed", snack: "carrot" }, { x: FRONT.x + 5, y: FRONT.y - 3 });
+    expect(near.now).toEqual({ kind: "eat", snack: "carrot", ms: EAT_MS });
+    expect(near.plan).toEqual([]);
+  });
+
+  test("eating lasts at least MIN_ACTIVITY_MS and never leaves the floor", () => {
+    expect(EAT_MS).toBeGreaterThanOrEqual(MIN_ACTIVITY_MS);
+    expect(onFloor(FRONT)).toBe(true);
+    const night = world({ night: true });
+    const fed = stepBrain(createBrain(41, night, HOME, calm), night, { type: "feed", snack: "broccoli" }, HOME);
+    expect([fed.now, ...fed.plan].some((a) => a.kind === "eat")).toBe(true);
+  });
+
+  test("after eating the hamster goes back to its own choices", () => {
+    const w = world();
+    const fed = stepBrain(createBrain(43, w, HOME, calm), w, { type: "feed", snack: "apple" }, FRONT);
+    expect(fed.now.kind).toBe("eat");
+    expect(stepBrain(fed, w, { type: "done" }, FRONT).now.kind).not.toBe("eat");
   });
 });
 

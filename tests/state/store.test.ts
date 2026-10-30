@@ -229,4 +229,19 @@ describe("app store", () => {
     store.getState().setDecor("wallpaper", "wall-sky");
     expect(activeProfile(store.getState())?.room.wallpaper).toBe("wall-sky");
   });
+
+  test("feedSnack gives one snack the child has, and nothing when there is none", () => {
+    const store = createAppStore(memoryStorage().storage, { now: () => NOW });
+    store.getState().addProfile("あに", 5);
+    expect(store.getState().feedSnack("apple")).toBe(false);
+    store.getState().giftSeeds(30);
+    store.getState().buyItem("apple");
+    store.getState().buyItem("apple");
+    expect(store.getState().feedSnack("apple")).toBe(true);
+    expect(activeProfile(store.getState())?.inventory.apple).toBe(1);
+    expect(store.getState().feedSnack("apple")).toBe(true);
+    expect(store.getState().feedSnack("apple")).toBe(false);
+    expect(activeProfile(store.getState())?.inventory.apple).toBe(0);
+    expect(store.getState().feedSnack("ball")).toBe(false);
+  });
 });

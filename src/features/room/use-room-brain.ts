@@ -298,6 +298,12 @@ export function useRoomBrain({
       else hop.value = loop(chain(tween(-14, 160), tween(0, 160)), 3);
     }
 
+    if (a.kind === "eat") {
+      // nibbling
+      if (rm) tilt.value = loop(chain(tween(-3, 300), tween(0, 300)), -1);
+      else hop.value = loop(chain(tween(-2, 150), tween(0, 150)), -1);
+    }
+
     // a walk ends when it arrives; everything else after its time
     if (a.kind !== "walk") later(a.ms, done);
     return () => {

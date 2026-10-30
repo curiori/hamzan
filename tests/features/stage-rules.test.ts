@@ -29,6 +29,8 @@ describe("timing and depth", () => {
     // up the ladder the hamster is in front of it; sitting in the cushion it sinks in behind the cushion's front
     expect(hamsterDepth({ kind: "play", good: "ladder", variant: "normal", ms: 5000 }, at)).toBe(ABOVE_ALL);
     expect(hamsterDepth({ kind: "play", good: "cushion", variant: "normal", ms: 5000 }, at)).toBe(210);
+    // eating at the very front, the hamster is in front of any small good standing there
+    expect(hamsterDepth({ kind: "eat", snack: "apple", ms: 2600 }, at)).toBe(ABOVE_ALL);
   });
 });
 
@@ -64,6 +66,7 @@ describe("look", () => {
     expect(play("grass")).toMatchObject({ view: "front", bubble: "くんくん", label: "まどべの くさで あそんで いる" });
     expect(play("cushion")).toMatchObject({ view: "front", mood: "happy", bubble: "ふかふか", label: "クッションで あそんで いる" });
     expect(play("ladder")).toMatchObject({ view: "front", bubble: null, label: "はしごで あそんで いる" });
+    expect(look({ kind: "eat", snack: "apple", ms: 2600 })).toMatchObject({ view: "front", pose: "cheeks", cheeks: true, bubble: "もぐもぐ", label: "りんごを たべて いる" });
   });
 });
 

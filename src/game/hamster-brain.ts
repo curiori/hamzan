@@ -1,5 +1,5 @@
 import { mulberry32, type Rng } from "@/domain/rng";
-import { clampToFloor, FLOOR, type Point } from "./room";
+import { clampToFloor, FLOOR, FRONT, type Point } from "./room";
 
 // What the room hamster does next. Pure and seeded: the room screen animates each activity and asks again
 // when it ends or when the child touches something. There are no needs to fill (no hunger, no energy).
@@ -14,6 +14,8 @@ const NIGHT_SLEEP_MS: [number, number] = [20000, 40000];
 const NAP_MS: [number, number] = [8000, 15000];
 const HOP_MS = 900;
 const PET_MS = 1600;
+/** eating a snack the child gave */
+export const EAT_MS = 2600;
 const CELEBRATE_MS = 2400;
 const STORE_FOOD_MS = 1500;
 const TURN_MS = 900;
@@ -29,7 +31,8 @@ export type Activity =
   | { kind: "play"; good: string; variant: "normal" | "tumble"; ms: number }
   | { kind: "sleep"; inHouse: boolean; ms: number }
   | { kind: "react"; how: "hop" | "pet"; ms: number }
-  | { kind: "celebrate"; ms: number };
+  | { kind: "celebrate"; ms: number }
+  | { kind: "eat"; snack: string; ms: number };
 
 export interface World {
   goods: { id: string; spot: Point }[];
@@ -47,7 +50,13 @@ export interface Brain {
   seed: number;
 }
 
-export type BrainEvent = { type: "done" } | { type: "tap" } | { type: "press" } | { type: "tapGood"; good: string } | { type: "tapFloor"; at: Point };
+export type BrainEvent =
+  | { type: "done" }
+  | { type: "tap" }
+  | { type: "press" }
+  | { type: "tapGood"; good: string }
+  | { type: "tapFloor"; at: Point }
+  | { type: "feed"; snack: string };
 
 const IDLE_ACTS: IdleAct[] = ["blink", "ear", "look", "groom"];
 
@@ -163,6 +172,9 @@ export function stepBrain(b: Brain, world: World, ev: BrainEvent, here: Point): 
         const to = clampToFloor(ev.at);
         return dist(here, to) < MIN_WALK ? [{ kind: "idle", act: "look", ms: TURN_MS }] : [{ kind: "walk", to, dash: false, carry: false }];
       }
+      case "feed":
+        // to the front of the room, where the child can watch it eat
+        return [...goTo(here, FRONT), { kind: "eat", snack: ev.snack, ms: EAT_MS }];
       case "done": {
         const plan = playsOnlyOwned(b.plan, world) ? b.plan : [];
         return plan.length ? plan : choose(r, world, here, b.lastGood);

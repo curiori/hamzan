@@ -1,11 +1,12 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useIsFocused } from "@react-navigation/native";
-import { memo, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Pressable, StyleSheet, View, type GestureResponderEvent } from "react-native";
 import Animated, { useAnimatedStyle, ZoomIn } from "react-native-reanimated";
 import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 import { Hamster, type Mood, type Pose } from "@/art/hamster";
 import { Bubble, HamsterSide, Heart } from "@/art/hamster-poses";
-import { ITEM_PARTS } from "@/art/items";
+import { ITEM_PARTS, ItemThumb } from "@/art/items";
 import { RoomBackground } from "@/art/room-scene";
 import { REWARDS } from "@/game/achievements";
 import { isNight, newlyOwned } from "@/game/hamster-brain";
@@ -19,6 +20,7 @@ import {
   ROOM_H,
   ROOM_W,
   seatIn,
+  SLOT_NAME,
   SLOTS,
   toRoom,
   type Point,
@@ -32,6 +34,7 @@ import { useAppActive } from "@/platform/use-app-state";
 import { ownedGoods, todayOf } from "@/state/profile";
 import { useAppStore } from "@/state/store";
 import type { Profile } from "@/state/types";
+import { colors } from "@/ui/theme";
 import { hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, roomGoods, type Look } from "./stage-rules";
 import { useRoomBrain, type Motion, type RoomStart, type StageGood } from "./use-room-brain";
 
@@ -40,11 +43,15 @@ const FEET: Point = { x: HAMSTER_W / 2, y: HAMSTER_H - 1 };
 const LONG_PRESS_MS = 400;
 /** how far the bubble above the head may reach past each side of the hamster, in points */
 const BUBBLE_PAD = 20;
+/** the snack held while eating, in design units */
+const SNACK_SIZE = 22;
 /** the test switch's "every good": rewards first, then shop goods (those finding no free slot stay stored) */
 const ALL_GOODS = [...REWARDS.map((r) => r.id), ...SHOP.filter((i) => i.kind === "good").map((i) => i.id)];
+const SLOT_IDS = Object.keys(SLOTS) as SlotId[];
 const NIGHT_BLUE = "#0B1E4D";
-/** the night blue and the lamp's light lie over every good and the hamster */
+/** the night blue and the lamp's light lie over every good and the hamster; the rearranging ＋ over all of it */
 const NIGHT_Z = 2000;
+const MARKER_Z = 3000;
 /** the lamp drawing's bulb in its 60×60 box, and how far its light reaches in room units */
 const LAMP_BULB: Point = { x: 30, y: 30 };
 const LAMP_GLOW_R = 120;
@@ -153,6 +160,7 @@ function HamsterSprite({
   depth,
   lk,
   wear,
+  snack,
   surprised,
   heart,
   bubbleBeside,
@@ -165,6 +173,8 @@ function HamsterSprite({
   depth: number;
   lk: Look;
   wear: string | null;
+  /** the snack being eaten, held in front of the belly */
+  snack: string | null;
   surprised: boolean;
   heart: boolean;
   /** up on a hanging good there is no room above the head, so the bubble goes to the side */
@@ -175,6 +185,7 @@ function HamsterSprite({
 }) {
   const w = HAMSTER_W * s;
   const h = HAMSTER_H * s;
+  const snackSize = SNACK_SIZE * s;
   const view = surprised ? "front" : lk.view;
   const mood: Mood = surprised ? "oops" : lk.mood;
   const pose: Pose | undefined = surprised ? undefined : lk.pose;
@@ -214,6 +225,11 @@ function HamsterSprite({
             </Animated.View>
           </>
         )}
+        {snack ? (
+          <View pointerEvents="none" style={[styles.abs, { left: (w - snackSize) / 2, top: h - snackSize * 0.95 }]}>
+            <ItemThumb id={snack} size={snackSize} />
+          </View>
+        ) : null}
       </Animated.View>
       {lk.bubble || heart ? (
         <Animated.View
@@ -244,8 +260,46 @@ function HamsterSprite({
   );
 }
 
+/** A slot while rearranging: a big ＋ on an empty slot, a small one on the good's drawing. */
+const SlotMarker = memo(function SlotMarker({ slot, good, s, onPress }: { slot: SlotId; good: string | null; s: number; onPress: (slot: SlotId) => void }) {
+  const sl = SLOTS[slot];
+  const box = 60 * sl.scale * s;
+  const size = good ? 28 : 36;
+  const clamp = (v: number, max: number) => Math.min(Math.max(v, 2), max - size - 2);
+  const left = clamp(good ? sl.x * s + box - size * 0.8 : sl.x * s + (box - size) / 2, ROOM_W * s);
+  const top = clamp(good ? sl.y * s + box * 0.1 : sl.y * s + (box - size) / 2, ROOM_H * s);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${SLOT_NAME[slot]}、${good ? itemName(good) : "あいて いる"}`}
+      accessibilityHint="おく ものを えらぶ"
+      hitSlop={6}
+      onPress={() => onPress(slot)}
+      style={[styles.abs, styles.marker, good ? styles.markerOn : styles.markerOff, { left, top, width: size, height: size, borderRadius: size / 2 }]}
+    >
+      <Ionicons name="add" size={good ? 18 : 24} color={good ? colors.primaryForeground : colors.primary} />
+    </Pressable>
+  );
+});
+
 /** The moving room: the child's goods where they were put and the hamster living among them. Touch the hamster, a good or the floor. */
-export function RoomStage({ profile, width, allGoods }: { profile: Profile; width: number; allGoods: boolean }) {
+export function RoomStage({
+  profile,
+  width,
+  allGoods,
+  arranging = false,
+  onSlot,
+  feeding = null,
+}: {
+  profile: Profile;
+  width: number;
+  allGoods: boolean;
+  /** rearranging: every slot shows a ＋ that opens its choices */
+  arranging?: boolean;
+  onSlot?: (slot: SlotId) => void;
+  /** a snack just given; a new object each time */
+  feeding?: { snack: string } | null;
+}) {
   const owned = useMemo(() => ownedGoods(profile), [profile]);
   // the test switch shows every good without touching the saved room
   const layoutKey = JSON.stringify(allGoods ? autoLayout(ALL_GOODS) : roomGoods(profile.room.layout, owned));
@@ -299,6 +353,14 @@ export function RoomStage({ profile, width, allGoods }: { profile: Profile; widt
     },
     [send, width],
   );
+  // a snack given from the snack list: the hamster comes to the front and eats it
+  const fed = useRef<object | null>(null);
+  useEffect(() => {
+    if (!feeding || fed.current === feeding) return;
+    fed.current = feeding;
+    send({ type: "feed", snack: feeding.snack });
+  }, [feeding, send]);
+  const pick = useCallback((slot: SlotId) => onSlot?.(slot), [onSlot]);
 
   const lamp = placed.find((g) => g.id === "lamp");
   const tint = nightTint(night, !!lamp);
@@ -326,6 +388,7 @@ export function RoomStage({ profile, width, allGoods }: { profile: Profile; widt
           depth={Math.round(hamsterDepth(activity, from))}
           lk={look(activity)}
           wear={profile.wearing}
+          snack={activity.kind === "eat" ? activity.snack : null}
           surprised={surprised}
           heart={activity.kind === "react" && activity.how === "hop"}
           bubbleBeside={activity.kind === "play" && GOOD_KIND[activity.good] === "ceiling"}
@@ -336,6 +399,13 @@ export function RoomStage({ profile, width, allGoods }: { profile: Profile; widt
       ) : null}
       {tint > 0 ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: NIGHT_BLUE, opacity: tint, zIndex: NIGHT_Z }]} /> : null}
       {tint > 0 && lamp ? <LampGlow slot={lamp.slot} width={width} /> : null}
+      {arranging ? (
+        <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: MARKER_Z }]}>
+          {SLOT_IDS.map((slot) => (
+            <SlotMarker key={slot} slot={slot} good={placed.find((g) => g.slot === slot)?.id ?? null} s={s} onPress={pick} />
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -344,4 +414,7 @@ const styles = StyleSheet.create({
   abs: { position: "absolute", left: 0, top: 0 },
   bubble: { position: "absolute", alignItems: "center" },
   bubbleRow: { flexDirection: "row", alignItems: "center", gap: 2 },
+  marker: { alignItems: "center", justifyContent: "center", borderWidth: 2 },
+  markerOff: { backgroundColor: "rgba(255,255,255,0.85)", borderColor: colors.primary, borderStyle: "dashed" },
+  markerOn: { backgroundColor: colors.primary, borderColor: colors.primaryForeground },
 });

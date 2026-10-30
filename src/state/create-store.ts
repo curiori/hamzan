@@ -7,7 +7,7 @@ import { LEVEL } from "@/domain/spec";
 import { writeChildFrom } from "@/domain/timing";
 import { appendLedger } from "@/game/economy";
 import { placeIn, placeNew, type SlotId } from "@/game/room";
-import { buy, type BuyResult } from "@/game/shop";
+import { buy, shopItem, type BuyResult } from "@/game/shop";
 import { migrate } from "./migrate";
 import { hashPin, makeSalt } from "./pin";
 import { newProfile, placementOutcome, todayOf } from "./profile";
@@ -52,6 +52,8 @@ export interface AppState {
   /** rearranging: a good into a slot, or null to store what is there */
   placeGood: (slotId: SlotId, goodId: string | null) => void;
   setDecor: (kind: "wallpaper" | "floor", id: string | null) => void;
+  /** gives the hamster one of the active child's snacks; false when there is none */
+  feedSnack: (id: string) => boolean;
   setDev: (patch: Partial<DevSettings>) => void;
 }
 
@@ -212,6 +214,12 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
           },
           placeGood: (slotId, goodId) => patchActive((p) => ({ ...p, room: { ...p.room, layout: placeIn(p.room.layout, slotId, goodId) } })),
           setDecor: (kind, id) => patchActive((p) => ({ ...p, room: { ...p.room, [kind]: id } })),
+          feedSnack: (id) => {
+            const p = activeProfile(get());
+            if (!p || shopItem(id)?.kind !== "snack" || (p.inventory[id] ?? 0) <= 0) return false;
+            patchProfile(p.id, (q) => ({ ...q, inventory: { ...q.inventory, [id]: (q.inventory[id] ?? 0) - 1 } }));
+            return true;
+          },
 
           setDev: (patch) => set((s) => ({ dev: { ...s.dev, ...patch } })),
         };

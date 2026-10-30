@@ -6,6 +6,7 @@ import {
   DEFAULT_SLOT,
   FLOOR,
   fits,
+  FRONT,
   GOOD_KIND,
   HAMSTER_H,
   HAMSTER_W,
@@ -19,6 +20,8 @@ import {
   seatIn,
   seatMoveMs,
   seatSways,
+  SLOT_NAME,
+  slotChoices,
   SLOTS,
   storedGoods,
   toRoom,
@@ -143,6 +146,26 @@ describe("slots", () => {
 });
 
 describe("placing goods", () => {
+  test("every slot has its own name to read out", () => {
+    const names = Object.keys(SLOTS).map((s) => SLOT_NAME[s as SlotId]);
+    expect(names.every((n) => typeof n === "string" && n.length > 0)).toBe(true);
+    expect(new Set(names).size).toBe(names.length);
+    expect(SLOT_NAME.floorL1).toBe("ゆか おおきい 1");
+  });
+
+  test("a slot offers the owned goods of its kind, stored or from another slot, but not the one already there", () => {
+    const layout = { floorS1: "tunnel", floorS2: "ball", floorL1: "desk" };
+    expect(slotChoices("floorS2", layout, ["tunnel", "bowl", "ball", "desk", "crown"])).toEqual([
+      { id: "tunnel", from: "floorS1" },
+      { id: "bowl", from: null },
+    ]);
+    expect(slotChoices("sill", layout, ["tunnel", "desk"])).toEqual([]);
+  });
+
+  test("snacks are eaten in front, on the floor near the middle", () => {
+    expect(clampToFloor(FRONT)).toEqual(FRONT);
+  });
+
   test("placeNew uses the default slot, then a free slot of the kind, then stores", () => {
     expect(placeNew({}, "wheel")).toEqual({ floorL2: "wheel" });
     expect(placeNew({ floorL2: "desk" }, "wheel")).toEqual({ floorL2: "desk", floorL1: "wheel" });

@@ -45,8 +45,9 @@ export const nightTint = (night: boolean, lampPlaced: boolean): number => (night
 /** Goods whose bottom edge is above this are drawn behind the hamster. */
 export function hamsterDepth(a: Activity, from: Point): number {
   if (a.kind === "walk") return Math.max(from.y, a.to.y);
-  // hanging goods, and the top of the ladder, put the hamster in front of everything
+  // hanging goods, the top of the ladder and eating at the front put the hamster in front of everything
   if (a.kind === "play" && (GOOD_KIND[a.good] === "ceiling" || a.good === "ladder")) return ABOVE_ALL;
+  if (a.kind === "eat") return ABOVE_ALL;
   return from.y;
 }
 
@@ -77,6 +78,8 @@ export function look(a: Activity): Look {
       return a.how === "hop" ? front("よろこんで いる", { mood: "happy", bubble: "きゅっ" }) : front("なでられて いる", { pose: "pet" });
     case "celebrate":
       return front("おいわい ちゅう", { mood: "cheer" });
+    case "eat":
+      return front(`${itemName(a.snack)}を たべて いる`, { pose: "cheeks", cheeks: true, bubble: "もぐもぐ" });
     case "play": {
       const label = `${itemName(a.good)}で あそんで いる`;
       switch (a.good) {
