@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Activity } from "@/game/hamster-brain";
-import { ABOVE_ALL, hamsterDepth, look, walkAxis, walkMs } from "@/features/room/stage-rules";
+import { ABOVE_ALL, hamsterDepth, look, roomGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
 
 const at = { x: 200, y: 210 };
 
@@ -52,5 +52,13 @@ describe("look", () => {
     expect(look({ kind: "react", how: "pet", ms: 1600 })).toMatchObject({ view: "front", pose: "pet" });
     expect(look({ kind: "celebrate", ms: 2400 })).toMatchObject({ view: "front", mood: "cheer", label: "おいわい ちゅう" });
     expect(look({ kind: "idle", act: "groom", ms: 2000 })).toMatchObject({ view: "front", mood: "idle", bubble: null });
+  });
+});
+
+describe("the saved room", () => {
+  test("goods no longer owned are not shown", () => {
+    expect(roomGoods({ floorL1: "desk", floorS2: "ball" }, ["ball"])).toEqual({ floorS2: "ball" });
+    expect(roomGoods({ floorL1: "desk", sill: "grass" }, ["desk", "grass", "ball"])).toEqual({ floorL1: "desk", sill: "grass" });
+    expect(roomGoods({}, ["desk"])).toEqual({});
   });
 });

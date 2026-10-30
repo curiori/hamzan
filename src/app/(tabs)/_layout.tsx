@@ -7,6 +7,7 @@ import { colors, fonts } from '@/ui/theme';
 
 export default function TabLayout() {
   const step = useAppStore((s) => onboardingStep(s.pin, activeProfile(s)));
+  const shopOn = useAppStore((s) => activeProfile(s)?.settings.shop ?? true);
   // first run (PIN, child, key practice, diagnosis) comes before the map
   if (step) return <Redirect href="/onboarding" />;
 
@@ -30,7 +31,12 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="shop"
-        options={{ title: 'ショップ', tabBarIcon: ({ color, size }) => <Ionicons name="storefront" color={color} size={size} /> }}
+        options={{
+          title: 'ショップ',
+          // a parent can turn the shop off; the seeds keep coming in
+          href: shopOn ? undefined : null,
+          tabBarIcon: ({ color, size }) => <Ionicons name="storefront" color={color} size={size} />,
+        }}
       />
     </Tabs>
   );
