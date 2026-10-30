@@ -16,6 +16,7 @@ const TOGGLES: { key: keyof Omit<Settings, "coeffs">; label: string; note: strin
   { key: "autoSubmit", label: "自動送信", note: "答えの桁数まで入力したら自動で送信" },
   { key: "sound", label: "効果音", note: "マナーモードのときは鳴りません" },
   { key: "vibration", label: "振動", note: "" },
+  { key: "shop", label: "ショップを使う", note: "オフにすると、ショップのタブをかくします。たねは たまりつづけます" },
 ];
 
 const COEFF_LABEL: Record<keyof Coeffs, string> = { read: "読む", think: "考える", write: "書く" };

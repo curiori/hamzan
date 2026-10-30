@@ -42,6 +42,7 @@ export function TestPane({ onExit }: { onExit: () => void }) {
   const profile = useAppStore((s) => activeProfile(s));
   const resetProfileData = useAppStore((s) => s.resetProfileData);
   const skipPlacementTo = useAppStore((s) => s.skipPlacementTo);
+  const giftSeeds = useAppStore((s) => s.giftSeeds);
   const [startLevel, setStartLevel] = useState(LEVELS[0].id);
   const confirm = useConfirm();
 
@@ -67,6 +68,17 @@ export function TestPane({ onExit }: { onExit: () => void }) {
         value={!!dev.roomAllGoods}
         onChange={(v) => setDev({ roomAllGoods: v })}
       />
+      {profile ? (
+        <View style={styles.card}>
+          <AppText weight="bold" style={styles.num}>
+            {profile.nickname}さんのたね：{profile.wallet.seeds}こ
+          </AppText>
+          <AppText style={styles.small}>ショップを試すためのものです。ふやした分は「テスト」として記録に残ります。</AppText>
+          <View style={styles.actions}>
+            <Button variant="outline" label="たねを 100 ふやす" icon={<Ionicons name="add-circle-outline" size={18} color={colors.foreground} />} onPress={() => giftSeeds(100)} />
+          </View>
+        </View>
+      ) : null}
       {profile ? (
         <View style={styles.card}>
           <AppText weight="bold">診断をとばして、えらんだレベルから始める</AppText>

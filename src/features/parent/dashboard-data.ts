@@ -1,6 +1,7 @@
 import { addDays, diffDays, type LocalDate } from "@/domain/dates";
 import { statusOf } from "@/domain/progression";
 import { ERROR_TYPES, LEVEL, LEVELS, SPEC, type LevelSpec } from "@/domain/spec";
+import { SHOP } from "@/game/shop";
 import type { FactStat, Profile } from "@/state/types";
 
 // Numbers behind the parent dashboard (same rules as the web prototype's Dashboard).
@@ -52,4 +53,13 @@ export const retestDue = (p: Profile, date: LocalDate) =>
 export function openStageId(p: Profile): number {
   const next = LEVELS.find((l) => !["star2", "mastered"].includes(statusOf(p.progress, l.id)));
   return (next ?? LEVEL["5-11"]).stage;
+}
+
+/** The seeds now, the seeds that came in over the last 7 days (today and the six before), and the shop items the child has. */
+export function seedSummary(p: Profile, today: LocalDate): { seeds: number; week: number; bought: { id: string; name: string; count: number }[] } {
+  const week = p.ledger
+    .filter((e) => e.delta > 0 && diffDays(today, e.date) >= 0 && diffDays(today, e.date) < 7)
+    .reduce((sum, e) => sum + e.delta, 0);
+  const bought = SHOP.filter((i) => (p.inventory[i.id] ?? 0) > 0).map((i) => ({ id: i.id, name: i.name, count: p.inventory[i.id] }));
+  return { seeds: p.wallet.seeds, week, bought };
 }

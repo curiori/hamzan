@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import type { ErrorTypeId } from "@/domain/errors";
 import type { Problem } from "@/domain/problem";
 import { ERROR_TYPES } from "@/domain/spec";
-import { calendarDays, errorCounts, retestDue, speedLevels, trendSeries, weakFactsTop } from "@/features/parent/dashboard-data";
+import { calendarDays, errorCounts, retestDue, seedSummary, speedLevels, trendSeries, weakFactsTop } from "@/features/parent/dashboard-data";
+import type { LedgerEntry } from "@/game/economy";
 import { newProfile } from "@/state/profile";
 import type { FactStat, Profile, SetAttempt } from "@/state/types";
 
@@ -95,5 +96,32 @@ describe("retestDue", () => {
     expect(retestDue(base(), day(29))).toBe(false);
     expect(retestDue({ ...base(), writeTestedAt: day(28) }, day(29))).toBe(false);
     expect(retestDue({ ...base(), writeTestedAt: "2026-01-01" }, day(29))).toBe(true);
+  });
+});
+
+describe("seeds", () => {
+  const entry = (date: string, delta: number, ref?: string): LedgerEntry => ({ at: 0, date, delta, reason: delta > 0 ? "set" : "buy", ...(ref ? { ref } : {}) });
+
+  test("seedSummary shows the wallet, the last 7 days and what was bought", () => {
+    const p: Profile = {
+      ...base(),
+      wallet: { ...base().wallet, seeds: 75 },
+      ledger: [entry(day(21), 30), entry(day(28), 20), entry(day(29), 15), entry(day(29), -60, "ball")],
+      inventory: { ball: 1, carrot: 2, apple: 0 },
+    };
+    expect(seedSummary(p, day(29))).toEqual({
+      seeds: 75,
+      week: 35,
+      bought: [
+        { id: "ball", name: "ころころボール", count: 1 },
+        { id: "carrot", name: "にんじん", count: 2 },
+      ],
+    });
+  });
+
+  test("the 7 days are today and the six days before it", () => {
+    const p: Profile = { ...base(), ledger: [entry(day(22), 7), entry(day(23), 6), entry(day(30), 100)] };
+    expect(seedSummary(p, day(29)).week).toBe(6);
+    expect(seedSummary(base(), day(29))).toEqual({ seeds: 0, week: 0, bought: [] });
   });
 });

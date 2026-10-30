@@ -13,7 +13,7 @@ import type { Profile } from "@/state/types";
 import { Chip } from "@/ui/chip";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
-import { calendarDays, errorCounts, openStageId, retestDue, speedLevels, trendSeries, weakFactsTop } from "./dashboard-data";
+import { calendarDays, errorCounts, openStageId, retestDue, seedSummary, speedLevels, trendSeries, weakFactsTop } from "./dashboard-data";
 import { Section } from "./section";
 import { TrendChart } from "./trend-chart";
 
@@ -37,6 +37,7 @@ export function Dashboard({ p }: { p: Profile }) {
   const days = calendarDays(p, date);
   const weak = weakFactsTop(p);
   const counts = errorCounts(p, date);
+  const seeds = seedSummary(p, date);
   const retestDays = SPEC.timeModel.inputSpeedTest.retestAfterDays;
 
   return (
@@ -74,6 +75,30 @@ export function Dashboard({ p }: { p: Profile }) {
           ))}
         </View>
         <AppText style={styles.small}>濃い緑＝きょうのゴール達成、うすい緑＝練習あり</AppText>
+      </Section>
+
+      <Section title="ひまわりのたね">
+        <View style={styles.seedBoxes}>
+          <View style={styles.seedBox} accessible accessibilityLabel={`いまのたね ${seeds.seeds}こ`}>
+            <AppText style={styles.small}>いま</AppText>
+            <AppText weight="bold" style={styles.seedNum}>
+              {seeds.seeds}こ
+            </AppText>
+          </View>
+          <View style={styles.seedBox} accessible accessibilityLabel={`直近7日で ${seeds.week}こ ふえた`}>
+            <AppText style={styles.small}>直近7日でふえた数</AppText>
+            <AppText weight="bold" style={styles.seedNum}>
+              +{seeds.week}
+            </AppText>
+          </View>
+        </View>
+        <AppText style={styles.body}>
+          買ったもの：{seeds.bought.length ? seeds.bought.map((b) => (b.count > 1 ? `${b.name}（${b.count}こ）` : b.name)).join("、") : "まだありません"}
+        </AppText>
+        <AppText style={styles.small}>
+          たねは練習でたまり、ショップでだけ使います。お金では買えません。おやつは残っている数です。
+          {p.settings.shop ? "" : "いまショップはオフです（設定で切りかえられます）。"}
+        </AppText>
       </Section>
 
       <Section title="ステージ・レベルの進み具合">
@@ -193,6 +218,9 @@ const styles = StyleSheet.create({
   calGoalText: { color: "#ffffff" },
   small: { fontSize: 12, lineHeight: 17 },
   body: { fontSize: 14, lineHeight: 21 },
+  seedBoxes: { flexDirection: "row", gap: 8 },
+  seedBox: { flex: 1, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 10, gap: 2 },
+  seedNum: { fontSize: 20, fontVariant: ["tabular-nums"] },
   stage: { borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 10, gap: 8 },
   stageHead: { flexDirection: "row", alignItems: "flex-start", gap: 6 },
   stageHeadText: { flex: 1, gap: 2 },
