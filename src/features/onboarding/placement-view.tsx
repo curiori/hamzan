@@ -5,10 +5,10 @@ import { Hamster } from "@/art/hamster";
 import { RoomScene } from "@/art/room-scene";
 import { miniLevel, placementBudgetLeft } from "@/domain/placement";
 import { LEVEL, RULE_NUMBERS, SPEC } from "@/domain/spec";
-import { unlockedRewards } from "@/game/achievements";
+import { autoLayout } from "@/game/room";
 import { KID_LEVEL_NAME, KID_STAGE_NAME, MODE_LABEL } from "@/i18n/ja";
 import { placementPlan, type PlayPlan } from "@/session/requests";
-import { rewardStats, todayOf } from "@/state/profile";
+import { ownedGoods, todayOf } from "@/state/profile";
 import { activeProfile, useAppStore } from "@/state/store";
 import { Button } from "@/ui/button";
 import { AppText } from "@/ui/text";
@@ -34,7 +34,14 @@ export function PlacementView({ onStart, onFinished }: { onStart: (plan: PlayPla
   if (roomOpen)
     return (
       <View style={styles.root}>
-        <RoomScene owned={unlockedRewards(rewardStats(profile))} wear={profile.wearing} name={profile.nickname} width={Math.min(width - 72, 420)} />
+        <RoomScene
+          layout={autoLayout(ownedGoods(profile))}
+          wallpaper={profile.room.wallpaper}
+          floor={profile.room.floor}
+          wear={profile.wearing}
+          name={profile.nickname}
+          width={Math.min(width - 72, 420)}
+        />
         <Button size="lg" variant="outline" label="もどる" onPress={() => setRoomOpen(false)} />
       </View>
     );

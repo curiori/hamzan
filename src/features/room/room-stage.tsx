@@ -10,6 +10,7 @@ import { RoomBackground } from "@/art/room-scene";
 import { REWARDS, unlockedRewards } from "@/game/achievements";
 import { newlyOwned } from "@/game/hamster-brain";
 import { autoLayout, GOOD_KIND, HAMSTER_H, HAMSTER_W, placedGoods, ROOM_H, ROOM_W, seatIn, SLOTS, toRoom, type Point, type SlotId } from "@/game/room";
+import { SHOP } from "@/game/shop";
 import { tapFeel } from "@/platform/feedback";
 import { useReduceMotion } from "@/platform/reduce-motion";
 import { useAppActive } from "@/platform/use-app-state";
@@ -22,6 +23,8 @@ import { useRoomBrain, type Motion, type RoomStart, type StageGood } from "./use
 /** the hamster's feet inside its sprite box, in design units */
 const FEET: Point = { x: HAMSTER_W / 2, y: HAMSTER_H - 1 };
 const LONG_PRESS_MS = 400;
+/** the test switch's "every good": rewards first, then shop goods (those finding no free slot stay stored) */
+const ALL_GOODS = [...REWARDS.map((r) => r.id), ...SHOP.filter((i) => i.kind === "good").map((i) => i.id)];
 
 /** Where a press landed inside the pressed view. iOS gives locationX/Y; a mouse press on react-native-web is a DOM click with offsetX/Y. */
 function pressPoint(e: GestureResponderEvent): Point | null {
@@ -31,11 +34,11 @@ function pressPoint(e: GestureResponderEvent): Point | null {
   return x !== undefined && y !== undefined && Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
 }
 
-const Background = memo(function Background({ width }: { width: number }) {
+const Background = memo(function Background({ width, wallpaper, floor }: { width: number; wallpaper: string | null; floor: string | null }) {
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <Svg width={width} height={(width * ROOM_H) / ROOM_W} viewBox={`0 0 ${ROOM_W} ${ROOM_H}`}>
-        <RoomBackground />
+        <RoomBackground wallpaper={wallpaper} floor={floor} />
       </Svg>
     </View>
   );
@@ -45,7 +48,7 @@ const Good = memo(function Good({ id, slot, s, motion, playing, onTap }: { id: s
   const sl = SLOTS[slot];
   const size = 60 * sl.scale * s;
   const parts = ITEM_PARTS[id];
-  const turning = id === "wheel";
+  const turning = parts?.motion === "spin";
   const moving = useAnimatedStyle(() => ({ transform: [{ rotate: `${playing ? (turning ? motion.spin.value : motion.sway.value) : 0}deg` }] }), [playing, turning]);
   const k = size / 60;
   return (
@@ -160,7 +163,7 @@ function HamsterSprite({
 
 /** The moving room: owned goods in their slots and the hamster living among them. Touch the hamster, a good or the floor. */
 export function RoomStage({ profile, width, allGoods }: { profile: Profile; width: number; allGoods: boolean }) {
-  const owned = allGoods ? REWARDS.map((r) => r.id) : unlockedRewards(rewardStats(profile));
+  const owned = allGoods ? ALL_GOODS : unlockedRewards(rewardStats(profile));
   const ownedKey = owned.join(",");
   const placed = useMemo(() => placedGoods(autoLayout(ownedKey ? ownedKey.split(",") : [])), [ownedKey]);
   const goods = useMemo<StageGood[]>(() => placed.map((g) => ({ id: g.id, spot: g.spot, seat: seatIn(g.id, g.slot) })), [placed]);
@@ -201,7 +204,7 @@ export function RoomStage({ profile, width, allGoods }: { profile: Profile; widt
 
   return (
     <View style={{ width, height: (width * ROOM_H) / ROOM_W, overflow: "hidden" }}>
-      <Background width={width} />
+      <Background width={width} wallpaper={profile.room.wallpaper} floor={profile.room.floor} />
       <Pressable accessibilityRole="button" accessibilityLabel="ゆか" accessibilityHint="ハムスターが そこへ あるいて くる" onPress={onFloor} style={StyleSheet.absoluteFill} />
       {placed.map((g) => (
         <Good key={g.id} id={g.id} slot={g.slot} s={s} motion={motion} playing={activity?.kind === "play" && activity.good === g.id} onTap={onGood} />

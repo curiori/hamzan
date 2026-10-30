@@ -46,6 +46,24 @@ export function HamsterSide({ frame, wear = null, size = 80, cheeks = false }: {
       {wear === "crown" ? (
         <Path d="M54 26 L54 14 L60 19 L66 9 L72 19 L78 14 L78 26 Z" fill="#F5C518" stroke="#B8860B" strokeWidth={1.5} strokeLinejoin="round" />
       ) : null}
+      {wear === "ribbon" ? (
+        <G>
+          <Path d="M76 22 L64 14 L65 30 Z M76 22 L88 14 L87 30 Z" fill="#F472B6" stroke="#DB2777" strokeWidth={1.2} strokeLinejoin="round" />
+          <Circle cx={76} cy={22} r={3.5} fill="#DB2777" />
+        </G>
+      ) : null}
+      {wear === "glasses" ? (
+        <G fill="none" stroke={INK} strokeWidth={2.5}>
+          <Circle cx={88} cy={54} r={9} fill="#E0F2FE" fillOpacity={0.35} />
+          <Path d="M79 52 L66 47" strokeLinecap="round" />
+        </G>
+      ) : null}
+      {wear === "scarf" ? (
+        <G>
+          <Path d="M64 72 Q86 90 106 76 L104 85 Q86 99 64 81 Z" fill="#EF4444" />
+          <Rect x={62} y={78} width={11} height={19} rx={3} fill="#EF4444" />
+        </G>
+      ) : null}
     </Svg>
   );
 }

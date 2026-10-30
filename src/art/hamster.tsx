@@ -121,6 +121,26 @@ export function HamsterBody({ mood = "idle", wear = null, pose }: { mood?: Mood;
           <Circle cx={71} cy={20} r={1.8} fill="#2563EB" />
         </G>
       )}
+      {wear === "ribbon" && (
+        <G>
+          <Path d="M78 20 L64 11 L65 29 Z M78 20 L92 11 L91 29 Z" fill="#F472B6" stroke="#DB2777" strokeWidth={1.2} strokeLinejoin="round" />
+          <Circle cx={78} cy={20} r={4} fill="#DB2777" />
+        </G>
+      )}
+      {wear === "glasses" && (
+        <G fill="none" stroke={INK} strokeWidth={2.5}>
+          <Circle cx={44} cy={51} r={10} fill="#E0F2FE" fillOpacity={0.35} />
+          <Circle cx={76} cy={51} r={10} fill="#E0F2FE" fillOpacity={0.35} />
+          <Path d="M54 49 Q60 45 66 49 M34 49 L24 45 M86 49 L96 45" strokeLinecap="round" />
+        </G>
+      )}
+      {wear === "scarf" && (
+        <G>
+          <Path d="M20 72 Q60 88 100 72 L99 81 Q60 97 21 81 Z" fill="#EF4444" />
+          <Rect x={78} y={80} width={12} height={20} rx={3} fill="#EF4444" />
+          <Path d="M80 88 H88 M80 94 H88" stroke="#FCA5A5" strokeWidth={2} />
+        </G>
+      )}
     </G>
   );
 }
