@@ -1,7 +1,7 @@
 import type { Mood, Pose } from "@/art/hamster";
-import { REWARDS } from "@/game/achievements";
 import type { Activity } from "@/game/hamster-brain";
 import { GOOD_KIND, type Point, type RoomLayout } from "@/game/room";
+import { itemName } from "@/game/shop";
 
 // How the room screen shows each activity: walk speeds, drawing depth, which hamster drawing, and the
 // words a screen reader hears. Pure, so bun can test it.
@@ -36,10 +36,17 @@ export function roomGoods(layout: RoomLayout, owned: string[]): RoomLayout {
   return Object.fromEntries(Object.entries(layout).filter(([, id]) => id !== undefined && has.has(id))) as RoomLayout;
 }
 
+/** Goods that are only looked at: the hamster never goes to play with them. */
+export const PLAYABLE_EXCEPT = ["lamp"];
+
+/** How dark the room's night blue is: none by day, lighter when a lamp is out. */
+export const nightTint = (night: boolean, lampPlaced: boolean): number => (night ? (lampPlaced ? 0.12 : 0.3) : 0);
+
 /** Goods whose bottom edge is above this are drawn behind the hamster. */
 export function hamsterDepth(a: Activity, from: Point): number {
   if (a.kind === "walk") return Math.max(from.y, a.to.y);
-  if (a.kind === "play" && GOOD_KIND[a.good] === "ceiling") return ABOVE_ALL;
+  // hanging goods, and the top of the ladder, put the hamster in front of everything
+  if (a.kind === "play" && (GOOD_KIND[a.good] === "ceiling" || a.good === "ladder")) return ABOVE_ALL;
   return from.y;
 }
 
@@ -52,7 +59,6 @@ export interface Look {
   label: string;
 }
 
-export const goodName = (id: string) => REWARDS.find((r) => r.id === id)?.name ?? "グッズ";
 const front = (label: string, extra: Partial<Look> = {}): Look => ({ view: "front", mood: "idle", cheeks: false, bubble: null, label, ...extra });
 
 const IDLE_LABEL = { blink: "ひとやすみ ちゅう", ear: "ひとやすみ ちゅう", look: "きょろきょろ して いる", groom: "けづくろい ちゅう" } as const;
@@ -72,7 +78,7 @@ export function look(a: Activity): Look {
     case "celebrate":
       return front("おいわい ちゅう", { mood: "cheer" });
     case "play": {
-      const label = `${goodName(a.good)}で あそんで いる`;
+      const label = `${itemName(a.good)}で あそんで いる`;
       switch (a.good) {
         case "house":
           return { view: "hidden", mood: "idle", cheeks: false, bubble: "Zzz", label };
@@ -80,6 +86,8 @@ export function look(a: Activity): Look {
           return { view: "hidden", mood: "idle", cheeks: false, bubble: null, label };
         case "wheel":
           return { view: "side", mood: "idle", cheeks: false, bubble: null, label };
+        case "ball":
+          return { view: "side", mood: "idle", cheeks: false, bubble: "ころころ", label };
         case "desk":
           return front(label, { pose: "read", bubble: "なるほど" });
         case "bowl":
@@ -87,9 +95,15 @@ export function look(a: Activity): Look {
         case "hammock":
           return front(label, { pose: "sleep", bubble: "Zzz" });
         case "swing":
+        case "ladder":
           return front(label, { mood: "happy" });
         case "flower":
+        case "grass":
           return front(label, { bubble: "くんくん" });
+        case "blocks":
+          return front(label, { bubble: "がらがら" });
+        case "cushion":
+          return front(label, { mood: "happy", bubble: "ふかふか" });
         default:
           return front(label);
       }

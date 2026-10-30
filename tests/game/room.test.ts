@@ -12,11 +12,13 @@ import {
   placedGoods,
   placeIn,
   placeNew,
+  pushSpot,
   ROOM_H,
   ROOM_W,
   SEATS,
   seatIn,
   seatMoveMs,
+  seatSways,
   SLOTS,
   storedGoods,
   toRoom,
@@ -91,7 +93,7 @@ describe("slots", () => {
   });
 
   test("a hamster on a seat stays inside the room in every slot of the good's kind", () => {
-    expect(Object.keys(SEATS).sort()).toEqual(["hammock", "ladder", "swing"]);
+    expect(Object.keys(SEATS).sort()).toEqual(["cushion", "hammock", "ladder", "swing"]);
     for (const good of Object.keys(SEATS)) {
       const slots = (Object.keys(SLOTS) as SlotId[]).filter((s) => SLOTS[s].kind === GOOD_KIND[good]);
       expect(slots.length).toBeGreaterThan(0);
@@ -106,7 +108,28 @@ describe("slots", () => {
       }
     }
     expect(seatIn("wheel", "floorL2")).toBeUndefined();
-    expect([seatMoveMs("swing"), seatMoveMs("hammock"), seatMoveMs("ladder"), seatMoveMs("wheel")]).toEqual([300, 300, 900, 0]);
+    expect([seatMoveMs("swing"), seatMoveMs("hammock"), seatMoveMs("ladder"), seatMoveMs("cushion"), seatMoveMs("wheel")]).toEqual([300, 300, 900, 300, 0]);
+    // only hanging goods rock the hamster
+    expect(["swing", "hammock", "ladder", "cushion", "wheel"].map(seatSways)).toEqual([true, true, false, false, false]);
+  });
+
+  test("the hamster pushes the ball from a side with floor to stand on, its nose at the ball", () => {
+    const NOSE = 24;
+    for (const slot of (Object.keys(SLOTS) as SlotId[]).filter((s) => SLOTS[s].kind === "floorSmall")) {
+      const push = pushSpot("ball", slot);
+      expect(push).toBeDefined();
+      if (!push) continue;
+      const sl = SLOTS[slot];
+      const ballX = sl.x + 30 * sl.scale;
+      expect(clampToFloor(push.at)).toEqual(push.at);
+      expect(Math.sign(ballX - push.at.x)).toBe(push.face);
+      const edge = ballX - push.face * 16 * sl.scale;
+      expect(Math.abs(push.at.x + push.face * NOSE - edge)).toBeLessThanOrEqual(4);
+    }
+    // the corner slot has no floor on the ball's left
+    expect(pushSpot("ball", "floorS1")?.face).toBe(-1);
+    expect(pushSpot("ball", "floorS2")?.face).toBe(1);
+    expect(pushSpot("blocks", "floorS2")).toBeUndefined();
   });
 
   test("every shop good has a slot kind and a default slot of that kind", () => {

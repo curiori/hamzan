@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Activity } from "@/game/hamster-brain";
-import { ABOVE_ALL, hamsterDepth, look, roomGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
+import { ABOVE_ALL, hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, roomGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
 
 const at = { x: 200, y: 210 };
 
@@ -26,6 +26,9 @@ describe("timing and depth", () => {
     expect(hamsterDepth({ kind: "idle", act: "blink", ms: 1000 }, at)).toBe(210);
     expect(hamsterDepth({ kind: "play", good: "swing", variant: "normal", ms: 5000 }, at)).toBe(ABOVE_ALL);
     expect(hamsterDepth({ kind: "play", good: "hammock", variant: "normal", ms: 5000 }, at)).toBe(ABOVE_ALL);
+    // up the ladder the hamster is in front of it; sitting in the cushion it sinks in behind the cushion's front
+    expect(hamsterDepth({ kind: "play", good: "ladder", variant: "normal", ms: 5000 }, at)).toBe(ABOVE_ALL);
+    expect(hamsterDepth({ kind: "play", good: "cushion", variant: "normal", ms: 5000 }, at)).toBe(210);
   });
 });
 
@@ -53,6 +56,15 @@ describe("look", () => {
     expect(look({ kind: "celebrate", ms: 2400 })).toMatchObject({ view: "front", mood: "cheer", label: "おいわい ちゅう" });
     expect(look({ kind: "idle", act: "groom", ms: 2000 })).toMatchObject({ view: "front", mood: "idle", bubble: null });
   });
+
+  test("new plays read their good's name", () => {
+    const play = (good: string) => look({ kind: "play", good, variant: "normal", ms: 5000 });
+    expect(play("ball")).toMatchObject({ view: "side", bubble: "ころころ", label: "ころころボールで あそんで いる" });
+    expect(play("blocks")).toMatchObject({ view: "front", bubble: "がらがら", label: "つみきで あそんで いる" });
+    expect(play("grass")).toMatchObject({ view: "front", bubble: "くんくん", label: "まどべの くさで あそんで いる" });
+    expect(play("cushion")).toMatchObject({ view: "front", mood: "happy", bubble: "ふかふか", label: "クッションで あそんで いる" });
+    expect(play("ladder")).toMatchObject({ view: "front", bubble: null, label: "はしごで あそんで いる" });
+  });
 });
 
 describe("the saved room", () => {
@@ -60,5 +72,16 @@ describe("the saved room", () => {
     expect(roomGoods({ floorL1: "desk", floorS2: "ball" }, ["ball"])).toEqual({ floorS2: "ball" });
     expect(roomGoods({ floorL1: "desk", sill: "grass" }, ["desk", "grass", "ball"])).toEqual({ floorL1: "desk", sill: "grass" });
     expect(roomGoods({}, ["desk"])).toEqual({});
+  });
+
+  test("the night is darker without a lamp", () => {
+    expect(nightTint(false, false)).toBe(0);
+    expect(nightTint(false, true)).toBe(0);
+    expect(nightTint(true, false)).toBe(0.3);
+    expect(nightTint(true, true)).toBe(0.12);
+  });
+
+  test("the lamp lights the room but is not played with", () => {
+    expect(PLAYABLE_EXCEPT).toEqual(["lamp"]);
   });
 });

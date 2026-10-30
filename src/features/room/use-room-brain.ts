@@ -13,7 +13,7 @@ import {
   type SharedValue,
 } from "react-native-reanimated";
 import { createBrain, isNight, stepBrain, type Activity, type Brain, type BrainEvent, type World } from "@/game/hamster-brain";
-import { clampToFloor, seatMoveMs, type Point } from "@/game/room";
+import { clampToFloor, seatMoveMs, seatSways, type Point } from "@/game/room";
 import { walkAxis, walkMs } from "./stage-rules";
 
 // The room makes its own calm moves when the system asks to reduce motion (slow walks, a nod instead of a hop),
@@ -27,11 +27,12 @@ const chain = (...steps: number[]) => withSequence(KEEP, ...steps);
 const loop = (anim: number, reps: number, reverse = false) => withRepeat(anim, reps, reverse, undefined, KEEP);
 const after = (ms: number, anim: number) => withDelay(ms, anim, KEEP);
 
-/** A placed good as the room needs it: where to stand, and for hanging goods where to sit. */
+/** A placed good as the room needs it: where to stand, where to sit on it, and where to push it from. */
 export interface StageGood {
   id: string;
   spot: Point;
   seat?: Point;
+  push?: { at: Point; face: 1 | -1 };
 }
 
 export interface Motion {
@@ -46,9 +47,9 @@ export interface Motion {
   flip: SharedValue<number>;
   /** 0..1, picks the walking frame */
   step: SharedValue<number>;
-  /** degrees of the wheel */
+  /** degrees of the wheel or the ball */
   spin: SharedValue<number>;
-  /** degrees of the swing or hammock */
+  /** degrees of the swing, the hammock or the top block */
   sway: SharedValue<number>;
   /** 0..1 eyelids */
   blink: SharedValue<number>;
@@ -57,6 +58,10 @@ export interface Motion {
 const HOME: Point = { x: 200, y: 222 };
 const SURPRISE_MS = 900;
 const TUNNEL_SHIFT = 44;
+/** stepping from the good's spot to the side of the ball */
+const PUSH_MOVE_MS = 400;
+/** when the wobbling top block falls, from the start of the blocks play */
+const BLOCKS_FALL_MS = 1820;
 
 /** How a visit to the room begins; a new object means a new visit. */
 export interface RoomStart {
@@ -113,6 +118,8 @@ export function useRoomBrain({
     hop.value = 0;
     tilt.value = 0;
     step.value = 0;
+    // a turn restarts from where it began, so a spin cut off halfway would jump on every turn after it
+    spin.value = 0;
     sway.value = 0;
     blink.value = 0;
     setSurprised(false);
@@ -226,13 +233,15 @@ export function useRoomBrain({
     if (a.kind === "play") {
       const good = goodsRef.current.find((g) => g.id === a.good);
       if (good?.seat) {
-        // up onto the swing or into the hammock, sway, and back down before the end
+        // onto the seat (the swing, the hammock, up the ladder or into the cushion) and back before the end
         const moveMs = seatMoveMs(a.good);
         x.value = tween(good.seat.x, moveMs);
         y.value = tween(good.seat.y, moveMs);
-        const amp = rm ? 4 : 10;
-        sway.value = loop(chain(tween(amp, 700), tween(-amp, 700)), -1, true);
-        tilt.value = loop(chain(tween(amp * 0.6, 700), tween(-amp * 0.6, 700)), -1, true);
+        if (seatSways(a.good)) {
+          const amp = rm ? 4 : 10;
+          sway.value = loop(chain(tween(amp, 700), tween(-amp, 700)), -1, true);
+          tilt.value = loop(chain(tween(amp * 0.6, 700), tween(-amp * 0.6, 700)), -1, true);
+        } else if (a.good === "cushion" && !rm) hop.value = after(moveMs, loop(chain(tween(-3, 260), tween(0, 260)), 2));
         later(Math.max(0, a.ms - moveMs), () => {
           cancelAnimation(tilt);
           cancelAnimation(sway);
@@ -241,6 +250,14 @@ export function useRoomBrain({
           x.value = tween(from.x, moveMs);
           y.value = tween(from.y, moveMs);
         });
+      } else if (good?.push) {
+        // beside the ball, nudging it while it rolls
+        const { at, face } = good.push;
+        flip.value = face;
+        step.value = loop(tween(1, 160), -1, true);
+        y.value = tween(at.y, PUSH_MOVE_MS);
+        x.value = chain(tween(at.x, PUSH_MOVE_MS), loop(chain(tween(at.x + face * 4, 350), tween(at.x, 350)), -1));
+        spin.value = after(PUSH_MOVE_MS, loop(tween(360 * face, rm ? 2400 : 1200, Easing.linear), -1));
       } else if (a.good === "wheel") {
         step.value = loop(tween(1, 90), -1, true);
         spin.value = loop(tween(360, rm ? 1400 : 500, Easing.linear), -1);
@@ -254,7 +271,15 @@ export function useRoomBrain({
       } else if (a.good === "tunnel") {
         // in at one end, out at the other
         x.value = after(300, tween(clampToFloor({ x: from.x + TUNNEL_SHIFT, y: from.y }).x, Math.max(300, a.ms - 600)));
-      } else if (a.good === "flower") {
+      } else if (a.good === "blocks") {
+        // the top block wobbles and topples, and is stacked again before the end
+        const amp = rm ? 4 : 9;
+        sway.value = chain(loop(chain(tween(amp, 220), tween(-amp, 220)), 3), tween(0, 120), tween(80, 380, Easing.in(Easing.quad)));
+        if (!rm) hop.value = after(BLOCKS_FALL_MS, chain(tween(-8, 150), tween(0, 200)));
+        later(Math.max(0, a.ms - 700), () => {
+          sway.value = tween(0, 450);
+        });
+      } else if (a.good === "flower" || a.good === "grass") {
         tilt.value = loop(chain(tween(-8, 300), tween(0, 300)), 4);
       } else if (a.good === "bowl") {
         hop.value = loop(chain(tween(-1.5, 150), tween(0, 150)), -1);

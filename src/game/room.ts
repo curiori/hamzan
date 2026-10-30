@@ -84,13 +84,15 @@ export const DEFAULT_SLOT: Record<string, SlotId> = {
 export type RoomLayout = Partial<Record<SlotId, string>>;
 
 /**
- * Where the hamster sits on a good, in the good's 60×60 box, and how long getting there takes. The hanging goods
- * hang low enough to keep a seated hamster inside the room; the ladder is climbed to its top rung.
+ * Where the hamster sits on a good, in the good's 60×60 box, how long getting there takes, and whether the good
+ * rocks it. The hanging goods hang low enough to keep a seated hamster inside the room; the ladder is climbed to
+ * its top rung; the cushion is sat in.
  */
-export const SEATS: Record<string, { at: Point; moveMs: number }> = {
-  swing: { at: { x: 30, y: 49 }, moveMs: 300 },
-  hammock: { at: { x: 30, y: 49 }, moveMs: 300 },
+export const SEATS: Record<string, { at: Point; moveMs: number; sway?: boolean }> = {
+  swing: { at: { x: 30, y: 49 }, moveMs: 300, sway: true },
+  hammock: { at: { x: 30, y: 49 }, moveMs: 300, sway: true },
   ladder: { at: { x: 30, y: 6 }, moveMs: 900 },
+  cushion: { at: { x: 30, y: 47 }, moveMs: 300 },
 };
 
 /** The hamster's feet when it sits on `goodId` in `slotId`, in room units; undefined for goods without a seat. */
@@ -102,6 +104,27 @@ export function seatIn(goodId: string, slotId: SlotId): Point | undefined {
 
 /** How long the hamster takes to get onto a good's seat; 0 for goods without one. */
 export const seatMoveMs = (goodId: string): number => SEATS[goodId]?.moveMs ?? 0;
+
+/** Whether sitting on the good rocks the hamster (the hanging ones). */
+export const seatSways = (goodId: string): boolean => !!SEATS[goodId]?.sway;
+
+/** the ball in its 60×60 box, and how far the side-view hamster's nose is ahead of its feet */
+const BALL = { x: 30, r: 16, floor: 57 };
+const NOSE = 22;
+
+/**
+ * Where the hamster stands to push the ball and which way it faces (1 right, -1 left): beside the ball with its nose
+ * at the ball, on the side with floor to stand on. Undefined for other goods.
+ */
+export function pushSpot(goodId: string, slotId: SlotId): { at: Point; face: 1 | -1 } | undefined {
+  if (goodId !== "ball") return undefined;
+  const sl = SLOTS[slotId];
+  const cx = sl.x + BALL.x * sl.scale;
+  const reach = BALL.r * sl.scale + NOSE;
+  const y = Math.min(FLOOR.y1, Math.max(FLOOR.y0, sl.y + BALL.floor * sl.scale));
+  const face: 1 | -1 = cx - reach >= FLOOR.x0 ? 1 : -1;
+  return { at: { x: Math.min(FLOOR.x1, Math.max(FLOOR.x0, cx - face * reach)), y }, face };
+}
 
 export const fits = (goodId: string, slotId: SlotId) => GOOD_KIND[goodId] === SLOTS[slotId].kind;
 
