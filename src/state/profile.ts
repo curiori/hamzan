@@ -38,7 +38,7 @@ export function newProfile(nickname: string, grade: number, opts: { id?: string;
     wearing: null,
     wallet: emptyWallet(),
     inventory: {},
-    room: { layout: {}, wallpaper: null, floor: null },
+    room: { layout: {}, wallpaper: null, floor: null, seen: [] },
     ledger: [],
   };
 }

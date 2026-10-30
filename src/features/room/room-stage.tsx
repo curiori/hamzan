@@ -1,7 +1,7 @@
 import { useIsFocused } from "@react-navigation/native";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View, type GestureResponderEvent } from "react-native";
-import Animated, { useAnimatedStyle, useReducedMotion, ZoomIn } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, ZoomIn } from "react-native-reanimated";
 import Svg from "react-native-svg";
 import { Hamster, type Mood, type Pose } from "@/art/hamster";
 import { Bubble, HamsterSide, Heart } from "@/art/hamster-poses";
@@ -9,8 +9,9 @@ import { ITEM_PARTS } from "@/art/items";
 import { RoomBackground } from "@/art/room-scene";
 import { REWARDS, unlockedRewards } from "@/game/achievements";
 import { newlyOwned } from "@/game/hamster-brain";
-import { autoLayout, HAMSTER_H, HAMSTER_W, placedGoods, ROOM_H, ROOM_W, seatIn, SLOTS, toRoom, type Point, type SlotId } from "@/game/room";
+import { autoLayout, GOOD_KIND, HAMSTER_H, HAMSTER_W, placedGoods, ROOM_H, ROOM_W, seatIn, SLOTS, toRoom, type Point, type SlotId } from "@/game/room";
 import { tapFeel } from "@/platform/feedback";
+import { useReduceMotion } from "@/platform/reduce-motion";
 import { useAppActive } from "@/platform/use-app-state";
 import { rewardStats, todayOf } from "@/state/profile";
 import { useAppStore } from "@/state/store";
@@ -21,9 +22,6 @@ import { useRoomBrain, type Motion, type RoomStart, type StageGood } from "./use
 /** the hamster's feet inside its sprite box, in design units */
 const FEET: Point = { x: HAMSTER_W / 2, y: HAMSTER_H - 1 };
 const LONG_PRESS_MS = 400;
-
-/** the goods each child had at the last visit to the room, for this run of the app */
-const seenGoods = new Map<string, string[]>();
 
 /** Where a press landed inside the pressed view. iOS gives locationX/Y; a mouse press on react-native-web is a DOM click with offsetX/Y. */
 function pressPoint(e: GestureResponderEvent): Point | null {
@@ -81,6 +79,7 @@ function HamsterSprite({
   wear,
   surprised,
   heart,
+  bubbleBeside,
   reduceMotion,
   onTap,
   onPet,
@@ -92,6 +91,8 @@ function HamsterSprite({
   wear: string | null;
   surprised: boolean;
   heart: boolean;
+  /** up on a hanging good there is no room above the head, so the bubble goes to the side */
+  bubbleBeside: boolean;
   reduceMotion: boolean;
   onTap: () => void;
   onPet: () => void;
@@ -132,7 +133,7 @@ function HamsterSprite({
         )}
       </Animated.View>
       {lk.bubble || heart ? (
-        <View pointerEvents="none" style={[styles.bubble, { bottom: h + 2 }]}>
+        <View pointerEvents="none" style={[styles.bubble, bubbleBeside ? { right: w - 4, top: 0, alignItems: "flex-end" } : { left: -20, right: -20, bottom: h + 2 }]}>
           <View style={styles.bubbleRow}>
             {heart ? (
               <Animated.View entering={reduceMotion ? undefined : ZoomIn.duration(200)}>
@@ -166,17 +167,20 @@ export function RoomStage({ profile, width, allGoods }: { profile: Profile; widt
   const focused = useIsFocused();
   const [appActive, setAppActive] = useState(true);
   useAppActive(setAppActive);
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReduceMotion();
   const dayOffset = useAppStore((st) => st.dev.dayOffset);
+  const markRoomSeen = useAppStore((st) => st.markRoomSeen);
   const goalDone = !!profile.sessions[todayOf(dayOffset)]?.goal;
+  // the room goods that are out, in the order they were earned (wearables are never room goods)
+  const outKey = owned.filter((id) => placed.some((g) => g.id === id)).join(",");
 
-  // each time the room comes into view is a visit: celebrate a reached goal, run to a good that is new since the last visit
-  const visitStart = (): RoomStart => ({ celebrate: goalDone, newGood: newlyOwned(seenGoods.get(profile.id) ?? null, owned) });
+  // each time the room comes into view is a visit: celebrate a reached goal, run to a good that was not out last time
+  const visitStart = (): RoomStart => ({ celebrate: goalDone, newGood: newlyOwned(profile.room.seen, outKey ? outKey.split(",") : []) });
   const [visit, setVisit] = useState(() => ({ focused, start: visitStart() }));
   if (visit.focused !== focused) setVisit({ focused, start: focused ? visitStart() : visit.start });
   useEffect(() => {
-    if (focused) seenGoods.set(profile.id, ownedKey ? ownedKey.split(",") : []);
-  }, [focused, profile.id, ownedKey]);
+    if (focused) markRoomSeen(outKey ? outKey.split(",") : []);
+  }, [focused, outKey, markRoomSeen]);
 
   const { activity, from, motion, surprised, send } = useRoomBrain({ goods, start: visit.start, active: focused && appActive, reduceMotion });
   const s = width / ROOM_W;
@@ -211,6 +215,7 @@ export function RoomStage({ profile, width, allGoods }: { profile: Profile; widt
           wear={profile.wearing}
           surprised={surprised}
           heart={activity.kind === "react" && activity.how === "hop"}
+          bubbleBeside={activity.kind === "play" && GOOD_KIND[activity.good] === "ceiling"}
           reduceMotion={reduceMotion}
           onTap={onTap}
           onPet={onPet}
@@ -222,6 +227,6 @@ export function RoomStage({ profile, width, allGoods }: { profile: Profile; widt
 
 const styles = StyleSheet.create({
   abs: { position: "absolute", left: 0, top: 0 },
-  bubble: { position: "absolute", left: -20, right: -20, alignItems: "center" },
+  bubble: { position: "absolute", alignItems: "center" },
   bubbleRow: { flexDirection: "row", alignItems: "center", gap: 2 },
 });

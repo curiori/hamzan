@@ -41,6 +41,8 @@ export interface AppState {
   recordSet: (run: SetRun) => SetSummary;
   /** test tool: n seeds for the active child, logged as a gift */
   giftSeeds: (n: number) => void;
+  /** the room goods the active child has seen out in the room (no write when nothing changed) */
+  markRoomSeen: (goods: string[]) => void;
   setDev: (patch: Partial<DevSettings>) => void;
 }
 
@@ -180,6 +182,11 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
               wallet: { ...p.wallet, seeds: p.wallet.seeds + n, lifetime: p.wallet.lifetime + n },
               ledger: appendLedger(p.ledger, { at: now(), date: today(), delta: n, reason: "gift" }),
             })),
+          markRoomSeen: (goods) => {
+            const p = activeProfile(get());
+            if (!p || (p.room.seen.length === goods.length && goods.every((g) => p.room.seen.includes(g)))) return;
+            patchActive((q) => ({ ...q, room: { ...q.room, seen: [...goods] } }));
+          },
 
           setDev: (patch) => set((s) => ({ dev: { ...s.dev, ...patch } })),
         };

@@ -33,6 +33,8 @@ export interface RoomSetup {
   layout: RoomLayout;
   wallpaper: string | null;
   floor: string | null;
+  /** room goods that were out at the last visit; a good not in here gets a run to try it */
+  seen: string[];
 }
 
 export interface SetAttempt {

@@ -9,10 +9,18 @@ import type { Profile } from "./types";
 
 type ProfileV1 = Omit<Profile, "wallet" | "inventory" | "room" | "ledger" | "settings"> & { settings: Omit<Profile["settings"], "shop"> };
 
-/** Version 1 → 2: an empty wallet, no shop items, the earned room goods laid out, and the shop switched on. */
+/** Version 1 → 2: an empty wallet, no shop items, the earned room goods laid out (and counted as seen), and the shop switched on. */
 function profileV2(p: ProfileV1): Profile {
-  const base: Profile = { ...p, settings: { ...p.settings, shop: true }, wallet: emptyWallet(), inventory: {}, ledger: [], room: { layout: {}, wallpaper: null, floor: null } };
-  return { ...base, room: { ...base.room, layout: autoLayout(unlockedRewards(rewardStats(base))) } };
+  const base: Profile = {
+    ...p,
+    settings: { ...p.settings, shop: true },
+    wallet: emptyWallet(),
+    inventory: {},
+    ledger: [],
+    room: { layout: {}, wallpaper: null, floor: null, seen: [] },
+  };
+  const layout = autoLayout(unlockedRewards(rewardStats(base)));
+  return { ...base, room: { ...base.room, layout, seen: Object.values(layout) } };
 }
 
 export function migrate(persisted: unknown, version: number): unknown {

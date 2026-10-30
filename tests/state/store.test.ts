@@ -189,7 +189,7 @@ describe("app store", () => {
     expect(p?.wallet).toEqual(emptyWallet());
     expect(p?.inventory).toEqual({});
     expect(p?.ledger).toEqual([]);
-    expect(p?.room).toEqual({ layout: { floorS3: "bowl" }, wallpaper: null, floor: null });
+    expect(p?.room).toEqual({ layout: { floorS3: "bowl" }, wallpaper: null, floor: null, seen: ["bowl"] });
     expect(p?.settings.shop).toBe(true);
     store.getState().addProfile("いもうと", 3);
     await sleep(10);
@@ -203,5 +203,15 @@ describe("app store", () => {
     const p = activeProfile(store.getState());
     expect(p?.wallet.seeds).toBe(100);
     expect(p?.ledger.at(-1)).toEqual({ at: NOW, date: todayOf(0, NOW), delta: 100, reason: "gift" });
+  });
+
+  test("markRoomSeen keeps what the room showed and leaves the same list alone", () => {
+    const store = createAppStore(memoryStorage().storage, { now: () => NOW });
+    store.getState().addProfile("あに", 5);
+    store.getState().markRoomSeen(["bowl", "wheel"]);
+    expect(activeProfile(store.getState())?.room.seen).toEqual(["bowl", "wheel"]);
+    const before = store.getState().profiles;
+    store.getState().markRoomSeen(["wheel", "bowl"]);
+    expect(store.getState().profiles).toBe(before);
   });
 });
