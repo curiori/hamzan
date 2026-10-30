@@ -6,14 +6,18 @@ import {
   DEFAULT_SLOT,
   FLOOR,
   fits,
+  GOOD_KIND,
   HAMSTER_H,
   HAMSTER_W,
   placedGoods,
   ROOM_H,
   ROOM_W,
+  SEATS,
+  seatIn,
   SLOTS,
   toRoom,
   toScreen,
+  type SlotId,
   type SlotKind,
 } from "@/game/room";
 
@@ -77,6 +81,23 @@ describe("slots", () => {
     const wheel = goods.find((g) => g.id === "wheel");
     expect(wheel?.slot).toBe("floorL2");
     expect(wheel?.spot).toEqual(SLOTS.floorL2.spot);
+  });
+
+  test("a hamster sitting on a hanging good stays inside the room in every ceiling slot", () => {
+    const ceilings = (Object.keys(SLOTS) as SlotId[]).filter((s) => SLOTS[s].kind === "ceiling");
+    for (const good of Object.keys(SEATS)) {
+      expect(GOOD_KIND[good]).toBe("ceiling");
+      for (const slot of ceilings) {
+        const feet = seatIn(good, slot);
+        expect(feet).toBeDefined();
+        if (!feet) continue;
+        // the sprite box hangs HAMSTER_H - 1 above the feet and spans HAMSTER_W around them
+        expect(feet.y - (HAMSTER_H - 1)).toBeGreaterThanOrEqual(0);
+        expect(feet.x - HAMSTER_W / 2).toBeGreaterThanOrEqual(0);
+        expect(feet.x + HAMSTER_W / 2).toBeLessThanOrEqual(ROOM_W);
+      }
+    }
+    expect(seatIn("wheel", "floorL2")).toBeUndefined();
   });
 });
 

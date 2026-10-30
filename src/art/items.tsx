@@ -78,17 +78,18 @@ export const ART: Record<string, ReactNode> = {
       <Path d="M19 44 H41 L38 58 H22 Z" fill="#C8643C" />
     </G>
   ),
+  // hung low enough that a hamster sitting on them stays inside the room (its feet at y 56 or lower)
   swing: (
     <G>
-      <Path d="M14 0 V44 M46 0 V44" stroke="#8B6B4A" strokeWidth={2} />
-      <Rect x={8} y={44} width={44} height={7} rx={3} fill="#D39A62" stroke="#9C6234" />
+      <Path d="M14 0 V49 M46 0 V49" stroke="#8B6B4A" strokeWidth={2} />
+      <Rect x={8} y={49} width={44} height={7} rx={3} fill="#D39A62" stroke="#9C6234" />
     </G>
   ),
   hammock: (
     <G>
-      <Path d="M4 6 L14 22 M56 6 L46 22" stroke="#8B6B4A" strokeWidth={2} />
-      <Path d="M12 20 Q30 46 48 20 Q30 34 12 20 Z" fill="#E87D7D" />
-      <Path d="M16 24 Q30 38 44 24" stroke="#F7B4B4" strokeWidth={2} fill="none" />
+      <Path d="M4 6 L14 39 M56 6 L46 39" stroke="#8B6B4A" strokeWidth={2} />
+      <Path d="M12 37 Q30 63 48 37 Q30 51 12 37 Z" fill="#E87D7D" />
+      <Path d="M16 41 Q30 55 44 41" stroke="#F7B4B4" strokeWidth={2} fill="none" />
     </G>
   ),
   crown: (

@@ -9,7 +9,7 @@ import { ITEM_PARTS } from "@/art/items";
 import { RoomBackground } from "@/art/room-scene";
 import { REWARDS, unlockedRewards } from "@/game/achievements";
 import { newlyOwned } from "@/game/hamster-brain";
-import { autoLayout, HAMSTER_H, HAMSTER_W, placedGoods, ROOM_H, ROOM_W, SLOTS, toRoom, type Point, type SlotId } from "@/game/room";
+import { autoLayout, HAMSTER_H, HAMSTER_W, placedGoods, ROOM_H, ROOM_W, seatIn, SLOTS, toRoom, type Point, type SlotId } from "@/game/room";
 import { tapFeel } from "@/platform/feedback";
 import { useAppActive } from "@/platform/use-app-state";
 import { rewardStats, todayOf } from "@/state/profile";
@@ -18,8 +18,6 @@ import type { Profile } from "@/state/types";
 import { goodName, hamsterDepth, look, type Look } from "./stage-rules";
 import { useRoomBrain, type Motion, type RoomStart, type StageGood } from "./use-room-brain";
 
-/** where the hamster sits on a hanging good, in the good's 60×60 box */
-const SEATS: Record<string, Point> = { swing: { x: 30, y: 44 }, hammock: { x: 30, y: 30 } };
 /** the hamster's feet inside its sprite box, in design units */
 const FEET: Point = { x: HAMSTER_W / 2, y: HAMSTER_H - 1 };
 const LONG_PRESS_MS = 400;
@@ -164,15 +162,7 @@ export function RoomStage({ profile, width, allGoods }: { profile: Profile; widt
   const owned = allGoods ? REWARDS.map((r) => r.id) : unlockedRewards(rewardStats(profile));
   const ownedKey = owned.join(",");
   const placed = useMemo(() => placedGoods(autoLayout(ownedKey ? ownedKey.split(",") : [])), [ownedKey]);
-  const goods = useMemo<StageGood[]>(
-    () =>
-      placed.map((g) => {
-        const seat = SEATS[g.id];
-        const sl = SLOTS[g.slot];
-        return { id: g.id, spot: g.spot, seat: seat ? { x: sl.x + seat.x * sl.scale, y: sl.y + seat.y * sl.scale } : undefined };
-      }),
-    [placed],
-  );
+  const goods = useMemo<StageGood[]>(() => placed.map((g) => ({ id: g.id, spot: g.spot, seat: seatIn(g.id, g.slot) })), [placed]);
   const focused = useIsFocused();
   const [appActive, setAppActive] = useState(true);
   useAppActive(setAppActive);

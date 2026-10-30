@@ -71,6 +71,16 @@ export const DEFAULT_SLOT: Record<string, SlotId> = {
 /** good id in each used slot */
 export type RoomLayout = Partial<Record<SlotId, string>>;
 
+/** Where the hamster sits on a hanging good, in the good's 60×60 box; the art hangs low enough to keep it inside the room. */
+export const SEATS: Record<string, Point> = { swing: { x: 30, y: 49 }, hammock: { x: 30, y: 49 } };
+
+/** The hamster's feet when it sits on `goodId` hung in `slotId`, in room units; undefined for goods without a seat. */
+export function seatIn(goodId: string, slotId: SlotId): Point | undefined {
+  const seat = SEATS[goodId];
+  const sl = SLOTS[slotId];
+  return seat ? { x: sl.x + seat.x * sl.scale, y: sl.y + seat.y * sl.scale } : undefined;
+}
+
 export const fits = (goodId: string, slotId: SlotId) => GOOD_KIND[goodId] === SLOTS[slotId].kind;
 
 /** Goods go to their default slot when it is free, then to any free slot of their kind; the rest are stored. */
