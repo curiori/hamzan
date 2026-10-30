@@ -6,6 +6,7 @@ const PAD = { l: 36, r: 12, t: 10, b: 22 };
 
 /** Seconds per problem over the last speed sets, with the ★2 and ★3 targets as dashed lines. */
 export function TrendChart({ data, t2, t3, width, height = 200 }: { data: { date: string; sec: number }[]; t2: number; t3: number; width: number; height?: number }) {
+  if (!data.length) return null;
   const max = Math.max(t2, ...data.map((d) => d.sec), 0.5) * 1.15;
   const innerW = width - PAD.l - PAD.r;
   const x = (i: number) => PAD.l + (data.length <= 1 ? innerW / 2 : (i * innerW) / (data.length - 1));

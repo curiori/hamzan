@@ -53,8 +53,9 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
             <Stack.Screen name="parent" />
-            <Stack.Screen name="play" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
-            <Stack.Screen name="result" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
+            {/* pushed, not presented: a native modal here would block the confirm dialog's Modal on iOS */}
+            <Stack.Screen name="play" options={{ animation: 'slide_from_bottom', gestureEnabled: false, fullScreenGestureEnabled: false }} />
+            <Stack.Screen name="result" options={{ animation: 'fade', gestureEnabled: false, fullScreenGestureEnabled: false }} />
           </Stack>
         )}
         <StatusBar style="dark" />

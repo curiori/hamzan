@@ -55,6 +55,11 @@ describe("speed records", () => {
     const p = { ...base(), sets: [set({ levelId: "1-2" }), set({ levelId: "0-1" }), set({ levelId: "1-1", kind: "placement" }), set({ levelId: "2-1", mode: "H" })] };
     expect(speedLevels(p).map((l) => l.id)).toEqual(["0-1", "1-2"]);
   });
+  test("a level whose speed sets were all interrupted has no trend and is not listed", () => {
+    const p = { ...base(), sets: [set({ levelId: "2-3", result: "interrupted" }), set({ levelId: "1-2" })] };
+    expect(trendSeries(p, "2-3")).toEqual([]);
+    expect(speedLevels(p).map((l) => l.id)).toEqual(["1-2"]);
+  });
 });
 
 describe("mistakes", () => {

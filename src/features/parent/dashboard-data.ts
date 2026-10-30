@@ -5,7 +5,8 @@ import type { FactStat, Profile } from "@/state/types";
 
 // Numbers behind the parent dashboard (same rules as the web prototype's Dashboard).
 
-const isSpeedRecord = (s: Profile["sets"][number]) => s.mode === "S" && s.kind !== "placement";
+/** a finished speed set outside the diagnosis: what the speed trend is drawn from */
+const isTrendRecord = (s: Profile["sets"][number]) => s.mode === "S" && s.kind !== "placement" && s.result !== "interrupted";
 
 /** The last `weeks` weeks ending on `date`, oldest first. */
 export function calendarDays(p: Profile, date: LocalDate, weeks = 5): { date: LocalDate; goal: boolean; practiced: boolean }[] {
@@ -17,13 +18,13 @@ export function calendarDays(p: Profile, date: LocalDate, weeks = 5): { date: Lo
   });
 }
 
-/** Levels with speed-mode records, in curriculum order. */
-export const speedLevels = (p: Profile): LevelSpec[] => LEVELS.filter((l) => p.sets.some((s) => s.levelId === l.id && isSpeedRecord(s)));
+/** Levels with a speed trend to show, in curriculum order. */
+export const speedLevels = (p: Profile): LevelSpec[] => LEVELS.filter((l) => p.sets.some((s) => s.levelId === l.id && isTrendRecord(s)));
 
 /** Seconds per problem of the last speed sets of a level (interrupted and diagnosis sets left out). */
 export function trendSeries(p: Profile, levelId: string, limit = 20): { date: string; sec: number; errors: number }[] {
   return p.sets
-    .filter((s) => s.levelId === levelId && isSpeedRecord(s) && s.result !== "interrupted")
+    .filter((s) => s.levelId === levelId && isTrendRecord(s))
     .slice(-limit)
     .map((s) => ({ date: s.date.slice(5), sec: s.perProblemSec, errors: s.errors }));
 }

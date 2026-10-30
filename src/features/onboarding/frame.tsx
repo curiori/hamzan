@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ParentButton } from "@/features/home/header-actions";
+import { HeaderActions } from "@/features/home/header-actions";
 import { colors, radius } from "@/ui/theme";
 
-/** Scrollable card in the middle of the screen; the keyboard pushes it up on iOS. onParent shows the parent-area button. */
-export function OnboardingFrame({ children, onParent }: { children: ReactNode; onParent?: () => void }) {
+/** Scrollable card in the middle of the screen; the keyboard pushes it up on iOS. `header` adds the child switcher and the parent button. */
+export function OnboardingFrame({ children, header = false }: { children: ReactNode; header?: boolean }) {
   const insets = useSafeAreaInsets();
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -14,9 +14,9 @@ export function OnboardingFrame({ children, onParent }: { children: ReactNode; o
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }]}
         keyboardShouldPersistTaps="handled"
       >
-        {onParent ? (
+        {header ? (
           <View style={styles.top}>
-            <ParentButton onPress={onParent} />
+            <HeaderActions />
           </View>
         ) : null}
         <View style={styles.card}>{children}</View>

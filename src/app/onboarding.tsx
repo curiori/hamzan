@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from "expo-router";
+import { Redirect } from "expo-router";
 import { FirstSteps } from "@/features/onboarding/first-steps";
 import { OnboardingFrame } from "@/features/onboarding/frame";
 import { onboardingStep } from "@/features/onboarding/gate";
@@ -14,11 +14,11 @@ export default function OnboardingRoute() {
   const beginPlacement = useAppStore((s) => s.beginPlacement);
   const ackPlacement = useAppStore((s) => s.ackPlacement);
   const runner = useSessionRunner();
-  const router = useRouter();
 
   if (!step) return <Redirect href="/" />;
   return (
-    <OnboardingFrame onParent={step !== "setup" && profile ? () => router.push("/parent") : undefined}>
+    // once a child exists: switch children (a sibling mid-diagnosis) and reach the parent area
+    <OnboardingFrame header={step !== "setup" && !!profile}>
       {step === "setup" || !profile ? (
         <Setup />
       ) : step === "firstSteps" ? (
