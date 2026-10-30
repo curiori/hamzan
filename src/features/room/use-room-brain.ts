@@ -14,7 +14,7 @@ import {
 } from "react-native-reanimated";
 import { createBrain, isNight, stepBrain, type Activity, type Brain, type BrainEvent, type World } from "@/game/hamster-brain";
 import { clampToFloor, type Point } from "@/game/room";
-import { walkMs } from "./stage-rules";
+import { walkAxis, walkMs } from "./stage-rules";
 
 // The room makes its own calm moves when the system asks to reduce motion (slow walks, a nod instead of a hop),
 // so Reanimated must play them instead of cutting every animation to its end. Callbacks stay on withTiming and
@@ -156,6 +156,8 @@ export function useRoomBrain({
   // a new visit begins a fresh plan, which opens with the celebration or the new good
   useEffect(() => {
     if (!active) {
+      // a walk that ends on the UI thread just as the room hides must not move the brain on
+      seqRef.current += 1;
       stopAll();
       return;
     }
@@ -186,13 +188,20 @@ export function useRoomBrain({
 
     if (a.kind === "walk") {
       const ms = walkMs(from, a.to, a.dash, rm);
+      const axis = walkAxis(from, a.to);
       flip.value = a.to.x < from.x ? -1 : 1;
       step.value = loop(tween(1, a.dash ? 90 : 160), -1, true);
-      x.value = tween(a.to.x, ms, Easing.linear);
-      y.value = withTiming(a.to.y, { duration: ms, easing: Easing.linear, reduceMotion: KEEP }, (finished) => {
-        if (finished) runOnJS(done)();
-      });
-      return;
+      if (axis === "x")
+        x.value = withTiming(a.to.x, { duration: ms, easing: Easing.linear, reduceMotion: KEEP }, (finished) => {
+          if (finished) runOnJS(done)();
+        });
+      else x.value = tween(a.to.x, ms, Easing.linear);
+      if (axis === "y")
+        y.value = withTiming(a.to.y, { duration: ms, easing: Easing.linear, reduceMotion: KEEP }, (finished) => {
+          if (finished) runOnJS(done)();
+        });
+      else y.value = tween(a.to.y, ms, Easing.linear);
+      if (axis === null) later(0, done);
     }
 
     if (a.kind === "idle") {
@@ -203,8 +212,9 @@ export function useRoomBrain({
           chain(tween(6, 220), tween(-6, 220)),
           3,
           true,
-          () => {
-            tilt.value = withTiming(0, { duration: 150, reduceMotion: KEEP });
+          (finished) => {
+            // a cancelled groom must not straighten the next activity's tilt
+            if (finished) tilt.value = withTiming(0, { duration: 150, reduceMotion: KEEP });
           },
           KEEP,
         );
@@ -263,7 +273,8 @@ export function useRoomBrain({
       else hop.value = loop(chain(tween(-14, 160), tween(0, 160)), 3);
     }
 
-    later(a.ms, done);
+    // a walk ends when it arrives; everything else after its time
+    if (a.kind !== "walk") later(a.ms, done);
     return () => {
       timers.current.forEach(clearTimeout);
       timers.current = [];

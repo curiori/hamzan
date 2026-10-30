@@ -18,6 +18,18 @@ export function walkMs(from: Point, to: Point, dash: boolean, reduceMotion: bool
   return Math.round((Math.hypot(to.x - from.x, to.y - from.y) / speed) * 1000);
 }
 
+/**
+ * The axis whose animation reports the end of a walk: the one that moves most. Reanimated calls back at once
+ * when a value is already at its target, so an axis that does not move would end the walk before it starts.
+ * Null when the walk does not move at all.
+ */
+export function walkAxis(from: Point, to: Point): "x" | "y" | null {
+  const dx = Math.abs(to.x - from.x);
+  const dy = Math.abs(to.y - from.y);
+  if (dx === 0 && dy === 0) return null;
+  return dx >= dy ? "x" : "y";
+}
+
 /** Goods whose bottom edge is above this are drawn behind the hamster. */
 export function hamsterDepth(a: Activity, from: Point): number {
   if (a.kind === "walk") return Math.max(from.y, a.to.y);

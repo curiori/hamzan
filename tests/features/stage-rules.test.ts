@@ -1,10 +1,18 @@
 import { describe, expect, test } from "bun:test";
 import type { Activity } from "@/game/hamster-brain";
-import { ABOVE_ALL, hamsterDepth, look, walkMs } from "@/features/room/stage-rules";
+import { ABOVE_ALL, hamsterDepth, look, walkAxis, walkMs } from "@/features/room/stage-rules";
 
 const at = { x: 200, y: 210 };
 
 describe("timing and depth", () => {
+  test("a walk ends on the axis that moves most, so a walk along a row still takes its time", () => {
+    // Reanimated calls back at once when a value is already at its target (desk, wheel and house share y 214)
+    expect(walkAxis({ x: 52, y: 214 }, { x: 137, y: 214 })).toBe("x");
+    expect(walkAxis({ x: 200, y: 190 }, { x: 200, y: 250 })).toBe("y");
+    expect(walkAxis({ x: 100, y: 200 }, { x: 140, y: 230 })).toBe("x");
+    expect(walkAxis({ x: 100, y: 200 }, { x: 100, y: 200 })).toBeNull();
+  });
+
   test("walks take distance over speed and are slower with reduce motion", () => {
     expect(walkMs(at, { x: 240, y: 210 }, false, false)).toBe(1000);
     expect(walkMs(at, { x: 330, y: 210 }, true, false)).toBe(1000);
