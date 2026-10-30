@@ -61,6 +61,12 @@ export const GOOD_KIND: Record<string, SlotKind> = {
   ladder: "floorSmall",
   grass: "sill",
   lamp: "wall",
+  bookshelf: "floorLarge",
+  slide: "floorLarge",
+  bridge: "ceiling",
+  bed: "floorSmall",
+  piano: "floorLarge",
+  goldwheel: "floorLarge",
 };
 
 export const DEFAULT_SLOT: Record<string, SlotId> = {
@@ -78,6 +84,12 @@ export const DEFAULT_SLOT: Record<string, SlotId> = {
   ladder: "floorS2",
   grass: "sill",
   lamp: "wall1",
+  bookshelf: "floorL1",
+  slide: "floorL3",
+  bridge: "ceil1",
+  bed: "floorS2",
+  piano: "floorL2",
+  goldwheel: "floorL2",
 };
 
 /** Where the hamster sits to eat a snack it was given: in front, near the middle of the floor. */
@@ -104,13 +116,14 @@ export type RoomLayout = Partial<Record<SlotId, string>>;
 /**
  * Where the hamster sits on a good, in the good's 60×60 box, how long getting there takes, and whether the good
  * rocks it. The hanging goods hang low enough to keep a seated hamster inside the room; the ladder is climbed to
- * its top rung; the cushion is sat in.
+ * its top rung; the cushion is sat in and the bed lain in.
  */
 export const SEATS: Record<string, { at: Point; moveMs: number; sway?: boolean }> = {
   swing: { at: { x: 30, y: 49 }, moveMs: 300, sway: true },
   hammock: { at: { x: 30, y: 49 }, moveMs: 300, sway: true },
   ladder: { at: { x: 30, y: 6 }, moveMs: 900 },
   cushion: { at: { x: 30, y: 47 }, moveMs: 300 },
+  bed: { at: { x: 30, y: 46 }, moveMs: 300 },
 };
 
 /** The hamster's feet when it sits on `goodId` in `slotId`, in room units; undefined for goods without a seat. */
@@ -142,6 +155,52 @@ export function pushSpot(goodId: string, slotId: SlotId): { at: Point; face: 1 |
   const y = Math.min(FLOOR.y1, Math.max(FLOOR.y0, sl.y + BALL.floor * sl.scale));
   const face: 1 | -1 = cx - reach >= FLOOR.x0 ? 1 : -1;
   return { at: { x: Math.min(FLOOR.x1, Math.max(FLOOR.x0, cx - face * reach)), y }, face };
+}
+
+/** One leg of a good's course: where the hamster's feet go and how long it takes; `notes` keys sound on the way, `ease` "in" speeds up (sliding). */
+export interface CourseStep {
+  to: Point;
+  ms: number;
+  notes?: number;
+  ease?: "in";
+}
+
+/**
+ * The way the hamster goes over a good, in the good's 60×60 box, starting from the spot where it stands to use it:
+ * up the slide's ladder and down the slide, across the rope bridge and back, over the piano's keys.
+ */
+export const COURSES: Record<string, CourseStep[]> = {
+  slide: [
+    { to: { x: 16, y: 58 }, ms: 500 },
+    { to: { x: 18, y: 10 }, ms: 900 },
+    { to: { x: 44, y: 56 }, ms: 450, ease: "in" },
+  ],
+  bridge: [
+    { to: { x: 6, y: 50 }, ms: 500 },
+    { to: { x: 54, y: 50 }, ms: 1800 },
+    { to: { x: 6, y: 50 }, ms: 1800 },
+  ],
+  piano: [
+    { to: { x: 8, y: 50 }, ms: 400 },
+    { to: { x: 52, y: 50 }, ms: 2000, notes: 5 },
+  ],
+};
+/** the last leg, back to the spot */
+const COURSE_BACK_MS = 500;
+
+/** A good's course in room units for its slot, kept where the hamster fits and ending back at the spot; undefined for goods without one. */
+export function courseIn(goodId: string, slotId: SlotId): { steps: CourseStep[]; ms: number } | undefined {
+  const course = COURSES[goodId];
+  if (!course) return undefined;
+  const sl = SLOTS[slotId];
+  const steps: CourseStep[] = [
+    ...course.map((s) => ({
+      ...s,
+      to: { x: clamp(sl.x + s.to.x * sl.scale, FLOOR.x0, FLOOR.x1), y: clamp(sl.y + s.to.y * sl.scale, HAMSTER_H - 1, FLOOR.y1) },
+    })),
+    { to: { ...sl.spot }, ms: COURSE_BACK_MS },
+  ];
+  return { steps, ms: steps.reduce((sum, s) => sum + s.ms, 0) };
 }
 
 export const fits = (goodId: string, slotId: SlotId) => GOOD_KIND[goodId] === SLOTS[slotId].kind;

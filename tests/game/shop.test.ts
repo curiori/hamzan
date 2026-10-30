@@ -19,15 +19,32 @@ describe("shop", () => {
       cushion: ["good", 100, "クッション"],
       ladder: ["good", 120, "はしご"],
       lamp: ["good", 150, "ランプ"],
+      bookshelf: ["good", 180, "ほんだな"],
+      slide: ["good", 200, "すべりだい"],
+      bridge: ["good", 250, "つりばし"],
+      bed: ["good", 300, "ふわふわベッド"],
+      piano: ["good", 400, "おもちゃの ピアノ"],
+      goldwheel: ["good", 600, "きんの まわしぐるま"],
       ribbon: ["wear", 120, "リボン"],
       glasses: ["wear", 150, "めがね"],
       scarf: ["wear", 180, "マフラー"],
+      beret: ["wear", 200, "ベレーぼう"],
+      headphones: ["wear", 250, "ヘッドホン"],
       "wall-sky": ["wallpaper", 150, "そらいろの かべがみ"],
+      "wall-forest": ["wallpaper", 250, "もりの かべがみ"],
+      "wall-night": ["wallpaper", 350, "よぞらの かべがみ"],
       "floor-grass": ["floor", 200, "しばふの ゆか"],
       broccoli: ["snack", 10, "ブロッコリー"],
       apple: ["snack", 15, "りんご"],
       carrot: ["snack", 15, "にんじん"],
     });
+    // the shelves list each kind cheapest first
+    expect(SHOP.map((i) => i.id)).toEqual([
+      "ball", "blocks", "grass", "cushion", "ladder", "lamp", "bookshelf", "slide", "bridge", "bed", "piano", "goldwheel",
+      "ribbon", "glasses", "scarf", "beret", "headphones",
+      "wall-sky", "wall-forest", "wall-night", "floor-grass",
+      "broccoli", "apple", "carrot",
+    ]);
     expect(shopItem("lamp")?.price).toBe(150);
     expect(shopItem("crown")).toBeUndefined();
     expect(itemName("desk")).toBe("べんきょうづくえ");

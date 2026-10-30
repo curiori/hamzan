@@ -3,6 +3,8 @@ import { REWARDS } from "@/game/achievements";
 import {
   autoLayout,
   clampToFloor,
+  COURSES,
+  courseIn,
   DEFAULT_SLOT,
   FLOOR,
   fits,
@@ -96,7 +98,7 @@ describe("slots", () => {
   });
 
   test("a hamster on a seat stays inside the room in every slot of the good's kind", () => {
-    expect(Object.keys(SEATS).sort()).toEqual(["cushion", "hammock", "ladder", "swing"]);
+    expect(Object.keys(SEATS).sort()).toEqual(["bed", "cushion", "hammock", "ladder", "swing"]);
     for (const good of Object.keys(SEATS)) {
       const slots = (Object.keys(SLOTS) as SlotId[]).filter((s) => SLOTS[s].kind === GOOD_KIND[good]);
       expect(slots.length).toBeGreaterThan(0);
@@ -113,7 +115,33 @@ describe("slots", () => {
     expect(seatIn("wheel", "floorL2")).toBeUndefined();
     expect([seatMoveMs("swing"), seatMoveMs("hammock"), seatMoveMs("ladder"), seatMoveMs("cushion"), seatMoveMs("wheel")]).toEqual([300, 300, 900, 300, 0]);
     // only hanging goods rock the hamster
-    expect(["swing", "hammock", "ladder", "cushion", "wheel"].map(seatSways)).toEqual([true, true, false, false, false]);
+    expect(["swing", "hammock", "ladder", "cushion", "wheel", "bed"].map(seatSways)).toEqual([true, true, false, false, false, false]);
+    expect(seatMoveMs("bed")).toBe(300);
+  });
+
+  test("courses keep the hamster inside the room in every slot of the good's kind and end at the spot", () => {
+    expect(Object.keys(COURSES).sort()).toEqual(["bridge", "piano", "slide"]);
+    for (const good of Object.keys(COURSES)) {
+      const slots = (Object.keys(SLOTS) as SlotId[]).filter((s) => SLOTS[s].kind === GOOD_KIND[good]);
+      expect(slots.length).toBeGreaterThan(0);
+      for (const slot of slots) {
+        const course = courseIn(good, slot);
+        expect(course).toBeDefined();
+        if (!course) continue;
+        for (const step of course.steps) {
+          expect(step.to.x).toBeGreaterThanOrEqual(FLOOR.x0);
+          expect(step.to.x).toBeLessThanOrEqual(FLOOR.x1);
+          // the sprite hangs HAMSTER_H - 1 above the feet
+          expect(step.to.y).toBeGreaterThanOrEqual(HAMSTER_H - 1);
+          expect(step.to.y).toBeLessThanOrEqual(FLOOR.y1);
+        }
+        expect(course.steps[course.steps.length - 1].to).toEqual(SLOTS[slot].spot);
+        expect(course.ms).toBe(course.steps.reduce((sum, s) => sum + s.ms, 0));
+      }
+    }
+    const piano = courseIn("piano", "floorL2");
+    expect(piano?.steps.filter((s) => s.notes).map((s) => s.notes)).toEqual([5]);
+    expect(courseIn("wheel", "floorL2")).toBeUndefined();
   });
 
   test("the hamster pushes the ball from a side with floor to stand on, its nose at the ball", () => {
@@ -141,6 +169,14 @@ describe("slots", () => {
       expect(SLOTS[DEFAULT_SLOT[item.id]].kind).toBe(GOOD_KIND[item.id]);
     }
     expect([GOOD_KIND.ball, GOOD_KIND.ladder, GOOD_KIND.grass, GOOD_KIND.lamp]).toEqual(["floorSmall", "floorSmall", "sill", "wall"]);
+    expect(["bookshelf", "slide", "bridge", "bed", "piano", "goldwheel"].map((id) => [GOOD_KIND[id], DEFAULT_SLOT[id]])).toEqual([
+      ["floorLarge", "floorL1"],
+      ["floorLarge", "floorL3"],
+      ["ceiling", "ceil1"],
+      ["floorSmall", "floorS2"],
+      ["floorLarge", "floorL2"],
+      ["floorLarge", "floorL2"],
+    ]);
     for (const item of SHOP.filter((i) => i.kind !== "good")) expect(GOOD_KIND[item.id]).toBeUndefined();
   });
 });
