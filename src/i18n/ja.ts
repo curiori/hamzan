@@ -78,6 +78,9 @@ export const MODE_LABEL: Record<Mode, string> = { H: "ヒント", M: "メモ", S
 
 export const GRADE_LABEL = (g: number) => `小${g}`;
 
+/** What clearing a child's records takes away (everything resetProfileData starts again). */
+export const RESET_WARNING = "進み具合・ミスの記録・ごほうび・ひまわりのたね・ショップで買ったもの・おへやの配置が消え、診断からやり直します。元に戻せません。";
+
 export const ja = {
   appName: "ハムざん",
   today: "きょうの れんしゅう",

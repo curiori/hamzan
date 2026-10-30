@@ -3,6 +3,7 @@ import type { StateStorage } from "zustand/middleware";
 import { buildSet } from "../../src/domain/setBuilder";
 import { emptyWallet } from "../../src/game/economy";
 import { STORAGE_KEY, activeProfile, createAppStore } from "../../src/state/create-store";
+import { RESET_WARNING } from "../../src/i18n/ja";
 import { newProfile, todayOf } from "../../src/state/profile";
 import type { SetRun } from "../../src/state/types";
 
@@ -228,6 +229,23 @@ describe("app store", () => {
     expect(activeProfile(store.getState())?.room.layout).toEqual({});
     store.getState().setDecor("wallpaper", "wall-sky");
     expect(activeProfile(store.getState())?.room.wallpaper).toBe("wall-sky");
+  });
+
+  test("resetting a child's records also clears the seeds, what was bought and the room, and the warning says so", () => {
+    const store = createAppStore(memoryStorage().storage, { now: () => NOW });
+    const id = store.getState().addProfile("あに", 5);
+    store.getState().giftSeeds(100);
+    store.getState().buyItem("ball");
+    store.getState().placeNewGood("ball");
+    store.getState().setDecor("wallpaper", "wall-sky");
+    store.getState().resetProfileData(id);
+    const p = activeProfile(store.getState());
+    expect(p?.wallet.seeds).toBe(0);
+    expect(p?.inventory).toEqual({});
+    expect(p?.room.layout).toEqual({});
+    expect(p?.room.wallpaper).toBeNull();
+    expect(RESET_WARNING).toContain("ひまわりのたね");
+    expect(RESET_WARNING).toContain("ショップで買ったもの");
   });
 
   test("feedSnack gives one snack the child has, and nothing when there is none", () => {

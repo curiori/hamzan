@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { StyleSheet, View } from "react-native";
-import { GRADE_LABEL } from "@/i18n/ja";
+import { GRADE_LABEL, RESET_WARNING } from "@/i18n/ja";
 import { useAppStore } from "@/state/store";
 import { Button } from "@/ui/button";
 import { useConfirm } from "@/ui/confirm";
@@ -30,7 +30,7 @@ export function DataPane() {
                 if (
                   await confirm({
                     title: `${p.nickname}さんの記録をすべて消しますか？`,
-                    description: "進み具合・ミスの記録・ごほうびが消え、診断からやり直します。元に戻せません。",
+                    description: RESET_WARNING,
                     confirmLabel: "消す",
                     destructive: true,
                   })
