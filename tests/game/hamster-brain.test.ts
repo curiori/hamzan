@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { REWARDS } from "@/game/achievements";
 import { createBrain, EAT_MS, isNight, MIN_ACTIVITY_MS, MIN_WALK, newlyOwned, stepBrain, type Activity, type Brain, type World } from "@/game/hamster-brain";
-import { autoLayout, FLOOR, FRONT, placedGoods, type Point } from "@/game/room";
+import { autoLayout, FLOOR, FRONT, placedGoods, SLOTS, type Point } from "@/game/room";
 
 const allGoods = placedGoods(autoLayout(REWARDS.map((r) => r.id))).map(({ id, spot }) => ({ id, spot }));
 const only = (...ids: string[]) => allGoods.filter((g) => ids.includes(g.id));
@@ -180,6 +180,41 @@ describe("snacks", () => {
     const fed = stepBrain(createBrain(43, w, HOME, calm), w, { type: "feed", snack: "apple" }, FRONT);
     expect(fed.now.kind).toBe("eat");
     expect(stepBrain(fed, w, { type: "done" }, FRONT).now.kind).not.toBe("eat");
+  });
+});
+
+describe("the bed, headphones and the golden wheel", () => {
+  const bed = { id: "bed", spot: SLOTS.floorS2.spot };
+
+  test("at night the hamster sleeps in its bed when it has one, and by day it naps in the house", () => {
+    const night = run(47, world({ night: true, goods: [...allGoods, bed] }), 400).filter(({ a }) => a.kind === "sleep");
+    expect(night.length).toBeGreaterThan(0);
+    for (const { a, from } of night) {
+      expect(a).toMatchObject({ inBed: true, inHouse: false });
+      expect(dist(from, bed.spot)).toBeLessThan(MIN_WALK);
+    }
+    const naps = run(47, world({ goods: [...allGoods, bed] }), 1500).filter(({ a }) => a.kind === "sleep");
+    expect(naps.length).toBeGreaterThan(0);
+    for (const { a } of naps) expect(a.kind === "sleep" && a.inHouse && !a.inBed).toBe(true);
+    // a night without a bed is spent in the house as before
+    const noBed = run(47, world({ night: true }), 400).filter(({ a }) => a.kind === "sleep");
+    expect(noBed.length).toBeGreaterThan(0);
+    for (const { a } of noBed) expect(a.kind === "sleep" && a.inHouse && !a.inBed).toBe(true);
+  });
+
+  test("with headphones on the hamster sometimes sways to the music, and never without them", () => {
+    const grooves = (w: World) => run(53, w, 1500).filter(({ a }) => a.kind === "idle" && a.act === "groove").length;
+    expect(grooves(world({ wear: "headphones" }))).toBeGreaterThan(0);
+    expect(grooves(world({ wear: null }))).toBe(0);
+    expect(grooves(world({ wear: "ribbon" }))).toBe(0);
+    expect(grooves(world())).toBe(0);
+  });
+
+  test("the golden wheel sometimes tumbles like the wheel", () => {
+    const gold = allGoods.map((g) => (g.id === "wheel" ? { ...g, id: "goldwheel" } : g));
+    const tumbles = (w: World) => run(59, w, 1500).filter(({ a }) => a.kind === "play" && a.good === "goldwheel" && a.variant === "tumble").length;
+    expect(tumbles(world({ goods: gold }))).toBeGreaterThan(0);
+    expect(tumbles(world({ goods: gold, reduceMotion: true }))).toBe(0);
   });
 });
 

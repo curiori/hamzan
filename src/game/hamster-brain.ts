@@ -24,12 +24,12 @@ const DASH_STEPS: [number, number] = [2, 3];
 const DAY_WEIGHTS = { idle: 30, walk: 25, play: 35, dash: 5, nap: 5 };
 const NIGHT_WEIGHTS = { sleep: 75, idle: 15, walk: 10 };
 
-export type IdleAct = "blink" | "ear" | "look" | "groom";
+export type IdleAct = "blink" | "ear" | "look" | "groom" | "groove";
 export type Activity =
   | { kind: "idle"; act: IdleAct; ms: number }
   | { kind: "walk"; to: Point; dash: boolean; carry: boolean }
   | { kind: "play"; good: string; variant: "normal" | "tumble"; ms: number }
-  | { kind: "sleep"; inHouse: boolean; ms: number }
+  | { kind: "sleep"; inHouse: boolean; ms: number; inBed?: boolean }
   | { kind: "react"; how: "hop" | "pet"; ms: number }
   | { kind: "celebrate"; ms: number }
   | { kind: "eat"; snack: string; ms: number };
@@ -38,6 +38,8 @@ export interface World {
   goods: { id: string; spot: Point }[];
   night: boolean;
   reduceMotion: boolean;
+  /** what the hamster has on: with headphones it sometimes sways to the music */
+  wear?: string | null;
 }
 
 export interface Brain {
@@ -61,6 +63,9 @@ export type BrainEvent =
   | { type: "rearranged" };
 
 const IDLE_ACTS: IdleAct[] = ["blink", "ear", "look", "groom"];
+/** with headphones on, a third of the idle moments are spent swaying to the music */
+const idleActs = (w: World): IdleAct[] => (w.wear === "headphones" ? [...IDLE_ACTS, "groove", "groove"] : IDLE_ACTS);
+const wheels = new Set(["wheel", "goldwheel"]);
 
 const dist = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -93,14 +98,17 @@ const house = (w: World) => w.goods.find((g) => g.id === "house") ?? null;
 
 /** Walk to a good, use it, and for the food bowl carry the seeds home afterwards. */
 function playPlan(r: Rng, w: World, from: Point, good: { id: string; spot: Point }, dash = false): Activity[] {
-  const tumble = good.id === "wheel" && !w.reduceMotion && r.next() < TUMBLE_CHANCE;
+  const tumble = wheels.has(good.id) && !w.reduceMotion && r.next() < TUMBLE_CHANCE;
   const acts: Activity[] = [...goTo(from, good.spot, dash), { kind: "play", good: good.id, variant: tumble ? "tumble" : "normal", ms: r.int(...PLAY_MS) }];
   const h = house(w);
   if (good.id === "bowl" && h) acts.push(...goTo(good.spot, h.spot, false, true), { kind: "play", good: "house", variant: "normal", ms: STORE_FOOD_MS });
   return acts;
 }
 
-function sleepPlan(w: World, from: Point, ms: number): Activity[] {
+/** The night's sleep goes to the bed when there is one; other sleeps (and nights without a bed) to the house. */
+function sleepPlan(w: World, from: Point, ms: number, night = false): Activity[] {
+  const bed = night ? w.goods.find((g) => g.id === "bed") : undefined;
+  if (bed) return [...goTo(from, bed.spot), { kind: "sleep", inHouse: false, inBed: true, ms }];
   const h = house(w);
   return h ? [...goTo(from, h.spot), { kind: "sleep", inHouse: true, ms }] : [{ kind: "sleep", inHouse: false, ms }];
 }
@@ -108,9 +116,9 @@ function sleepPlan(w: World, from: Point, ms: number): Activity[] {
 function choose(r: Rng, w: World, here: Point, lastGood: string | null): Activity[] {
   if (w.night) {
     const what = pickWeighted(r, NIGHT_WEIGHTS);
-    if (what === "sleep") return sleepPlan(w, here, r.int(...NIGHT_SLEEP_MS));
+    if (what === "sleep") return sleepPlan(w, here, r.int(...NIGHT_SLEEP_MS), true);
     if (what === "walk") return [{ kind: "walk", to: farPoint(r, here), dash: false, carry: false }];
-    return [{ kind: "idle", act: r.pick(IDLE_ACTS), ms: r.int(...IDLE_MS) }];
+    return [{ kind: "idle", act: r.pick(idleActs(w)), ms: r.int(...IDLE_MS) }];
   }
   const what = pickWeighted(r, { ...DAY_WEIGHTS, play: w.goods.length ? DAY_WEIGHTS.play : 0, dash: w.reduceMotion ? 0 : DAY_WEIGHTS.dash });
   if (what === "play") {
@@ -129,7 +137,7 @@ function choose(r: Rng, w: World, here: Point, lastGood: string | null): Activit
     return acts;
   }
   if (what === "nap") return sleepPlan(w, here, r.int(...NAP_MS));
-  return [{ kind: "idle", act: r.pick(IDLE_ACTS), ms: r.int(...IDLE_MS) }];
+  return [{ kind: "idle", act: r.pick(idleActs(w)), ms: r.int(...IDLE_MS) }];
 }
 
 /** Runs one step with the brain's random numbers and hands back the seed for the next one. */
