@@ -54,6 +54,12 @@ describe("choosing what to do", () => {
     if (b.now.kind === "walk") expect(onFloor(b.now.to)).toBe(true);
   });
 
+  test("a floor tap without a real point is ignored, so the hamster never walks to nowhere", () => {
+    const b = createBrain(3, world(), HOME, calm);
+    expect(stepBrain(b, world(), { type: "tapFloor", at: { x: Number.NaN, y: 200 } }, HOME)).toBe(b);
+    expect(stepBrain(b, world(), { type: "tapFloor", at: { x: 200, y: Number.POSITIVE_INFINITY } }, HOME)).toBe(b);
+  });
+
   test("plays only with goods in the world and ignores taps on goods it does not have", () => {
     const w = world({ goods: only("wheel", "bowl") });
     const goods = new Set(plays(run(5, w, 1500)));

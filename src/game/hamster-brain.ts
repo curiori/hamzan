@@ -147,6 +147,8 @@ export function createBrain(seed: number, world: World, here: Point, start: { ce
 
 export function stepBrain(b: Brain, world: World, ev: BrainEvent, here: Point): Brain {
   if (ev.type === "tapGood" && !world.goods.some((g) => g.id === ev.good)) return b;
+  // a position that is not a number would freeze the hamster for good
+  if (ev.type === "tapFloor" && !(Number.isFinite(ev.at.x) && Number.isFinite(ev.at.y))) return b;
   const [acts, next] = withRng(b.seed, (r): Activity[] => {
     switch (ev.type) {
       case "tap":

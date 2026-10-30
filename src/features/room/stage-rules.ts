@@ -34,7 +34,7 @@ export interface Look {
   label: string;
 }
 
-const goodName = (id: string) => REWARDS.find((r) => r.id === id)?.name ?? "グッズ";
+export const goodName = (id: string) => REWARDS.find((r) => r.id === id)?.name ?? "グッズ";
 const front = (label: string, extra: Partial<Look> = {}): Look => ({ view: "front", mood: "idle", cheeks: false, bubble: null, label, ...extra });
 
 const IDLE_LABEL = { blink: "ひとやすみ ちゅう", ear: "ひとやすみ ちゅう", look: "きょろきょろ して いる", groom: "けづくろい ちゅう" } as const;

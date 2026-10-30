@@ -55,6 +55,16 @@ export function cue(kind: Cue, opts: { sound: boolean; vibration: boolean }): vo
   }
 }
 
+/** A light tap in the hand, e.g. when the child touches the hamster. */
+export function tapFeel(vibration: boolean): void {
+  if (!vibration) return;
+  try {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  } catch {
+    // haptics unavailable
+  }
+}
+
 /** Loads the sounds ahead of the first answer, so the first cue is not late. */
 export function preloadCues(): void {
   try {

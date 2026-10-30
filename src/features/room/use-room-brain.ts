@@ -1,8 +1,31 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { cancelAnimation, Easing, runOnJS, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
+import {
+  cancelAnimation,
+  Easing,
+  ReduceMotion,
+  runOnJS,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+  type EasingFunction,
+  type SharedValue,
+} from "react-native-reanimated";
 import { createBrain, isNight, stepBrain, type Activity, type Brain, type BrainEvent, type World } from "@/game/hamster-brain";
 import { clampToFloor, type Point } from "@/game/room";
 import { walkMs } from "./stage-rules";
+
+// The room makes its own calm moves when the system asks to reduce motion (slow walks, a nod instead of a hop),
+// so Reanimated must play them instead of cutting every animation to its end. Callbacks stay on withTiming and
+// withRepeat themselves, so the Reanimated plugin turns them into worklets.
+const KEEP = ReduceMotion.Never;
+const tween = (to: number, duration: number, easing?: EasingFunction) =>
+  // an explicit `easing: undefined` would replace Reanimated's default easing
+  withTiming(to, easing ? { duration, easing, reduceMotion: KEEP } : { duration, reduceMotion: KEEP });
+const chain = (...steps: number[]) => withSequence(KEEP, ...steps);
+const loop = (anim: number, reps: number, reverse = false) => withRepeat(anim, reps, reverse, undefined, KEEP);
+const after = (ms: number, anim: number) => withDelay(ms, anim, KEEP);
 
 /** A placed good as the room needs it: where to stand, and for hanging goods where to sit. */
 export interface StageGood {
@@ -36,6 +59,12 @@ const SEAT_MOVE_MS = 300;
 const SURPRISE_MS = 900;
 const TUNNEL_SHIFT = 44;
 
+/** How a visit to the room begins; a new object means a new visit. */
+export interface RoomStart {
+  celebrate: boolean;
+  newGood: string | null;
+}
+
 /**
  * Runs the hamster brain while `active` (the room is on screen and the app in front): animates each activity on
  * the UI thread and asks the brain for the next one when it ends. While inactive nothing runs and nothing advances.
@@ -47,7 +76,7 @@ export function useRoomBrain({
   reduceMotion,
 }: {
   goods: StageGood[];
-  start: { celebrate: boolean; newGood: string | null };
+  start: RoomStart;
   active: boolean;
   reduceMotion: boolean;
 }) {
@@ -70,11 +99,10 @@ export function useRoomBrain({
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const goodsRef = useRef(goods);
   const rmRef = useRef(reduceMotion);
-  const startRef = useRef(start);
+  const usedStart = useRef<RoomStart | null>(null);
   useEffect(() => {
     goodsRef.current = goods;
     rmRef.current = reduceMotion;
-    startRef.current = start;
   });
 
   const world = useCallback((): World => ({ goods: goodsRef.current, night: isNight(new Date().getHours()), reduceMotion: rmRef.current }), []);
@@ -124,7 +152,8 @@ export function useRoomBrain({
     [apply, here, stopAll, world, x, y],
   );
 
-  // pause and resume with the screen: nothing runs while hidden, and the hamster picks up from where it stands
+  // pause and resume with the screen: nothing runs while hidden, and the hamster picks up from where it stands;
+  // a new visit begins a fresh plan, which opens with the celebration or the new good
   useEffect(() => {
     if (!active) {
       stopAll();
@@ -132,11 +161,17 @@ export function useRoomBrain({
     }
     const b = brainRef.current;
     const h = here();
+    stopAll();
     x.value = h.x;
     y.value = h.y;
-    if (!b) apply(createBrain(Date.now() >>> 0, world(), h, startRef.current), h);
-    else apply(stepBrain(b, world(), { type: "done" }, h), h);
-  }, [active, apply, here, stopAll, world, x, y]);
+    if (!b || usedStart.current !== start) {
+      usedStart.current = start;
+      apply(createBrain(Date.now() >>> 0, world(), h, start), h);
+    } else if (b.now.kind === "walk") {
+      // a walk cut short by the app going away goes on from here, so the plan's next step still happens at its place
+      apply({ ...b, pos: h }, h);
+    } else apply(stepBrain(b, world(), { type: "done" }, h), h);
+  }, [active, start, apply, here, stopAll, world, x, y]);
 
   // run the current activity (a state that is no longer the latest, e.g. right after resuming, is skipped)
   useEffect(() => {
@@ -152,20 +187,27 @@ export function useRoomBrain({
     if (a.kind === "walk") {
       const ms = walkMs(from, a.to, a.dash, rm);
       flip.value = a.to.x < from.x ? -1 : 1;
-      step.value = withRepeat(withTiming(1, { duration: a.dash ? 90 : 160 }), -1, true);
-      x.value = withTiming(a.to.x, { duration: ms, easing: Easing.linear });
-      y.value = withTiming(a.to.y, { duration: ms, easing: Easing.linear }, (finished) => {
+      step.value = loop(tween(1, a.dash ? 90 : 160), -1, true);
+      x.value = tween(a.to.x, ms, Easing.linear);
+      y.value = withTiming(a.to.y, { duration: ms, easing: Easing.linear, reduceMotion: KEEP }, (finished) => {
         if (finished) runOnJS(done)();
       });
       return;
     }
 
     if (a.kind === "idle") {
-      if (a.act === "blink") blink.value = withSequence(withTiming(1, { duration: 80 }), withTiming(0, { duration: 120 }), withDelay(300, withTiming(1, { duration: 80 })), withTiming(0, { duration: 120 }));
-      if (a.act === "ear") tilt.value = withSequence(withTiming(5, { duration: 90 }), withTiming(-4, { duration: 90 }), withTiming(0, { duration: 90 }));
-      if (a.act === "groom") tilt.value = withRepeat(withSequence(withTiming(6, { duration: 220 }), withTiming(-6, { duration: 220 })), 3, true, () => {
-        tilt.value = withTiming(0, { duration: 150 });
-      });
+      if (a.act === "blink") blink.value = chain(tween(1, 80), tween(0, 120), after(300, tween(1, 80)), tween(0, 120));
+      if (a.act === "ear") tilt.value = chain(tween(5, 90), tween(-4, 90), tween(0, 90));
+      if (a.act === "groom")
+        tilt.value = withRepeat(
+          chain(tween(6, 220), tween(-6, 220)),
+          3,
+          true,
+          () => {
+            tilt.value = withTiming(0, { duration: 150, reduceMotion: KEEP });
+          },
+          KEEP,
+        );
       if (a.act === "look") {
         flip.value = -flip.value;
         later(a.ms / 2, () => (flip.value = -flip.value));
@@ -176,49 +218,49 @@ export function useRoomBrain({
       const good = goodsRef.current.find((g) => g.id === a.good);
       if (good?.seat) {
         // up onto the swing or into the hammock, sway, and back down before the end
-        x.value = withTiming(good.seat.x, { duration: SEAT_MOVE_MS });
-        y.value = withTiming(good.seat.y, { duration: SEAT_MOVE_MS });
+        x.value = tween(good.seat.x, SEAT_MOVE_MS);
+        y.value = tween(good.seat.y, SEAT_MOVE_MS);
         const amp = rm ? 4 : 10;
-        sway.value = withRepeat(withSequence(withTiming(amp, { duration: 700 }), withTiming(-amp, { duration: 700 })), -1, true);
-        tilt.value = withRepeat(withSequence(withTiming(amp * 0.6, { duration: 700 }), withTiming(-amp * 0.6, { duration: 700 })), -1, true);
+        sway.value = loop(chain(tween(amp, 700), tween(-amp, 700)), -1, true);
+        tilt.value = loop(chain(tween(amp * 0.6, 700), tween(-amp * 0.6, 700)), -1, true);
         later(Math.max(0, a.ms - SEAT_MOVE_MS), () => {
           cancelAnimation(tilt);
           cancelAnimation(sway);
-          tilt.value = withTiming(0, { duration: 150 });
-          sway.value = withTiming(0, { duration: 400 });
-          x.value = withTiming(from.x, { duration: SEAT_MOVE_MS });
-          y.value = withTiming(from.y, { duration: SEAT_MOVE_MS });
+          tilt.value = tween(0, 150);
+          sway.value = tween(0, 400);
+          x.value = tween(from.x, SEAT_MOVE_MS);
+          y.value = tween(from.y, SEAT_MOVE_MS);
         });
       } else if (a.good === "wheel") {
-        step.value = withRepeat(withTiming(1, { duration: 90 }), -1, true);
-        spin.value = withRepeat(withTiming(360, { duration: rm ? 1400 : 500, easing: Easing.linear }), -1, false);
+        step.value = loop(tween(1, 90), -1, true);
+        spin.value = loop(tween(360, rm ? 1400 : 500, Easing.linear), -1);
         if (a.variant === "tumble")
           later(Math.max(0, a.ms - SURPRISE_MS), () => {
             cancelAnimation(step);
             setSurprised(true);
-            hop.value = withSequence(withTiming(-12, { duration: 180 }), withTiming(0, { duration: 220 }));
-            x.value = withTiming(clampToFloor({ x: from.x + 18 * flip.value, y: from.y }).x, { duration: 400 });
+            hop.value = chain(tween(-12, 180), tween(0, 220));
+            x.value = tween(clampToFloor({ x: from.x + 18 * flip.value, y: from.y }).x, 400);
           });
       } else if (a.good === "tunnel") {
         // in at one end, out at the other
-        x.value = withDelay(300, withTiming(clampToFloor({ x: from.x + TUNNEL_SHIFT, y: from.y }).x, { duration: Math.max(300, a.ms - 600) }));
+        x.value = after(300, tween(clampToFloor({ x: from.x + TUNNEL_SHIFT, y: from.y }).x, Math.max(300, a.ms - 600)));
       } else if (a.good === "flower") {
-        tilt.value = withRepeat(withSequence(withTiming(-8, { duration: 300 }), withTiming(0, { duration: 300 })), 4);
+        tilt.value = loop(chain(tween(-8, 300), tween(0, 300)), 4);
       } else if (a.good === "bowl") {
-        hop.value = withRepeat(withSequence(withTiming(-1.5, { duration: 150 }), withTiming(0, { duration: 150 })), -1);
+        hop.value = loop(chain(tween(-1.5, 150), tween(0, 150)), -1);
       }
     }
 
     if (a.kind === "react") {
       if (a.how === "hop")
-        if (rm) tilt.value = withSequence(withTiming(-8, { duration: 200 }), withTiming(0, { duration: 250 }));
-        else hop.value = withSequence(withTiming(-16, { duration: 200, easing: Easing.out(Easing.quad) }), withTiming(0, { duration: 250, easing: Easing.in(Easing.quad) }));
-      else tilt.value = withRepeat(withSequence(withTiming(3, { duration: 400 }), withTiming(-3, { duration: 400 })), 2, true);
+        if (rm) tilt.value = chain(tween(-8, 200), tween(0, 250));
+        else hop.value = chain(tween(-16, 200, Easing.out(Easing.quad)), tween(0, 250, Easing.in(Easing.quad)));
+      else tilt.value = loop(chain(tween(3, 400), tween(-3, 400)), 2, true);
     }
 
     if (a.kind === "celebrate") {
-      if (rm) tilt.value = withRepeat(withSequence(withTiming(6, { duration: 400 }), withTiming(-6, { duration: 400 })), 3, true);
-      else hop.value = withRepeat(withSequence(withTiming(-14, { duration: 160 }), withTiming(0, { duration: 160 })), 3);
+      if (rm) tilt.value = loop(chain(tween(6, 400), tween(-6, 400)), 3, true);
+      else hop.value = loop(chain(tween(-14, 160), tween(0, 160)), 3);
     }
 
     later(a.ms, done);
