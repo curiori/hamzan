@@ -1,6 +1,6 @@
 import type { Mood, Pose } from "@/art/hamster";
 import type { Activity } from "@/game/hamster-brain";
-import { GOOD_KIND, pushSpot, seatIn, type Point, type SlotId } from "@/game/room";
+import { COURSES, courseIn, GOOD_KIND, pushSpot, seatIn, seatMoveMs, type CourseStep, type Point, type SlotId } from "@/game/room";
 import { itemName } from "@/game/shop";
 
 // How the room screen shows each activity: walk speeds, drawing depth, which hamster drawing, and the
@@ -33,12 +33,13 @@ export function walkAxis(from: Point, to: Point): "x" | "y" | null {
 /** Goods that are only looked at: the hamster never goes to play with them. */
 export const PLAYABLE_EXCEPT = ["lamp"];
 
-/** A placed good as the moving room needs it: where to stand to use it, where to sit on it, and where to push it from. */
+/** A placed good as the moving room needs it: where to stand to use it, where to sit on it, where to push it from, and the way over it. */
 export interface StageGood {
   id: string;
   spot: Point;
   seat?: Point;
   push?: { at: Point; face: 1 | -1 };
+  course?: { steps: CourseStep[]; ms: number };
 }
 
 /** The goods the hamster plays with; the ball is walked to from the side it is pushed from, so nothing steps back before pushing. */
@@ -47,12 +48,23 @@ export function stageGoods(placed: { id: string; slot: SlotId; spot: Point }[]):
     .filter((g) => !PLAYABLE_EXCEPT.includes(g.id))
     .map((g) => {
       const push = pushSpot(g.id, g.slot);
-      return { id: g.id, spot: push ? push.at : g.spot, seat: seatIn(g.id, g.slot), push };
+      return { id: g.id, spot: push ? push.at : g.spot, seat: seatIn(g.id, g.slot), push, course: courseIn(g.id, g.slot) };
     });
 }
 
-/** The goods an activity uses: the good played with, or the house slept in. */
-const usedGoods = (a: Activity): string[] => (a.kind === "play" ? [a.good] : a.kind === "sleep" && a.inHouse ? ["house"] : []);
+/**
+ * Whether the hamster is up on its good (a seat, a course or the bed it sleeps in) rather than on the floor: where it
+ * stands then is the spot it went up from.
+ */
+export const perchedOn = (a: Activity): boolean =>
+  (a.kind === "play" && (seatMoveMs(a.good) > 0 || !!COURSES[a.good])) || (a.kind === "sleep" && !!a.inBed);
+
+/** The goods an activity uses: the good played with, or the house or the bed slept in. */
+const usedGoods = (a: Activity): string[] => {
+  if (a.kind === "play") return [a.good];
+  if (a.kind === "sleep") return a.inHouse ? ["house"] : a.inBed ? ["bed"] : [];
+  return [];
+};
 const samePoint = (a?: Point, b?: Point) => a?.x === b?.x && a?.y === b?.y;
 
 /**
@@ -80,6 +92,17 @@ export function hamsterDepth(a: Activity, from: Point): number {
   return from.y;
 }
 
+/**
+ * The good drawn over the hamster sitting or lying in it (the cushion, the bed): it lets a press through, so the
+ * hamster under it answers a tap. Null when the hamster is not in a good or is drawn over it.
+ */
+export function coveringGood(a: Activity, from: Point, placed: { id: string; depth: number }[]): string | null {
+  if (!perchedOn(a)) return null;
+  const id = a.kind === "play" ? a.good : "bed";
+  const good = placed.find((g) => g.id === id);
+  return good && good.depth > hamsterDepth(a, from) ? id : null;
+}
+
 export interface Look {
   view: "front" | "side" | "hidden";
   mood: Mood;
@@ -98,8 +121,9 @@ export function look(a: Activity): Look {
     case "walk":
       return { view: "side", mood: "idle", cheeks: a.carry, bubble: null, label: a.carry ? "たねを はこんで いる" : a.dash ? "はしって いる" : "さんぽ ちゅう" };
     case "idle":
-      return front(IDLE_LABEL[a.act]);
+      return a.act === "groove" ? front(IDLE_LABEL.groove, { mood: "happy", bubble: "♪" }) : front(IDLE_LABEL[a.act]);
     case "sleep":
+      if (a.inBed) return front("ベッドで ねて いる", { pose: "sleep", bubble: "Zzz" });
       return a.inHouse
         ? { view: "hidden", mood: "idle", cheeks: false, bubble: "Zzz", label: "おうちで ねて いる" }
         : front("ねて いる", { pose: "sleep", bubble: "Zzz" });
@@ -118,14 +142,26 @@ export function look(a: Activity): Look {
           return { view: "hidden", mood: "idle", cheeks: false, bubble: null, label };
         case "wheel":
           return { view: "side", mood: "idle", cheeks: false, bubble: null, label };
+        case "goldwheel":
+          return { view: "side", mood: "idle", cheeks: false, bubble: "きらきら", label };
+        case "slide":
+          return { view: "side", mood: "idle", cheeks: false, bubble: "わーい", label };
+        case "bridge":
+          return { view: "side", mood: "idle", cheeks: false, bubble: "どきどき", label };
+        case "piano":
+          return { view: "side", mood: "idle", cheeks: false, bubble: "♪", label };
         case "ball":
           return { view: "side", mood: "idle", cheeks: false, bubble: "ころころ", label };
         case "desk":
           return front(label, { pose: "read", bubble: "なるほど" });
+        case "bookshelf":
+          return front(label, { pose: "read", bubble: "ふむふむ" });
         case "bowl":
           return front(label, { pose: "cheeks" });
         case "hammock":
           return front(label, { pose: "sleep", bubble: "Zzz" });
+        case "bed":
+          return front(label, { pose: "sleep", bubble: "ごろん" });
         case "swing":
         case "ladder":
           return front(label, { mood: "happy" });

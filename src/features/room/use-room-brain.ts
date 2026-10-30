@@ -14,7 +14,7 @@ import {
 } from "react-native-reanimated";
 import { createBrain, isNight, stepBrain, type Activity, type Brain, type BrainEvent, type World } from "@/game/hamster-brain";
 import { clampToFloor, seatMoveMs, seatSways, type Point } from "@/game/room";
-import { rearrangedUnder, walkAxis, walkMs, type StageGood } from "./stage-rules";
+import { perchedOn, rearrangedUnder, walkAxis, walkMs, type StageGood } from "./stage-rules";
 
 // The room makes its own calm moves when the system asks to reduce motion (slow walks, a nod instead of a hop),
 // so Reanimated must play them instead of cutting every animation to its end. Callbacks stay on withTiming and
@@ -39,7 +39,7 @@ export interface Motion {
   flip: SharedValue<number>;
   /** 0..1, picks the walking frame */
   step: SharedValue<number>;
-  /** degrees of the wheel or the ball */
+  /** degrees of the wheels or the ball */
   spin: SharedValue<number>;
   /** degrees of the swing, the hammock or the top block */
   sway: SharedValue<number>;
@@ -54,6 +54,10 @@ const TUNNEL_SHIFT = 44;
 const PUSH_MOVE_MS = 400;
 /** when the wobbling top block falls, from the start of the blocks play */
 const BLOCKS_FALL_MS = 1820;
+/** goods that turn under the hamster's feet */
+const WHEELS = ["wheel", "goldwheel"];
+/** swaying to the music: one beat each way */
+const GROOVE_BEAT_MS = 300;
 
 /** How a visit to the room begins; a new object means a new visit. */
 export interface RoomStart {
@@ -70,11 +74,14 @@ export function useRoomBrain({
   start,
   active,
   reduceMotion,
+  wear = null,
 }: {
   goods: StageGood[];
   start: RoomStart;
   active: boolean;
   reduceMotion: boolean;
+  /** what the hamster has on (headphones make it sway to the music now and then) */
+  wear?: string | null;
 }) {
   const x = useSharedValue(HOME.x);
   const y = useSharedValue(HOME.y);
@@ -95,13 +102,18 @@ export function useRoomBrain({
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const goodsRef = useRef(goods);
   const rmRef = useRef(reduceMotion);
+  const wearRef = useRef(wear);
   const usedStart = useRef<RoomStart | null>(null);
   useEffect(() => {
     goodsRef.current = goods;
     rmRef.current = reduceMotion;
+    wearRef.current = wear;
   });
 
-  const world = useCallback((): World => ({ goods: goodsRef.current, night: isNight(new Date().getHours()), reduceMotion: rmRef.current }), []);
+  const world = useCallback(
+    (): World => ({ goods: goodsRef.current, night: isNight(new Date().getHours()), reduceMotion: rmRef.current, wear: wearRef.current }),
+    [],
+  );
 
   const stopAll = useCallback(() => {
     timers.current.forEach(clearTimeout);
@@ -117,11 +129,10 @@ export function useRoomBrain({
     setSurprised(false);
   }, [x, y, hop, tilt, flip, step, spin, sway, blink]);
 
-  /** where the hamster stands now; a hamster up on a seat counts as standing below it, also when that good was just put away */
+  /** where the hamster stands now; a hamster up on a good counts as standing below it, also when that good was just put away */
   const here = useCallback((): Point => {
     const now = brainRef.current?.now;
-    const up = now?.kind === "play" && seatMoveMs(now.good) > 0;
-    return up ? fromRef.current : clampToFloor({ x: x.value, y: y.value });
+    return now && perchedOn(now) ? fromRef.current : clampToFloor({ x: x.value, y: y.value });
   }, [x, y]);
 
   const apply = useCallback(
@@ -192,6 +203,18 @@ export function useRoomBrain({
       if (seqRef.current === seq) send({ type: "done" });
     };
     const later = (ms: number, f: () => void) => timers.current.push(setTimeout(f, ms));
+    /** onto a seat, and back down to where it went up from before `ms` is over */
+    const perch = (seat: Point, moveMs: number, ms: number, leaving?: () => void) => {
+      x.value = tween(seat.x, moveMs);
+      y.value = tween(seat.y, moveMs);
+      later(Math.max(0, ms - moveMs), () => {
+        leaving?.();
+        x.value = tween(from.x, moveMs);
+        y.value = tween(from.y, moveMs);
+      });
+    };
+    // when the activity ends (a course runs its last lap to the end)
+    let ends = a.kind === "walk" ? 0 : a.ms;
 
     if (a.kind === "walk") {
       const ms = walkMs(from, a.to, a.dash, rm);
@@ -229,27 +252,35 @@ export function useRoomBrain({
         flip.value = -flip.value;
         later(a.ms / 2, () => (flip.value = -flip.value));
       }
+      if (a.act === "groove") {
+        // swaying to the music with a little bounce on each beat; calmer and without the bounce with reduce motion
+        const amp = rm ? 3 : 7;
+        tilt.value = loop(chain(tween(amp, GROOVE_BEAT_MS), tween(-amp, GROOVE_BEAT_MS)), -1, true);
+        if (!rm) hop.value = loop(chain(tween(-3, GROOVE_BEAT_MS / 2), tween(0, GROOVE_BEAT_MS / 2)), -1);
+        later(Math.max(0, a.ms - GROOVE_BEAT_MS), () => {
+          cancelAnimation(tilt);
+          cancelAnimation(hop);
+          tilt.value = tween(0, 150);
+          hop.value = tween(0, 150);
+        });
+      }
     }
 
     if (a.kind === "play") {
       const good = goodsRef.current.find((g) => g.id === a.good);
       if (good?.seat) {
-        // onto the seat (the swing, the hammock, up the ladder or into the cushion) and back before the end
+        // onto the seat (the swing, the hammock, up the ladder, into the cushion or the bed) and back before the end
         const moveMs = seatMoveMs(a.good);
-        x.value = tween(good.seat.x, moveMs);
-        y.value = tween(good.seat.y, moveMs);
         if (seatSways(a.good)) {
           const amp = rm ? 4 : 10;
           sway.value = loop(chain(tween(amp, 700), tween(-amp, 700)), -1, true);
           tilt.value = loop(chain(tween(amp * 0.6, 700), tween(-amp * 0.6, 700)), -1, true);
         } else if (a.good === "cushion" && !rm) hop.value = after(moveMs, loop(chain(tween(-3, 260), tween(0, 260)), 2));
-        later(Math.max(0, a.ms - moveMs), () => {
+        perch(good.seat, moveMs, a.ms, () => {
           cancelAnimation(tilt);
           cancelAnimation(sway);
           tilt.value = tween(0, 150);
           sway.value = tween(0, 400);
-          x.value = tween(from.x, moveMs);
-          y.value = tween(from.y, moveMs);
         });
       } else if (good?.push) {
         // beside the ball, nudging it while it rolls
@@ -259,7 +290,30 @@ export function useRoomBrain({
         y.value = tween(at.y, PUSH_MOVE_MS);
         x.value = chain(tween(at.x, PUSH_MOVE_MS), loop(chain(tween(at.x + face * 4, 350), tween(at.x, 350)), -1));
         spin.value = after(PUSH_MOVE_MS, loop(tween(360 * face, rm ? 2400 : 1200, Easing.linear), -1));
-      } else if (a.good === "wheel") {
+      } else if (good?.course) {
+        // over the good's course (up the ladder and down the slide, across the bridge and back, over the keys) as many
+        // times as the play lasts, the last time to its end
+        const { steps, ms: lapMs } = good.course;
+        const laps = Math.max(1, Math.floor(a.ms / lapMs));
+        ends = Math.max(a.ms, laps * lapMs);
+        const legs = (axis: "x" | "y") => chain(...steps.map((st) => tween(st.to[axis], st.ms, st.ease === "in" ? Easing.in(Easing.quad) : Easing.linear)));
+        x.value = loop(legs("x"), laps);
+        y.value = loop(legs("y"), laps);
+        step.value = loop(tween(1, 160), -1, true);
+        // facing the way each leg goes; a leg almost straight up or down keeps the way it faced
+        let face = flip.value;
+        let at = from;
+        let t = 0;
+        for (let lap = 0; lap < laps; lap++)
+          for (const st of steps) {
+            const dx = st.to.x - at.x;
+            if (Math.abs(dx) >= 1) face = dx < 0 ? -1 : 1;
+            const f = face;
+            later(t, () => (flip.value = f));
+            t += st.ms;
+            at = st.to;
+          }
+      } else if (WHEELS.includes(a.good)) {
         step.value = loop(tween(1, 90), -1, true);
         spin.value = loop(tween(360, rm ? 1400 : 500, Easing.linear), -1);
         if (a.variant === "tumble")
@@ -287,6 +341,12 @@ export function useRoomBrain({
       }
     }
 
+    if (a.kind === "sleep" && a.inBed) {
+      // into the bed, and out again just before waking
+      const bed = goodsRef.current.find((g) => g.id === "bed");
+      if (bed?.seat) perch(bed.seat, seatMoveMs("bed"), a.ms);
+    }
+
     if (a.kind === "react") {
       if (a.how === "hop")
         if (rm) tilt.value = chain(tween(-8, 200), tween(0, 250));
@@ -306,7 +366,7 @@ export function useRoomBrain({
     }
 
     // a walk ends when it arrives; everything else after its time
-    if (a.kind !== "walk") later(a.ms, done);
+    if (a.kind !== "walk") later(ends, done);
     return () => {
       timers.current.forEach(clearTimeout);
       timers.current = [];

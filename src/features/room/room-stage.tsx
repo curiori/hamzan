@@ -1,12 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useIsFocused } from "@react-navigation/native";
-import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Pressable, StyleSheet, View, type GestureResponderEvent } from "react-native";
 import Animated, { useAnimatedStyle, ZoomIn } from "react-native-reanimated";
 import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 import { Hamster, type Mood, type Pose } from "@/art/hamster";
 import { Bubble, HamsterSide, Heart } from "@/art/hamster-poses";
-import { ITEM_PARTS, ItemThumb } from "@/art/items";
+import { GOLD_SPARKLES, ITEM_PARTS, ItemThumb } from "@/art/items";
 import { RoomBackground } from "@/art/room-scene";
 import { REWARDS } from "@/game/achievements";
 import { isNight, newlyOwned } from "@/game/hamster-brain";
@@ -34,7 +34,7 @@ import { ownedGoods, todayOf } from "@/state/profile";
 import { useAppStore } from "@/state/store";
 import type { Profile } from "@/state/types";
 import { colors } from "@/ui/theme";
-import { hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, stageGoods, type Look } from "./stage-rules";
+import { coveringGood, hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, stageGoods, type Look } from "./stage-rules";
 import { useRoomBrain, type Motion, type RoomStart } from "./use-room-brain";
 
 /** the hamster's feet inside its sprite box, in design units */
@@ -54,6 +54,8 @@ const MARKER_Z = 3000;
 /** the lamp drawing's bulb in its 60×60 box, and how far its light reaches in room units */
 const LAMP_BULB: Point = { x: 30, y: 30 };
 const LAMP_GLOW_R = 120;
+/** stars drawn over a good that twinkle while it turns */
+const TWINKLES: Partial<Record<string, ReactNode>> = { goldwheel: GOLD_SPARKLES };
 
 const everyMinute = (onChange: () => void) => {
   const t = setInterval(onChange, 60_000);
@@ -88,6 +90,7 @@ const Good = memo(function Good({
   motion,
   playing,
   playable,
+  through,
   onTap,
 }: {
   id: string;
@@ -96,6 +99,8 @@ const Good = memo(function Good({
   motion: Motion;
   playing: boolean;
   playable: boolean;
+  /** the hamster is in it, under its drawing: a press goes through to the hamster */
+  through: boolean;
   onTap: (id: string) => void;
 }) {
   const sl = SLOTS[slot];
@@ -103,6 +108,9 @@ const Good = memo(function Good({
   const parts = ITEM_PARTS[id];
   const turning = parts?.motion === "spin";
   const moving = useAnimatedStyle(() => ({ transform: [{ rotate: `${playing ? (turning ? motion.spin.value : motion.sway.value) : 0}deg` }] }), [playing, turning]);
+  // stars that stay lit while the good rests and twinkle once a turn while it turns
+  const stars = TWINKLES[id];
+  const twinkle = useAnimatedStyle(() => ({ opacity: playing ? 0.6 + 0.4 * Math.cos((motion.spin.value * Math.PI) / 180) : 1 }), [playing]);
   const k = size / 60;
   const box = [styles.abs, { left: sl.x * s, top: sl.y * s, width: size, height: size, zIndex: Math.round(sl.depth) }];
   const art = (
@@ -119,11 +127,24 @@ const Good = memo(function Good({
           </Svg>
         </Animated.View>
       ) : null}
+      {stars ? (
+        <Animated.View style={[styles.abs, { width: size, height: size }, twinkle]}>
+          <Svg width={size} height={size} viewBox="0 0 60 60">
+            {stars}
+          </Svg>
+        </Animated.View>
+      ) : null}
     </>
   );
   // a good that is only looked at (the lamp) lets a press through to the floor
   return playable ? (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${itemName(id)}で あそばせる`} onPress={() => onTap(id)} style={box}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${itemName(id)}で あそばせる`}
+      onPress={() => onTap(id)}
+      pointerEvents={through ? "none" : "auto"}
+      style={box}
+    >
       {art}
     </Pressable>
   ) : (
@@ -330,7 +351,7 @@ export function RoomStage({
     if (focused) markRoomSeen(outKey ? outKey.split(",") : []);
   }, [focused, outKey, markRoomSeen]);
 
-  const { activity, from, motion, surprised, send } = useRoomBrain({ goods, start: visit.start, active: focused && appActive, reduceMotion });
+  const { activity, from, motion, surprised, send } = useRoomBrain({ goods, start: visit.start, active: focused && appActive, reduceMotion, wear: profile.wearing });
   const s = width / ROOM_W;
   const vibration = profile.settings.vibration;
   const onTap = useCallback(() => {
@@ -358,6 +379,7 @@ export function RoomStage({
 
   const lamp = placed.find((g) => g.id === "lamp");
   const tint = nightTint(night, !!lamp);
+  const covering = activity ? coveringGood(activity, from, placed) : null;
 
   return (
     <View style={{ width, height: (width * ROOM_H) / ROOM_W, overflow: "hidden" }}>
@@ -372,6 +394,7 @@ export function RoomStage({
           motion={motion}
           playing={activity?.kind === "play" && activity.good === g.id}
           playable={!PLAYABLE_EXCEPT.includes(g.id)}
+          through={covering === g.id}
           onTap={onGood}
         />
       ))}

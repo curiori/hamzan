@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { Activity } from "@/game/hamster-brain";
-import { ABOVE_ALL, hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
-import { placedGoods, pushSpot, seatIn, SLOTS } from "@/game/room";
+import { ABOVE_ALL, coveringGood, hamsterDepth, look, nightTint, perchedOn, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
+import { courseIn, placedGoods, pushSpot, seatIn, SLOTS } from "@/game/room";
 
 const at = { x: 200, y: 210 };
 
@@ -68,6 +68,14 @@ describe("look", () => {
     expect(play("cushion")).toMatchObject({ view: "front", mood: "happy", bubble: "ふかふか", label: "クッションで あそんで いる" });
     expect(play("ladder")).toMatchObject({ view: "front", bubble: null, label: "はしごで あそんで いる" });
     expect(look({ kind: "eat", snack: "apple", ms: 2600 })).toMatchObject({ view: "front", pose: "cheeks", cheeks: true, bubble: "もぐもぐ", label: "りんごを たべて いる" });
+    expect(play("bookshelf")).toMatchObject({ view: "front", pose: "read", bubble: "ふむふむ", label: "ほんだなで あそんで いる" });
+    expect(play("slide")).toMatchObject({ view: "side", bubble: "わーい", label: "すべりだいで あそんで いる" });
+    expect(play("bridge")).toMatchObject({ view: "side", bubble: "どきどき", label: "つりばしで あそんで いる" });
+    expect(play("piano")).toMatchObject({ view: "side", bubble: "♪", label: "おもちゃの ピアノで あそんで いる" });
+    expect(play("goldwheel")).toMatchObject({ view: "side", bubble: "きらきら", label: "きんの まわしぐるまで あそんで いる" });
+    expect(play("bed")).toMatchObject({ view: "front", pose: "sleep", bubble: "ごろん", label: "ふわふわベッドで あそんで いる" });
+    expect(look({ kind: "sleep", inHouse: false, inBed: true, ms: 30000 })).toMatchObject({ view: "front", pose: "sleep", bubble: "Zzz", label: "ベッドで ねて いる" });
+    expect(look({ kind: "idle", act: "groove", ms: 3000 })).toMatchObject({ view: "front", mood: "happy", bubble: "♪", label: "おんがくを きいて いる" });
   });
 });
 
@@ -94,6 +102,34 @@ describe("the stage's goods", () => {
     expect(goods.find((g) => g.id === "wheel")?.spot).toEqual(SLOTS.floorL2.spot);
     expect(goods.find((g) => g.id === "swing")?.seat).toEqual(seatIn("swing", "ceil1"));
   });
+
+  test("course goods carry their course", () => {
+    const goods = stageGoods(placedGoods({ floorL3: "slide", floorL2: "wheel" }));
+    expect(goods.find((g) => g.id === "slide")?.course).toEqual(courseIn("slide", "floorL3"));
+    expect(goods.find((g) => g.id === "wheel")?.course).toBeUndefined();
+  });
+
+  test("perched activities count as standing at the spot", () => {
+    const play = (good: string): Activity => ({ kind: "play", good, variant: "normal", ms: 5000 });
+    for (const good of ["swing", "ladder", "bed", "slide", "bridge", "piano"]) expect(perchedOn(play(good))).toBe(true);
+    for (const good of ["wheel", "ball"]) expect(perchedOn(play(good))).toBe(false);
+    expect(perchedOn({ kind: "sleep", inHouse: false, inBed: true, ms: 30000 })).toBe(true);
+    expect(perchedOn({ kind: "sleep", inHouse: true, ms: 30000 })).toBe(false);
+    expect(perchedOn({ kind: "walk", to: at, dash: false, carry: false })).toBe(false);
+  });
+
+  test("the cushion or the bed drawn over the hamster in it lets a tap through to the hamster", () => {
+    const play = (good: string): Activity => ({ kind: "play", good, variant: "normal", ms: 5000 });
+    const placed = placedGoods({ floorS2: "bed", floorS3: "cushion", ceil1: "swing", floorL3: "slide", floorS1: "ball" });
+    expect(coveringGood(play("bed"), SLOTS.floorS2.spot, placed)).toBe("bed");
+    expect(coveringGood({ kind: "sleep", inHouse: false, inBed: true, ms: 30000 }, SLOTS.floorS2.spot, placed)).toBe("bed");
+    expect(coveringGood(play("cushion"), SLOTS.floorS3.spot, placed)).toBe("cushion");
+    // up on the swing or the slide the hamster is drawn over its good; beside the ball it is not in it
+    expect(coveringGood(play("swing"), SLOTS.ceil1.spot, placed)).toBeNull();
+    expect(coveringGood(play("slide"), SLOTS.floorL3.spot, placed)).toBeNull();
+    expect(coveringGood(play("ball"), pushSpot("ball", "floorS1")?.at ?? at, placed)).toBeNull();
+    expect(coveringGood({ kind: "idle", act: "blink", ms: 1000 }, SLOTS.floorS2.spot, placed)).toBeNull();
+  });
 });
 
 describe("rearranging under the hamster", () => {
@@ -111,6 +147,12 @@ describe("rearranging under the hamster", () => {
     expect(rearrangedUnder({ now: walk, plan: [play("ball")] }, before, movedBall)).toBe(true);
     // the bowl's seeds are carried home to the house
     expect(rearrangedUnder({ now: play("bowl"), plan: [{ ...walk, carry: true }, play("house")] }, before, without("house"))).toBe(true);
+  });
+
+  test("a bed slept in that is put away wakes the hamster", () => {
+    const withBed = stageGoods(placedGoods({ floorL3: "house", floorS2: "bed" }));
+    const noBed = withBed.filter((g) => g.id !== "bed");
+    expect(rearrangedUnder({ now: { kind: "sleep", inHouse: false, inBed: true, ms: 30000 }, plan: [] }, withBed, noBed)).toBe(true);
   });
 
   test("changes to other goods, or to nothing the hamster uses, leave it alone", () => {
