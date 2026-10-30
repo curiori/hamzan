@@ -33,6 +33,20 @@ const BLOCKS_BASE = (
 );
 const BLOCKS_TOP = <Path d="M20 30 L29.5 15 L39 30 Z" fill="#34D399" stroke="#10B981" strokeLinejoin="round" />;
 
+const GOLD_STAND = <Path d="M30 30 L14 58 M30 30 L46 58" stroke="#A16207" strokeWidth={4} strokeLinecap="round" />;
+const GOLD_ROTOR = (
+  <G>
+    <Circle cx={30} cy={28} r={24} fill="none" stroke="#EAB308" strokeWidth={4} />
+    <Circle cx={30} cy={28} r={19} fill="none" stroke="#FDE68A" strokeWidth={3} strokeDasharray="3 4" />
+    <Path d="M30 4 V52 M6 28 H54 M13 11 L47 45 M47 11 L13 45" stroke="#CA8A04" strokeWidth={1.5} />
+    <Circle cx={30} cy={28} r={3} fill="#A16207" />
+  </G>
+);
+const sparkle = (x: number, y: number, s: number) =>
+  `M${x} ${y - s} L${x + s * 0.3} ${y - s * 0.3} L${x + s} ${y} L${x + s * 0.3} ${y + s * 0.3} L${x} ${y + s} L${x - s * 0.3} ${y + s * 0.3} L${x - s} ${y} L${x - s * 0.3} ${y - s * 0.3} Z`;
+/** the stars that twinkle around the golden wheel while it turns (in its 60×60 box) */
+export const GOLD_SPARKLES = <Path d={`${sparkle(6, 8, 5)} ${sparkle(54, 14, 4)} ${sparkle(52, 50, 3.5)}`} fill="#FDE047" stroke="#EAB308" strokeWidth={0.6} />;
+
 // Room goods drawn in a 60×60 box (same shapes as the web prototype).
 export const ART: Record<string, ReactNode> = {
   bowl: (
@@ -163,6 +177,88 @@ export const ART: Record<string, ReactNode> = {
       <Path d="M16 30 L22 10 H38 L44 30 Z" fill="#FDE68A" stroke="#D97706" strokeWidth={1.5} strokeLinejoin="round" />
     </G>
   ),
+  bookshelf: (
+    <G>
+      <Rect x={8} y={4} width={44} height={54} rx={2} fill="#A0703F" />
+      <Rect x={11} y={7} width={38} height={48} fill="#7A532D" />
+      <Rect x={11} y={21} width={38} height={3} fill="#A0703F" />
+      <Rect x={11} y={37} width={38} height={3} fill="#A0703F" />
+      <Rect x={13} y={10} width={5} height={11} fill="#E45756" />
+      <Rect x={19} y={12} width={4} height={9} fill="#4C78A8" />
+      <Rect x={24} y={9} width={5} height={12} fill="#F2C14E" />
+      <Rect x={30} y={11} width={4} height={10} fill="#54A24B" />
+      <Rect x={37} y={15} width={10} height={6} rx={1} fill="#B279A2" />
+      <Rect x={13} y={26} width={4} height={11} fill="#54A24B" />
+      <Rect x={18} y={27} width={6} height={10} fill="#E45756" />
+      <Rect x={25} y={25} width={4} height={12} fill="#4C78A8" />
+      <Rect x={32} y={26} width={5} height={11} fill="#F2C14E" transform="rotate(10 34.5 31.5)" />
+      <Rect x={40} y={27} width={5} height={10} fill="#72B7B2" />
+      <Rect x={13} y={42} width={6} height={13} fill="#4C78A8" />
+      <Rect x={20} y={44} width={4} height={11} fill="#F58518" />
+      <Rect x={25} y={42} width={5} height={13} fill="#E45756" />
+      <Rect x={31} y={45} width={4} height={10} fill="#54A24B" />
+      <Rect x={36} y={43} width={6} height={12} fill="#B279A2" />
+    </G>
+  ),
+  // the hamster climbs the ladder to the platform (18, 10) and slides down to (44, 56)
+  slide: (
+    <G>
+      <Path d="M38 38 V58" stroke="#8B6B4A" strokeWidth={2.5} strokeLinecap="round" />
+      <Path d="M22 11 Q27 32 41 50 Q47 57 58 57 L58 60 Q45 60 38 52 Q24 33 18 13 Z" fill="#60A5FA" stroke="#2563EB" strokeWidth={1.2} strokeLinejoin="round" />
+      <Path d="M12 10 V58 M20 10 V58" stroke="#8B6B4A" strokeWidth={2.5} strokeLinecap="round" />
+      <Path d="M12 18 H20 M12 26 H20 M12 34 H20 M12 42 H20 M12 50 H20" stroke="#A0703F" strokeWidth={2} />
+      <Rect x={9} y={8} width={16} height={4} rx={1.5} fill="#E45756" />
+    </G>
+  ),
+  // hung low enough that a hamster walking across stays inside the room (the planks' top at y 50)
+  bridge: (
+    <G>
+      <Path d="M4 0 V52 M56 0 V52" stroke="#8B6B4A" strokeWidth={2} />
+      <Path d="M4 40 Q30 46 56 40" stroke="#8B6B4A" strokeWidth={1.5} fill="none" />
+      <Path d="M12 42 V50 M20 43.5 V50 M28 44.5 V50 M36 44.2 V50 M44 43 V50 M52 41 V50" stroke="#A0703F" strokeWidth={1} />
+      {Array.from({ length: 9 }, (_, i) => (
+        <Rect key={i} x={4 + i * 5.9} y={50} width={5} height={4} rx={1} fill="#D39A62" stroke="#9C6234" strokeWidth={0.6} />
+      ))}
+      <Path d="M4 52 H56" stroke="#8B6B4A" strokeWidth={1.2} />
+    </G>
+  ),
+  bed: (
+    <G>
+      <Rect x={2} y={26} width={12} height={32} rx={5} fill="#A0703F" />
+      <Rect x={6} y={40} width={50} height={16} rx={6} fill="#C08A52" />
+      <Ellipse cx={31} cy={42} rx={23} ry={6} fill="#FFF7ED" />
+      <Ellipse cx={17} cy={39} rx={8} ry={4.5} fill="#fff" stroke="#E5E7EB" strokeWidth={1} />
+      <Path d="M24 44 Q40 39 56 44 L56 53 Q40 57 24 53 Z" fill="#93C5FD" />
+      <Path d="M27 47 Q40 43 53 47" stroke="#BFDBFE" strokeWidth={2} fill="none" />
+      <Rect x={8} y={55} width={4} height={4} fill="#8A5E33" />
+      <Rect x={50} y={55} width={4} height={4} fill="#8A5E33" />
+    </G>
+  ),
+  // the hamster walks over the keys at y 50, from x 8 to 52
+  piano: (
+    <G>
+      <Rect x={4} y={22} width={52} height={26} rx={4} fill="#DC2626" />
+      <Rect x={9} y={27} width={42} height={7} rx={2} fill="#FCA5A5" opacity={0.55} />
+      <Rect x={4} y={46} width={52} height={8} fill="#fff" stroke="#9CA3AF" strokeWidth={0.8} />
+      <Path d="M10.5 46 V54 M17 46 V54 M23.5 46 V54 M30 46 V54 M36.5 46 V54 M43 46 V54 M49.5 46 V54" stroke="#9CA3AF" strokeWidth={0.8} />
+      <G fill="#111827">
+        <Rect x={8.5} y={46} width={4} height={4.5} />
+        <Rect x={15} y={46} width={4} height={4.5} />
+        <Rect x={28} y={46} width={4} height={4.5} />
+        <Rect x={34.5} y={46} width={4} height={4.5} />
+        <Rect x={41} y={46} width={4} height={4.5} />
+      </G>
+      <Rect x={8} y={54} width={4} height={4} fill="#7F1D1D" />
+      <Rect x={48} y={54} width={4} height={4} fill="#7F1D1D" />
+    </G>
+  ),
+  goldwheel: (
+    <G>
+      {GOLD_STAND}
+      {GOLD_ROTOR}
+      {GOLD_SPARKLES}
+    </G>
+  ),
   // shop wear, as the list shows them
   ribbon: (
     <G>
@@ -183,6 +279,22 @@ export const ART: Record<string, ReactNode> = {
       <Rect x={36} y={30} width={12} height={24} rx={3} fill="#EF4444" />
       <Path d="M38 40 H46 M38 46 H46" stroke="#FCA5A5" strokeWidth={2} />
       <Path d="M14 26 Q30 34 46 26" stroke="#FCA5A5" strokeWidth={2} fill="none" />
+    </G>
+  ),
+  beret: (
+    <G>
+      <Ellipse cx={30} cy={34} rx={24} ry={10} fill="#1E3A8A" />
+      <Path d="M8 37 Q30 45 52 37" stroke="#172554" strokeWidth={4} fill="none" strokeLinecap="round" />
+      <Path d="M30 24 L32 16" stroke="#1E3A8A" strokeWidth={4} strokeLinecap="round" />
+    </G>
+  ),
+  headphones: (
+    <G>
+      <Path d="M12 40 Q12 10 30 10 Q48 10 48 40" stroke="#374151" strokeWidth={5} fill="none" strokeLinecap="round" />
+      <Rect x={5} y={34} width={13} height={19} rx={5} fill="#EF4444" />
+      <Rect x={42} y={34} width={13} height={19} rx={5} fill="#EF4444" />
+      <Rect x={9} y={38} width={5} height={11} rx={2} fill="#B91C1C" />
+      <Rect x={46} y={38} width={5} height={11} rx={2} fill="#B91C1C" />
     </G>
   ),
   // snacks
@@ -218,6 +330,27 @@ export const ART: Record<string, ReactNode> = {
       <Ellipse cx={39} cy={38} rx={9} ry={4.5} fill="#fff" />
     </G>
   ),
+  "wall-forest": (
+    <G>
+      <Rect x={6} y={6} width={48} height={48} rx={8} fill="#D7EFD0" />
+      <Rect x={18} y={32} width={5} height={16} fill="#9C7650" />
+      <Circle cx={20.5} cy={27} r={10} fill="#7DBB7A" />
+      <Rect x={38} y={36} width={4} height={12} fill="#9C7650" />
+      <Circle cx={40} cy={32} r={8} fill="#5E9E58" />
+    </G>
+  ),
+  "wall-night": (
+    <G>
+      <Rect x={6} y={6} width={48} height={48} rx={8} fill="#1F2B57" />
+      <Path d="M38 13 A11 11 0 1 0 47 31 A9 9 0 1 1 38 13 Z" fill="#FDE68A" />
+      <G fill="#FFF6C8">
+        <Circle cx={16} cy={18} r={1.8} />
+        <Circle cx={24} cy={40} r={1.4} />
+        <Circle cx={14} cy={46} r={1.2} />
+        <Circle cx={44} cy={44} r={1.6} />
+      </G>
+    </G>
+  ),
   "floor-grass": (
     <G>
       <Rect x={6} y={6} width={48} height={48} rx={8} fill="#A8D98F" />
@@ -246,6 +379,7 @@ export interface ItemParts {
 export const ITEM_PARTS: Record<string, ItemParts> = {
   ...Object.fromEntries(Object.entries(ART).map(([id, art]) => [id, { base: art }])),
   wheel: { base: WHEEL_STAND, moving: WHEEL_ROTOR, pivot: { x: 30, y: 28 }, motion: "spin" },
+  goldwheel: { base: GOLD_STAND, moving: GOLD_ROTOR, pivot: { x: 30, y: 28 }, motion: "spin" },
   swing: { base: null, moving: ART.swing, pivot: { x: 30, y: 0 }, motion: "sway" },
   hammock: { base: null, moving: ART.hammock, pivot: { x: 30, y: 6 }, motion: "sway" },
   ball: { base: BALL_SHADOW, moving: BALL, pivot: { x: 30, y: 40 }, motion: "spin" },

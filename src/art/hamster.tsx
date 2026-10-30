@@ -141,6 +141,22 @@ export function HamsterBody({ mood = "idle", wear = null, pose }: { mood?: Mood;
           <Path d="M80 88 H88 M80 94 H88" stroke="#FCA5A5" strokeWidth={2} />
         </G>
       )}
+      {wear === "beret" && (
+        <G>
+          <Ellipse cx={62} cy={21} rx={26} ry={8.5} fill="#1E3A8A" transform="rotate(-8 62 21)" />
+          <Path d="M38 27 Q61 33 86 21" stroke="#172554" strokeWidth={3.5} fill="none" strokeLinecap="round" />
+          <Path d="M64 13 L66 6" stroke="#1E3A8A" strokeWidth={3.5} strokeLinecap="round" />
+        </G>
+      )}
+      {wear === "headphones" && (
+        <G>
+          <Path d="M16 44 Q14 4 60 5 Q106 4 104 44" stroke="#374151" strokeWidth={5} fill="none" strokeLinecap="round" />
+          <Rect x={7} y={40} width={16} height={24} rx={7} fill="#EF4444" />
+          <Rect x={97} y={40} width={16} height={24} rx={7} fill="#EF4444" />
+          <Rect x={11} y={45} width={6} height={14} rx={3} fill="#B91C1C" />
+          <Rect x={103} y={45} width={6} height={14} rx={3} fill="#B91C1C" />
+        </G>
+      )}
     </G>
   );
 }

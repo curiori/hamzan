@@ -64,6 +64,20 @@ export function HamsterSide({ frame, wear = null, size = 80, cheeks = false }: {
           <Rect x={62} y={78} width={11} height={19} rx={3} fill="#EF4444" />
         </G>
       ) : null}
+      {wear === "beret" ? (
+        <G>
+          <Ellipse cx={70} cy={24} rx={19} ry={6.5} fill="#1E3A8A" transform="rotate(-6 70 24)" />
+          <Path d="M52 28 Q70 33 88 24" stroke="#172554" strokeWidth={3} fill="none" strokeLinecap="round" />
+          <Path d="M72 18 L74 12" stroke="#1E3A8A" strokeWidth={3} strokeLinecap="round" />
+        </G>
+      ) : null}
+      {wear === "headphones" ? (
+        <G>
+          <Path d="M58 46 Q56 14 74 13 Q90 13 92 30" stroke="#374151" strokeWidth={4.5} fill="none" strokeLinecap="round" />
+          <Rect x={50} y={40} width={16} height={22} rx={7} fill="#EF4444" />
+          <Rect x={54} y={45} width={6} height={12} rx={3} fill="#B91C1C" />
+        </G>
+      ) : null}
     </Svg>
   );
 }
