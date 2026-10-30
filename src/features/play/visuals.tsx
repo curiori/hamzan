@@ -28,9 +28,9 @@ function Frame({ cells, label }: { cells: Dot[]; label: string }) {
 
 const fill = (n: number, kind: Dot, total = 10): Dot[] => Array.from({ length: total }, (_, i) => (i < n ? kind : "empty"));
 
-function Dots({ n, color = colors.sky600 }: { n: number; color?: string }) {
+function Dots({ n, color = colors.sky600, perRow = 10 }: { n: number; color?: string; perRow?: number }) {
   return (
-    <View style={styles.dots} accessible={false}>
+    <View style={[styles.dots, { maxWidth: perRow * DOT + (perRow - 1) * GAP }]} accessible={false}>
       {Array.from({ length: n }, (_, i) => (
         <View key={i} style={[styles.dot, { backgroundColor: color }]} />
       ))}
@@ -118,14 +118,14 @@ export function Visual({ inst }: { inst: ProblemInstance }) {
       return (
         <View style={styles.rowWrap}>
           <Frame cells={fill(10, "a")} label="10の かたまり" />
-          <Dots n={p.n - 10} />
+          <Dots n={p.n - 10} perRow={5} />
         </View>
       );
     if (p.shape === "binary" && p.op === "+" && inst.levelId === "0-2")
       return (
         <View style={styles.rowWrap}>
           <Frame cells={fill(10, "a")} label="10の かたまり" />
-          <Dots n={p.a === 10 ? p.b : p.a} />
+          <Dots n={p.a === 10 ? p.b : p.a} perRow={5} />
         </View>
       );
     if (p.shape === "binary" && p.op === "+") {
@@ -180,26 +180,32 @@ export function Visual({ inst }: { inst: ProblemInstance }) {
   return null;
 }
 
-const CELL = 30;
+// Sized so the tallest picture plus the answer box fits the iPhone SE play card (see play-screen compact).
+const CELL = 26;
+const DOT = 20;
+const GAP = 5;
+const PAD = 6;
+const BORDER = 2;
 
 const styles = StyleSheet.create({
   frame: {
-    width: CELL * 5 + 6 * 4 + 16,
+    // RN widths include padding and border; five cells a row
+    width: CELL * 5 + GAP * 4 + PAD * 2 + BORDER * 2,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
-    padding: 8,
+    gap: GAP,
+    padding: PAD,
     borderRadius: radius.md,
-    borderWidth: 2,
+    borderWidth: BORDER,
     borderColor: "rgba(10,10,10,0.3)",
     backgroundColor: colors.card,
   },
   cell: { width: CELL, height: CELL, borderRadius: 6, borderWidth: 1, borderColor: "rgba(10,10,10,0.15)", alignItems: "center", justifyContent: "center" },
-  dot: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
-  cross: { color: colors.red700, fontSize: 16, lineHeight: 18 },
-  dots: { flexDirection: "row", flexWrap: "wrap", gap: 6, maxWidth: 220 },
-  rowWrap: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 12 },
-  pairs: { gap: 8 },
+  dot: { width: DOT, height: DOT, borderRadius: DOT / 2, alignItems: "center", justifyContent: "center" },
+  cross: { color: colors.red700, fontSize: 15, lineHeight: 17 },
+  dots: { flexDirection: "row", flexWrap: "wrap", gap: GAP },
+  rowWrap: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 10 },
+  pairs: { gap: 6 },
   split: { borderTopWidth: 2, borderStyle: "dashed", borderColor: "rgba(10,10,10,0.4)" },
   line: { flexDirection: "row", width: "100%", maxWidth: 360 },
   tickCol: { flex: 1, alignItems: "center" },
@@ -208,18 +214,18 @@ const styles = StyleSheet.create({
   axis: { position: "absolute", left: 0, right: 0, height: 2, backgroundColor: "rgba(10,10,10,0.5)" },
   tick: { width: 2, height: 16, backgroundColor: "rgba(10,10,10,0.6)" },
   tickLabel: { marginTop: 2, fontSize: 13, fontVariant: ["tabular-nums"] },
-  pvWrap: { alignItems: "center", gap: 6 },
+  pvWrap: { alignItems: "center", gap: 4 },
   pvTable: { flexDirection: "row", borderWidth: 2, borderColor: "rgba(10,10,10,0.3)", borderRadius: radius.md, overflow: "hidden" },
-  pvCell: { alignItems: "center", minWidth: 52 },
+  pvCell: { alignItems: "center", minWidth: 48 },
   pvDivider: { borderRightWidth: 1, borderColor: "rgba(10,10,10,0.2)" },
-  pvHead: { fontSize: 11, backgroundColor: colors.muted, alignSelf: "stretch", textAlign: "center", paddingVertical: 2 },
-  pvDigit: { fontSize: 24, paddingVertical: 4, fontVariant: ["tabular-nums"] },
-  small: { fontSize: 13 },
+  pvHead: { fontSize: 10, backgroundColor: colors.muted, alignSelf: "stretch", textAlign: "center", paddingVertical: 2 },
+  pvDigit: { fontSize: 22, paddingVertical: 2, fontVariant: ["tabular-nums"] },
+  small: { fontSize: 12 },
   note: { backgroundColor: colors.muted, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 10 },
-  skip: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 6 },
-  chip: { minWidth: 44, alignItems: "center", borderRadius: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 6, paddingVertical: 2 },
-  chipHead: { fontSize: 10 },
-  chipValue: { fontSize: 17, fontVariant: ["tabular-nums"] },
+  skip: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 4 },
+  chip: { minWidth: 40, alignItems: "center", borderRadius: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 5, paddingVertical: 1 },
+  chipHead: { fontSize: 9 },
+  chipValue: { fontSize: 15, fontVariant: ["tabular-nums"] },
   blocks: { flexDirection: "row", gap: 6 },
-  block: { width: 18, height: 80, borderRadius: 4, borderWidth: 1, borderColor: "rgba(10,10,10,0.2)", backgroundColor: colors.card },
+  block: { width: 18, height: 60, borderRadius: 4, borderWidth: 1, borderColor: "rgba(10,10,10,0.2)", backgroundColor: colors.card },
 });

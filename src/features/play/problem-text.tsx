@@ -14,6 +14,8 @@ export function pairTerms(p: Problem): number[] {
 }
 
 export const problemFontSize = (p: Problem) => {
+  // "991は9の倍数？" is mostly full-width characters plus a reading on top; 38 keeps it on one line on a 375pt screen
+  if (p.shape === "divisibility") return 38;
   const len = display(p).length;
   return len > 12 ? 34 : len > 9 ? 42 : 50;
 };

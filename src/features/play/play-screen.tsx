@@ -178,10 +178,11 @@ export function PlayScreen({
   const doneCount = Math.min(queue.results.length, firstCount);
   const mood: Mood = phase === "right" ? "happy" : phase === "wrong" ? "oops" : "idle";
   const mode: Mode = item.requeue ? "S" : req.mode;
-  const compact = height < 740;
+  // short usable height (iPhone SE 647pt, mini 728pt): every hint level must fit without scrolling
+  const compact = height - insets.top - insets.bottom < 740;
   const textSize = problemFontSize(item.inst.problem) - (mode === "H" && compact ? 8 : 0);
 
-  const layout = ({ body, keypad }: SolverParts): ReactElement => (
+  const layout = ({ body, keypad, note }: SolverParts): ReactElement => (
     <View style={[styles.root, { paddingTop: insets.top + 6, paddingBottom: Math.max(insets.bottom, 10) }]}>
       <View style={styles.header}>
         <View style={styles.titleBox}>
@@ -213,7 +214,7 @@ export function PlayScreen({
       )}
 
       <View style={[styles.card, phase === "right" ? styles.cardRight : phase === "wrong" ? styles.cardWrong : null]}>
-        <ScrollView contentContainerStyle={styles.cardContent} showsVerticalScrollIndicator={false} bounces={false}>
+        <ScrollView contentContainerStyle={[styles.cardContent, compact && styles.cardContentCompact]} showsVerticalScrollIndicator={false} bounces={false}>
           {item.requeue ? (
             <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.requeue}>
               さっきの もんだいを もういちど
@@ -222,8 +223,13 @@ export function PlayScreen({
           <Animated.View entering={reduce ? undefined : FadeIn.duration(150)}>
             <ProblemText inst={item.inst} hint={mode === "H"} size={textSize} />
           </Animated.View>
-          <View style={styles.body}>{body}</View>
-          <View style={styles.feedback}>
+          <View style={[styles.body, compact && styles.bodyCompact]}>{body}</View>
+          <View style={[styles.feedback, compact && styles.feedbackCompact]}>
+            {phase === "ask" && note ? (
+              <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} accessibilityLiveRegion="polite" style={styles.note}>
+                {note}
+              </AppText>
+            ) : null}
             {phase === "right" ? (
               <View style={styles.rightRow} accessibilityLiveRegion="polite">
                 <Ionicons name="checkmark" size={26} color={colors.green700} />
@@ -266,7 +272,7 @@ export function PlayScreen({
     </View>
   );
 
-  const solverProps = { inst: item.inst, autoSubmit: settings.autoSubmit, locked: phase !== "ask" || paused, onDone, sfx, render: layout };
+  const solverProps = { inst: item.inst, autoSubmit: settings.autoSubmit, compact, locked: phase !== "ask" || paused, onDone, sfx, render: layout };
   // a new solver per position; pausing keeps it mounted, so a revealed hint stays revealed
   if (mode === "H") return <HintSolver key={`solver-${queue.pos}`} {...solverProps} />;
   if (mode === "M") return <MemoSolver key={`solver-${queue.pos}`} {...solverProps} />;
@@ -291,9 +297,13 @@ const styles = StyleSheet.create({
   cardRight: { borderColor: colors.green600 },
   cardWrong: { borderColor: colors.red600 },
   cardContent: { flexGrow: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 12, paddingTop: 14, paddingBottom: 8 },
+  cardContentCompact: { paddingTop: 8, paddingBottom: 4 },
   requeue: { fontSize: 13, color: colors.orange800, marginBottom: 2 },
   body: { marginTop: 8, alignItems: "center", alignSelf: "stretch" },
+  bodyCompact: { marginTop: 4 },
   feedback: { minHeight: 40, marginTop: 6, alignItems: "center", justifyContent: "center" },
+  feedbackCompact: { marginTop: 4 },
+  note: { fontSize: 17, textAlign: "center", color: colors.orange800 },
   rightRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   rightText: { fontSize: 22, color: colors.green700 },
   wrongBox: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: colors.red50, borderRadius: radius.lg, paddingHorizontal: 14, paddingVertical: 6 },

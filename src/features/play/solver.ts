@@ -12,11 +12,15 @@ export interface SolverResult {
 export interface SolverParts {
   body: ReactNode;
   keypad: ReactNode;
+  /** "try again" or a revealed step; shown in the feedback slot under the body, so it never makes the card taller */
+  note?: string | null;
 }
 
 export interface SolverProps {
   inst: ProblemInstance;
   autoSubmit: boolean;
+  /** a short screen (iPhone SE): smaller hint lines and keys, so the play screen fits without scrolling */
+  compact: boolean;
   /** feedback is showing or the set is paused: no field is active and the keys do nothing */
   locked: boolean;
   onDone: (r: SolverResult) => void;

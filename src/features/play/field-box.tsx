@@ -37,19 +37,9 @@ export function FieldRow({ defs, vals, active, fontSize }: { defs: FieldDef[]; v
   );
 }
 
-/** "try again" and revealed-value notes under the fields */
-export function SolverMessage({ text }: { text: string }) {
-  return (
-    <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} accessibilityLiveRegion="polite" style={styles.message}>
-      {text}
-    </AppText>
-  );
-}
-
 const styles = StyleSheet.create({
   row: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "center", rowGap: 6 },
   item: { flexDirection: "row", alignItems: "center" },
-  message: { marginTop: 6, fontSize: 17, textAlign: "center", color: colors.orange800 },
   box: {
     marginHorizontal: 4,
     borderRadius: radius.md,

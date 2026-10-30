@@ -40,7 +40,7 @@ export function MemoSolver(props: SolverProps) {
         <FieldRow defs={defs.slice(memo.length)} vals={fs.vals.slice(memo.length)} active={active < 0 ? -1 : active - memo.length} fontSize={36} />
       </>
     ),
-    keypad: <Keypad def={def} canRem={def?.role === "q"} onKey={press} disabled={locked} />,
+    keypad: <Keypad def={def} canRem={def?.role === "q"} onKey={press} disabled={locked} compact={props.compact} />,
   });
 }
 

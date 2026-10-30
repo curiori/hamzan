@@ -5,7 +5,7 @@ import { hintLines, scaffoldOf } from "@/domain/scaffolds";
 import { AppText } from "@/ui/text";
 import { colors, MAX_FONT_SCALE, radius } from "@/ui/theme";
 import { AnswerSolver } from "./answer-solver";
-import { FieldRow, SolverMessage } from "./field-box";
+import { FieldRow } from "./field-box";
 import { defsForAnswer, toStep } from "./field-set";
 import { activeStep, expectedStep, initHint, submitHintStep } from "./hint-flow";
 import { Keypad } from "./keypad";
@@ -14,10 +14,12 @@ import { Visual } from "./visuals";
 
 const RULE_CARD = "2・5は いちのくらい／4は したの 2けた／8は したの 3けた／3・9は かくくらいの かずを たす／6は 2と 3の りょうほう";
 const LINE_SIZE = 22;
+// "かくくらいの かずを たすと" and its box share one line on a 375pt screen only below 22
+const LINE_SIZE_COMPACT = 20;
 
 /** Hint mode: fill the hint blanks one by one. Levels without hint steps show a picture and allow a second try. */
 export function HintSolver(props: SolverProps) {
-  const { inst, autoSubmit, locked, onDone, sfx, render } = props;
+  const { inst, autoSubmit, compact, locked, onDone, sfx, render } = props;
   const sc = useMemo(() => scaffoldOf(inst.levelId, inst.problem), [inst]);
   const lines = useMemo(() => hintLines(inst.levelId, inst.problem), [inst]);
   const [hs, setHs] = useState(() => initHint(sc.steps.length));
@@ -56,56 +58,66 @@ export function HintSolver(props: SolverProps) {
     }),
   );
   const def = defs[fs.active] ?? null;
+  const size = compact ? LINE_SIZE_COMPACT : LINE_SIZE;
+  const ln = compact ? lineCompact : lineRegular;
 
   return render({
     body: (
       <>
         {sc.kind === "DIVISIBILITY_RULE" ? (
-          <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.rule}>
+          <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={[styles.rule, compact && styles.ruleCompact]}>
             {RULE_CARD}
           </AppText>
         ) : null}
-        <View accessibilityLabel="ヒント" style={styles.lines}>
-          {lines.map((ln, li) => (
+        <View accessibilityLabel="ヒント" style={[styles.lines, compact && styles.linesCompact]}>
+          {lines.map((line, li) => (
             <View key={li} style={styles.line}>
-              {ln.map((t, ti) => {
+              {line.map((t, ti) => {
                 if (t.t === "text")
                   return (
-                    <AppText key={ti} weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.text}>
+                    <AppText key={ti} weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={ln.text}>
                       {t.v}
                     </AppText>
                   );
                 const v = hs.filled[t.step];
                 if (t.step === active && firstUse.get(t.step) === `${li}:${ti}`)
-                  return <FieldRow key={ti} defs={defs} vals={fs.vals} active={locked ? -1 : fs.active} fontSize={LINE_SIZE} />;
+                  return <FieldRow key={ti} defs={defs} vals={fs.vals} active={locked ? -1 : fs.active} fontSize={size} />;
                 if (v !== null)
                   return (
-                    <View key={ti} style={[styles.chip, hs.revealed[t.step] ? styles.chipRevealed : styles.chipOk]}>
-                      <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={[styles.text, { color: hs.revealed[t.step] ? colors.orange900 : colors.green900 }]}>
+                    <View key={ti} style={[ln.chip, hs.revealed[t.step] ? styles.chipRevealed : styles.chipOk]}>
+                      <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={[ln.text, { color: hs.revealed[t.step] ? colors.orange900 : colors.green900 }]}>
                         {stepText(v)}
                       </AppText>
                     </View>
                   );
-                return <View key={ti} style={styles.blank} />;
+                return <View key={ti} style={ln.blank} />;
               })}
             </View>
           ))}
         </View>
-        {hs.msg ? <SolverMessage text={hs.msg} /> : null}
       </>
     ),
-    keypad: <Keypad def={def} canRem={def?.role === "q"} onKey={press} disabled={locked || active < 0} />,
+    keypad: <Keypad def={def} canRem={def?.role === "q"} onKey={press} disabled={locked || active < 0} compact={compact} />,
+    note: hs.msg,
   });
 }
 
+const lineStyles = (size: number) =>
+  StyleSheet.create({
+    text: { fontSize: size, flexShrink: 1, fontVariant: ["tabular-nums"] },
+    chip: { marginHorizontal: 4, minWidth: size * 1.6, borderRadius: radius.sm, paddingHorizontal: 6, alignItems: "center" },
+    blank: { marginHorizontal: 4, width: size * 1.6, height: size * 1.3, borderRadius: radius.sm, borderWidth: 2, borderStyle: "dashed", borderColor: "rgba(10,10,10,0.3)" },
+  });
+const lineRegular = lineStyles(LINE_SIZE);
+const lineCompact = lineStyles(LINE_SIZE_COMPACT);
+
 const styles = StyleSheet.create({
-  visual: { alignSelf: "stretch", alignItems: "center", marginBottom: 10 },
+  visual: { alignSelf: "stretch", alignItems: "center", marginBottom: 6 },
   rule: { fontSize: 12, lineHeight: 17, backgroundColor: colors.muted, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 6, overflow: "hidden" },
+  ruleCompact: { fontSize: 11, lineHeight: 15, paddingVertical: 4, marginBottom: 4 },
   lines: { gap: 6, alignSelf: "stretch" },
+  linesCompact: { gap: 4 },
   line: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", rowGap: 4 },
-  text: { fontSize: LINE_SIZE, flexShrink: 1, fontVariant: ["tabular-nums"] },
-  chip: { marginHorizontal: 4, minWidth: LINE_SIZE * 1.6, borderRadius: radius.sm, paddingHorizontal: 6, alignItems: "center" },
   chipOk: { backgroundColor: colors.green100 },
   chipRevealed: { backgroundColor: colors.orange100 },
-  blank: { marginHorizontal: 4, width: LINE_SIZE * 1.6, height: LINE_SIZE * 1.3, borderRadius: radius.sm, borderWidth: 2, borderStyle: "dashed", borderColor: "rgba(10,10,10,0.3)" },
 });
