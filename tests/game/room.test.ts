@@ -10,11 +10,14 @@ import {
   HAMSTER_H,
   HAMSTER_W,
   placedGoods,
+  placeIn,
+  placeNew,
   ROOM_H,
   ROOM_W,
   SEATS,
   seatIn,
   SLOTS,
+  storedGoods,
   toRoom,
   toScreen,
   type SlotId,
@@ -98,6 +101,28 @@ describe("slots", () => {
       }
     }
     expect(seatIn("wheel", "floorL2")).toBeUndefined();
+  });
+});
+
+describe("placing goods", () => {
+  test("placeNew uses the default slot, then a free slot of the kind, then stores", () => {
+    expect(placeNew({}, "wheel")).toEqual({ floorL2: "wheel" });
+    expect(placeNew({ floorL2: "desk" }, "wheel")).toEqual({ floorL2: "desk", floorL1: "wheel" });
+    const full = { floorL1: "desk", floorL2: "wheel", floorL3: "house" };
+    expect(placeNew(full, "bed", { ...GOOD_KIND, bed: "floorLarge" })).toBe(full);
+    expect(placeNew({ floorL1: "wheel" }, "wheel")).toEqual({ floorL1: "wheel" });
+    expect(placeNew({}, "crown")).toEqual({});
+  });
+
+  test("placeIn moves a good from another slot and null stores it", () => {
+    expect(placeIn({ floorL1: "desk", floorL2: "wheel" }, "floorL1", "wheel")).toEqual({ floorL1: "wheel" });
+    expect(placeIn({ floorL1: "desk" }, "floorL1", null)).toEqual({});
+    const layout = { floorL1: "desk" };
+    expect(placeIn(layout, "sill", "wheel")).toBe(layout);
+  });
+
+  test("storedGoods lists owned goods that are in no slot", () => {
+    expect(storedGoods({ floorL1: "desk" }, ["desk", "wheel", "crown"])).toEqual(["wheel"]);
   });
 });
 

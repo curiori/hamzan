@@ -41,6 +41,22 @@ export interface Wallet {
 
 export const emptyWallet = (): Wallet => ({ seeds: 0, lifetime: 0, day: null, earnedToday: 0, bestToday: [] });
 
+export type LedgerReason = "set" | "buy" | "gift";
+
+/** One movement of seeds: a finished set, a purchase (negative) or a test-tool gift. */
+export interface LedgerEntry {
+  at: number;
+  date: LocalDate;
+  delta: number;
+  reason: LedgerReason;
+  ref?: string;
+}
+
+export const MAX_LEDGER = 300;
+
+/** The ledger with `e` added, keeping the newest MAX_LEDGER entries. */
+export const appendLedger = (ledger: LedgerEntry[], e: LedgerEntry): LedgerEntry[] => [...ledger, e].slice(-MAX_LEDGER);
+
 export type SeedLineKind = "correct" | "complete" | "warmup" | "goal" | "star2" | "mastered" | "stageCheck" | "review" | "personalBest" | "challengeBest";
 
 /** One line of the result screen's breakdown; count is the number of right answers behind a "correct" line. */

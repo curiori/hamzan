@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { StateStorage } from "zustand/middleware";
 import { buildSet } from "../../src/domain/setBuilder";
+import { emptyWallet } from "../../src/game/economy";
 import { STORAGE_KEY, activeProfile, createAppStore } from "../../src/state/create-store";
 import { newProfile, todayOf } from "../../src/state/profile";
 import type { SetRun } from "../../src/state/types";
@@ -85,7 +86,7 @@ describe("app store", () => {
 
   test("data saved with another version is kept", async () => {
     const { data, storage } = memoryStorage({ delayMs: 1 });
-    const newer = JSON.stringify({ ...JSON.parse(saved()), version: 2 });
+    const newer = JSON.stringify({ ...JSON.parse(saved()), version: 3 });
     data.set(STORAGE_KEY, newer);
     const store = createAppStore(storage, { now: () => NOW });
     await sleep(30);
@@ -169,8 +170,38 @@ describe("app store", () => {
     const summary = store.getState().recordSet(run);
     expect(summary.n).toBe(3);
     const stored = JSON.parse(data.get(STORAGE_KEY) ?? "{}");
-    expect(stored.version).toBe(1);
+    expect(stored.version).toBe(2);
     expect(stored.state.profiles[0].sets.length).toBe(1);
     expect(stored.state.hydrated).toBeUndefined();
+  });
+
+  test("version 1 data moves to version 2 with an empty wallet and the earned goods in the room", async () => {
+    const { data, storage } = memoryStorage({ delayMs: 1 });
+    const { wallet: _w, inventory: _i, room: _r, ledger: _l, ...rest } = newProfile("あに", 5, { id: "pA", now: NOW });
+    const { shop: _s, ...settings } = rest.settings;
+    const clean = { id: "s1", kind: "main", levelId: "0-1", mode: "H", date: "2026-10-28", startedAt: NOW, n: 10, errors: 0, perProblemSec: 2, target2: 3, target3: 2, result: "done" };
+    const v1 = { ...rest, settings, sets: [clean] };
+    data.set(STORAGE_KEY, JSON.stringify({ state: { pin: null, profiles: [v1], activeId: "pA", dev: { dayOffset: 0, unlockAll: false, shortPlacement: false } }, version: 1 }));
+    const store = createAppStore(storage, { now: () => NOW });
+    await sleep(30);
+    expect(store.getState().loadError).toBe(false);
+    const p = activeProfile(store.getState());
+    expect(p?.wallet).toEqual(emptyWallet());
+    expect(p?.inventory).toEqual({});
+    expect(p?.ledger).toEqual([]);
+    expect(p?.room).toEqual({ layout: { floorS3: "bowl" }, wallpaper: null, floor: null });
+    expect(p?.settings.shop).toBe(true);
+    store.getState().addProfile("いもうと", 3);
+    await sleep(10);
+    expect(JSON.parse(data.get(STORAGE_KEY) ?? "{}").version).toBe(2);
+  });
+
+  test("giftSeeds adds seeds to the active child and logs a gift", () => {
+    const store = createAppStore(memoryStorage().storage, { now: () => NOW });
+    store.getState().addProfile("あに", 5);
+    store.getState().giftSeeds(100);
+    const p = activeProfile(store.getState());
+    expect(p?.wallet.seeds).toBe(100);
+    expect(p?.ledger.at(-1)).toEqual({ at: NOW, date: todayOf(0, NOW), delta: 100, reason: "gift" });
   });
 });

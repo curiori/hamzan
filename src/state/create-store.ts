@@ -5,6 +5,8 @@ import { applyPlacementResult, startPlacement, type PlacementState } from "@/dom
 import { planDailySession } from "@/domain/session";
 import { LEVEL } from "@/domain/spec";
 import { writeChildFrom } from "@/domain/timing";
+import { appendLedger } from "@/game/economy";
+import { migrate } from "./migrate";
 import { hashPin, makeSalt } from "./pin";
 import { newProfile, placementOutcome, todayOf } from "./profile";
 import { recordSet as recordSetPure } from "./record-set";
@@ -37,6 +39,8 @@ export interface AppState {
   ensureSession: () => { day: SessionDay; date: LocalDate } | null;
   skipSessionPart: (index: number) => void;
   recordSet: (run: SetRun) => SetSummary;
+  /** test tool: n seeds for the active child, logged as a gift */
+  giftSeeds: (n: number) => void;
   setDev: (patch: Partial<DevSettings>) => void;
 }
 
@@ -170,18 +174,23 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
             return summary;
           },
 
+          giftSeeds: (n) =>
+            patchActive((p) => ({
+              ...p,
+              wallet: { ...p.wallet, seeds: p.wallet.seeds + n, lifetime: p.wallet.lifetime + n },
+              ledger: appendLedger(p.ledger, { at: now(), date: today(), delta: n, reason: "gift" }),
+            })),
+
           setDev: (patch) => set((s) => ({ dev: { ...s.dev, ...patch } })),
         };
       },
       {
         name: STORAGE_KEY,
-        version: 1,
+        version: 2,
         storage: createJSONStorage(() => guarded),
         partialize: (s) => ({ pin: s.pin, profiles: s.profiles, activeId: s.activeId, dev: s.dev }),
-        // only version 1 exists; data from any other version is left untouched (the read counts as failed)
-        migrate: (_persisted, version) => {
-          throw new Error(`saved data version ${version} is not supported`);
-        },
+        // version 1 moves to 2; data from any other version is left untouched (the read counts as failed)
+        migrate: (persisted, version) => migrate(persisted, version) as AppState,
         // runs after a successful or failed read, so the app never waits forever on broken data
         onRehydrateStorage: () => (_state, error) => finishLoad(!!error),
       },

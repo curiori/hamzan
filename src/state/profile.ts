@@ -7,6 +7,7 @@ import type { StageCheckRecord } from "@/domain/session";
 import { LEVELS, SPEC, STAGES, type Mode } from "@/domain/spec";
 import type { TimeOptions } from "@/domain/timing";
 import type { RewardStats } from "@/game/achievements";
+import { emptyWallet } from "@/game/economy";
 import { DEFAULT_SETTINGS, type Profile } from "./types";
 
 export const todayOf = (dayOffset: number, nowMs: number = Date.now()): LocalDate => toLocalDate(nowMs + dayOffset * 86400000);
@@ -35,6 +36,10 @@ export function newProfile(nickname: string, grade: number, opts: { id?: string;
     placement: null,
     placementDone: false,
     wearing: null,
+    wallet: emptyWallet(),
+    inventory: {},
+    room: { layout: {}, wallpaper: null, floor: null },
+    ledger: [],
   };
 }
 

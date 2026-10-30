@@ -7,6 +7,8 @@ import type { ProgressEvent, ProgressMap } from "@/domain/progression";
 import type { ReviewItem } from "@/domain/review";
 import type { SessionPart, StageCheckRecord } from "@/domain/session";
 import type { Coeffs, Mode } from "@/domain/spec";
+import type { LedgerEntry, SeedLine, Wallet } from "@/game/economy";
+import type { RoomLayout } from "@/game/room";
 
 // Everything is stored on this device only (C-1). One record per child profile.
 
@@ -18,8 +20,20 @@ export interface Settings {
   sound: boolean;
   vibration: boolean;
   coeffs: { star2: Coeffs; star3: Coeffs } | null;
+  /** the shop tab is shown; seeds keep coming either way */
+  shop: boolean;
 }
-export const DEFAULT_SETTINGS: Settings = { timer: false, autoSubmit: true, sound: true, vibration: true, coeffs: null };
+export const DEFAULT_SETTINGS: Settings = { timer: false, autoSubmit: true, sound: true, vibration: true, coeffs: null, shop: true };
+
+/** shop item id → how many (1 for everything but snacks) */
+export type Inventory = Record<string, number>;
+
+/** How the child set up the room; a null wallpaper or floor is the original look. */
+export interface RoomSetup {
+  layout: RoomLayout;
+  wallpaper: string | null;
+  floor: string | null;
+}
 
 export interface SetAttempt {
   id: string;
@@ -85,6 +99,11 @@ export interface Profile {
   /** ★2 / mastered counts handed out by the diagnosis; rewards only count what comes after */
   rewardBaseline?: { star2: number; mastered: number };
   wearing: string | null;
+  wallet: Wallet;
+  inventory: Inventory;
+  room: RoomSetup;
+  /** seed movements, newest last, at most MAX_LEDGER */
+  ledger: LedgerEntry[];
 }
 
 export interface ProblemResult {
@@ -130,6 +149,7 @@ export interface SetSummary {
   challengeBest: { sec: number | null; isNew: boolean } | null;
   goalReached: boolean;
   newRewards: string[];
+  seeds: { lines: SeedLine[]; total: number; capped: boolean };
 }
 
 export interface DevSettings {

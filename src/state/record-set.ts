@@ -7,6 +7,8 @@ import { applyReview, scheduleOnMastery } from "@/domain/review";
 import { LEVEL, RULE_NUMBERS, SPEC } from "@/domain/spec";
 import { mixedTargetSec, targetSec } from "@/domain/timing";
 import { REWARDS, unlockedRewards } from "@/game/achievements";
+import { appendLedger, awardSeeds } from "@/game/economy";
+import { placeNew } from "@/game/room";
 import { placementOutcome, rewardStats, timeOpts } from "./profile";
 import type { Profile, ProblemResult, SetAttempt, SetRun, SetSummary } from "./types";
 
@@ -87,6 +89,7 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
     challengeBest: null,
     goalReached: false,
     newRewards: [],
+    seeds: { lines: [], total: 0, capped: false },
   };
   let attemptResult: SetAttempt["result"] = "done";
 
@@ -190,6 +193,31 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
   summary.newRewards = after.filter((id) => !rewardsBefore.has(id));
   const wear = REWARDS.find((r) => r.wear && summary.newRewards.includes(r.id));
   if (wear) p.wearing = wear.id;
+  // a new room good goes to a free slot of its kind, or waits in storage
+  const layout = summary.newRewards.reduce((l, id) => placeNew(l, id), p0.room.layout);
+  if (layout !== p0.room.layout) p.room = { ...p0.room, layout };
+
+  // seeds never change how the set is judged; they are counted from what was judged above
+  const award = awardSeeds(
+    p0.wallet,
+    {
+      kind: run.kind,
+      inSession: run.sessionPart !== undefined,
+      interrupted: run.interrupted,
+      firstCorrect: n - errors,
+      levelId: run.levelId,
+      levelMasteredBefore: run.levelId ? isMastered(lpOf(p0.progress, run.levelId)) : false,
+      events: summary.events,
+      reviewsPassed: summary.reviews.filter((r) => r.passed).length,
+      stageCheckPassed: !!summary.stageCheck?.passed,
+      goalReached: summary.goalReached,
+      challengeBestNew: !!summary.challengeBest?.isNew,
+    },
+    date,
+  );
+  p.wallet = award.wallet;
+  summary.seeds = { lines: award.lines, total: award.total, capped: award.capped };
+  if (award.total > 0) p.ledger = appendLedger(p0.ledger, { at: now, date, delta: award.total, reason: "set", ref: run.kind });
 
   return { profile: p, summary };
 }

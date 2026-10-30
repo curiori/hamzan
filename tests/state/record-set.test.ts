@@ -172,3 +172,57 @@ describe("recordSet", () => {
     expect(summary.stageCheck).toEqual({ stage: 0, passed: true });
   });
 });
+
+describe("seeds", () => {
+  const hintSet = (kind: SetRun["kind"], n = 10) => mkRun({ kind, mode: "H", levelId: "1-1", results: results("1-1", n) });
+
+  test("a session set pays seeds into the wallet and logs one line", () => {
+    const p = profileWith({ "1-1": { mode: "H", practiced: true } });
+    p.sessions[DATE] = { plan: [{ kind: "warmup" }, { kind: "slot", slot: "frontier" }, { kind: "slot", slot: "frontier" }], done: 1, goal: false };
+    const { profile, summary } = recordSet(p, { ...hintSet("main"), sessionPart: 1 }, ctx());
+    expect(summary.seeds).toEqual({
+      lines: [
+        { kind: "correct", seeds: 10, count: 10 },
+        { kind: "complete", seeds: 5 },
+      ],
+      total: 15,
+      capped: false,
+    });
+    expect(profile.wallet.seeds).toBe(15);
+    expect(profile.ledger.at(-1)).toEqual({ at: NOW, date: DATE, delta: 15, reason: "set", ref: "main" });
+  });
+
+  test("free practice at the cap pays only milestones and says it was capped", () => {
+    const p = profileWith({ "1-1": { mode: "S", practiced: true } });
+    p.wallet = { ...p.wallet, day: DATE, earnedToday: 50 };
+    const { profile, summary } = recordSet(p, { ...sSet(), kind: "extra" }, ctx());
+    expect(summary.seeds.lines.map((l) => l.kind)).toEqual(["star2", "personalBest"]);
+    expect(summary.seeds.capped).toBe(true);
+    expect(profile.wallet.seeds).toBe(15);
+    expect(profile.wallet.earnedToday).toBe(50);
+  });
+
+  test("a free practice set that ends after midnight counts for the new day", () => {
+    const p = profileWith({ "1-1": { mode: "H", practiced: true } });
+    p.wallet = { ...p.wallet, day: addDays(DATE, -1), earnedToday: 50 };
+    const { profile, summary } = recordSet(p, hintSet("extra"), ctx());
+    expect(summary.seeds.total).toBe(5 + 2);
+    expect(profile.wallet.day).toBe(DATE);
+    expect(profile.wallet.earnedToday).toBe(7);
+  });
+
+  test("the first clean set places the bowl in its default slot", () => {
+    const p = profileWith({ "0-1": { mode: "H", practiced: true } });
+    const run = mkRun({ kind: "main", mode: "H", levelId: "0-1", results: results("0-1", LEVEL["0-1"].setSize) });
+    expect(recordSet(p, run, ctx()).profile.room.layout).toEqual({ floorS3: "bowl" });
+  });
+
+  test("the ledger keeps the last 300 lines", () => {
+    const p = profileWith({ "1-1": { mode: "H", practiced: true } });
+    p.ledger = Array.from({ length: 300 }, (_, i) => ({ at: i, date: DATE, delta: 1, reason: "gift" as const }));
+    const { profile } = recordSet(p, hintSet("extra"), ctx());
+    expect(profile.ledger).toHaveLength(300);
+    expect(profile.ledger[0].at).toBe(1);
+    expect(profile.ledger.at(-1)?.delta).toBe(7);
+  });
+});

@@ -108,6 +108,33 @@ export function placedGoods(layout: RoomLayout): { id: string; slot: SlotId; spo
   }).sort((a, b) => a.depth - b.depth);
 }
 
+/** A newly owned good goes to its default slot when free, else to a free slot of its kind; with no room it stays stored. */
+export function placeNew(layout: RoomLayout, goodId: string, kinds: Record<string, SlotKind> = GOOD_KIND): RoomLayout {
+  const kind = kinds[goodId];
+  if (!kind || Object.values(layout).includes(goodId)) return layout;
+  const d = DEFAULT_SLOT[goodId];
+  const slot = d && SLOTS[d].kind === kind && !layout[d] ? d : SLOT_IDS.find((s) => SLOTS[s].kind === kind && !layout[s]);
+  return slot ? { ...layout, [slot]: goodId } : layout;
+}
+
+/** Rearranging: put a good in a slot, taking it from any other slot; null stores what is there. A good that does not fit changes nothing. */
+export function placeIn(layout: RoomLayout, slotId: SlotId, goodId: string | null, kinds: Record<string, SlotKind> = GOOD_KIND): RoomLayout {
+  if (goodId !== null && kinds[goodId] !== SLOTS[slotId].kind) return layout;
+  const next: RoomLayout = {};
+  for (const s of SLOT_IDS) {
+    const id = layout[s];
+    if (id && id !== goodId && s !== slotId) next[s] = id;
+  }
+  if (goodId !== null) next[slotId] = goodId;
+  return next;
+}
+
+/** Owned goods that are in no slot (しまってある); wearables are not goods. */
+export function storedGoods(layout: RoomLayout, owned: string[], kinds: Record<string, SlotKind> = GOOD_KIND): string[] {
+  const placed = new Set(Object.values(layout));
+  return owned.filter((id) => kinds[id] && !placed.has(id));
+}
+
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
 export const clampToFloor = (p: Point): Point => ({ x: clamp(p.x, FLOOR.x0, FLOOR.x1), y: clamp(p.y, FLOOR.y0, FLOOR.y1) });
