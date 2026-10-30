@@ -61,6 +61,12 @@ export function TestPane({ onExit }: { onExit: () => void }) {
       </View>
       <SwitchRow label="すべてのレベルを開放する" note="前提の★2がなくても練習できます（判定は通常どおり）" value={dev.unlockAll} onChange={(v) => setDev({ unlockAll: v })} />
       <SwitchRow label="診断を短くする" note="ステージチェックを6問にし、1日8分の区切りを外します" value={dev.shortPlacement} onChange={(v) => setDev({ shortPlacement: v })} />
+      <SwitchRow
+        label="おへやに すべての グッズを おく（表示だけ）"
+        note="ごほうびが なくても、グッズで遊ぶ様子を確かめられます。記録は変わりません"
+        value={!!dev.roomAllGoods}
+        onChange={(v) => setDev({ roomAllGoods: v })}
+      />
       {profile ? (
         <View style={styles.card}>
           <AppText weight="bold">診断をとばして、えらんだレベルから始める</AppText>

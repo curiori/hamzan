@@ -136,6 +136,8 @@ export interface DevSettings {
   dayOffset: number;
   unlockAll: boolean;
   shortPlacement: boolean;
+  /** test tool: the room shows every good (records are untouched); missing in older saves means off */
+  roomAllGoods?: boolean;
 }
 
 export interface PinRecord {

@@ -11,7 +11,7 @@ import { recordSet as recordSetPure } from "./record-set";
 import type { DevSettings, PinRecord, Profile, SessionDay, SetRun, SetSummary } from "./types";
 
 export const STORAGE_KEY = "hamzan-ios-v1";
-export const DEFAULT_DEV: DevSettings = { dayOffset: 0, unlockAll: false, shortPlacement: false };
+export const DEFAULT_DEV: DevSettings = { dayOffset: 0, unlockAll: false, shortPlacement: false, roomAllGoods: false };
 
 export interface AppState {
   pin: PinRecord | null;
