@@ -248,6 +248,19 @@ describe("app store", () => {
     expect(RESET_WARNING).toContain("ショップで買ったもの");
   });
 
+  test("placeNewGood puts a new good where a good the child no longer has stood", () => {
+    const store = createAppStore(memoryStorage().storage, { now: () => NOW });
+    store.getState().addProfile("あに", 5);
+    store.getState().giftSeeds(300);
+    for (const id of ["ball", "cushion", "ladder"]) expect(store.getState().buyItem(id).ok).toBe(true);
+    // blocks were never bought: a good the child does not have, left in the saved room
+    store.getState().placeGood("floorS1", "blocks");
+    store.getState().placeGood("floorS2", "ball");
+    store.getState().placeGood("floorS3", "cushion");
+    expect(store.getState().placeNewGood("ladder")).toBe(true);
+    expect(activeProfile(store.getState())?.room.layout.floorS1).toBe("ladder");
+  });
+
   test("feedSnack gives one snack the child has, and nothing when there is none", () => {
     const store = createAppStore(memoryStorage().storage, { now: () => NOW });
     store.getState().addProfile("あに", 5);

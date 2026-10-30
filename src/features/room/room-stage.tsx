@@ -18,6 +18,7 @@ import {
   placedGoods,
   ROOM_H,
   ROOM_W,
+  roomGoods,
   SLOT_NAME,
   SLOTS,
   toRoom,
@@ -33,7 +34,7 @@ import { ownedGoods, todayOf } from "@/state/profile";
 import { useAppStore } from "@/state/store";
 import type { Profile } from "@/state/types";
 import { colors } from "@/ui/theme";
-import { hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, roomGoods, stageGoods, type Look } from "./stage-rules";
+import { hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, stageGoods, type Look } from "./stage-rules";
 import { useRoomBrain, type Motion, type RoomStart } from "./use-room-brain";
 
 /** the hamster's feet inside its sprite box, in design units */

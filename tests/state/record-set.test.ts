@@ -217,6 +217,24 @@ describe("seeds", () => {
     expect(recordSet(p, run, ctx()).profile.room.layout).toEqual({ floorS3: "bowl" });
   });
 
+  test("a new reward good takes a slot held only by a good the child no longer has", () => {
+    const p = profileWith({ "0-1": { mode: "H", practiced: true } });
+    p.inventory = { ball: 1, cushion: 1 };
+    p.room = { ...p.room, layout: { floorS1: "blocks", floorS2: "ball", floorS3: "cushion" } };
+    const run = mkRun({ kind: "main", mode: "H", levelId: "0-1", results: results("0-1", LEVEL["0-1"].setSize) });
+    expect(recordSet(p, run, ctx()).profile.room.layout).toEqual({ floorS1: "bowl", floorS2: "ball", floorS3: "cushion" });
+  });
+
+  test("a set that brings no new room good leaves the saved room as it was", () => {
+    const p = profileWith({ "1-1": { mode: "H", practiced: true } });
+    // an earlier clean set already brought the bowl, so this set brings nothing new
+    p.sets = [{ id: "old", kind: "extra", levelId: "1-1", mode: "H", date: "2026-10-01", startedAt: 0, n: 10, errors: 0, perProblemSec: 2, target2: 3, target3: 2, result: "done" }];
+    p.room = { ...p.room, layout: { floorS1: "blocks" } };
+    const { profile, summary } = recordSet(p, hintSet("extra"), ctx());
+    expect(summary.newRewards).toEqual([]);
+    expect(profile.room.layout).toEqual({ floorS1: "blocks" });
+  });
+
   test("the ledger keeps the last 300 lines", () => {
     const p = profileWith({ "1-1": { mode: "H", practiced: true } });
     p.ledger = Array.from({ length: 300 }, (_, i) => ({ at: i, date: DATE, delta: 1, reason: "gift" as const }));

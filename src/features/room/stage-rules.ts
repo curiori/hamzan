@@ -1,6 +1,6 @@
 import type { Mood, Pose } from "@/art/hamster";
 import type { Activity } from "@/game/hamster-brain";
-import { GOOD_KIND, pushSpot, seatIn, type Point, type RoomLayout, type SlotId } from "@/game/room";
+import { GOOD_KIND, pushSpot, seatIn, type Point, type SlotId } from "@/game/room";
 import { itemName } from "@/game/shop";
 
 // How the room screen shows each activity: walk speeds, drawing depth, which hamster drawing, and the
@@ -28,12 +28,6 @@ export function walkAxis(from: Point, to: Point): "x" | "y" | null {
   const dy = Math.abs(to.y - from.y);
   if (dx === 0 && dy === 0) return null;
   return dx >= dy ? "x" : "y";
-}
-
-/** The saved room without the goods the child no longer has (records deleted, a reward's condition lost). */
-export function roomGoods(layout: RoomLayout, owned: string[]): RoomLayout {
-  const has = new Set(owned);
-  return Object.fromEntries(Object.entries(layout).filter(([, id]) => id !== undefined && has.has(id))) as RoomLayout;
 }
 
 /** Goods that are only looked at: the hamster never goes to play with them. */

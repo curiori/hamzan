@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Activity } from "@/game/hamster-brain";
-import { ABOVE_ALL, hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, rearrangedUnder, roomGoods, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
+import { ABOVE_ALL, hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
 import { placedGoods, pushSpot, seatIn, SLOTS } from "@/game/room";
 
 const at = { x: 200, y: 210 };
@@ -72,12 +72,6 @@ describe("look", () => {
 });
 
 describe("the saved room", () => {
-  test("goods no longer owned are not shown", () => {
-    expect(roomGoods({ floorL1: "desk", floorS2: "ball" }, ["ball"])).toEqual({ floorS2: "ball" });
-    expect(roomGoods({ floorL1: "desk", sill: "grass" }, ["desk", "grass", "ball"])).toEqual({ floorL1: "desk", sill: "grass" });
-    expect(roomGoods({}, ["desk"])).toEqual({});
-  });
-
   test("the night is darker without a lamp", () => {
     expect(nightTint(false, false)).toBe(0);
     expect(nightTint(false, true)).toBe(0);

@@ -8,8 +8,8 @@ import { LEVEL, RULE_NUMBERS, SPEC } from "@/domain/spec";
 import { mixedTargetSec, targetSec } from "@/domain/timing";
 import { REWARDS, unlockedRewards } from "@/game/achievements";
 import { appendLedger, awardSeeds } from "@/game/economy";
-import { placeNew } from "@/game/room";
-import { placementOutcome, rewardStats, timeOpts } from "./profile";
+import { GOOD_KIND, placeNew, roomGoods } from "@/game/room";
+import { ownedGoods, placementOutcome, rewardStats, timeOpts } from "./profile";
 import type { Profile, ProblemResult, SetAttempt, SetRun, SetSummary } from "./types";
 
 const MAX_SETS = 600;
@@ -193,9 +193,12 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
   summary.newRewards = after.filter((id) => !rewardsBefore.has(id));
   const wear = REWARDS.find((r) => r.wear && summary.newRewards.includes(r.id));
   if (wear) p.wearing = wear.id;
-  // a new room good goes to a free slot of its kind, or waits in storage
-  const layout = summary.newRewards.reduce((l, id) => placeNew(l, id), p0.room.layout);
-  if (layout !== p0.room.layout) p.room = { ...p0.room, layout };
+  // a new room good goes to a free slot of its kind, or waits in storage; goods the child no longer has give their
+  // slots up then, and a set that brings no room good leaves the saved room as it was
+  if (summary.newRewards.some((id) => GOOD_KIND[id])) {
+    const layout = summary.newRewards.reduce((l, id) => placeNew(l, id), roomGoods(p0.room.layout, ownedGoods(p)));
+    p.room = { ...p0.room, layout };
+  }
 
   // seeds never change how the set is judged; they are counted from what was judged above
   const award = awardSeeds(

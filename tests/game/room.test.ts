@@ -15,7 +15,9 @@ import {
   placedGoods,
   placeIn,
   placeNew,
+  previewLayout,
   pushSpot,
+  roomGoods,
   ROOM_H,
   ROOM_W,
   SEATS,
@@ -182,6 +184,27 @@ describe("slots", () => {
 });
 
 describe("placing goods", () => {
+  test("goods no longer owned are not shown", () => {
+    expect(roomGoods({ floorL1: "desk", floorS2: "ball" }, ["ball"])).toEqual({ floorS2: "ball" });
+    expect(roomGoods({ floorL1: "desk", sill: "grass" }, ["desk", "grass", "ball"])).toEqual({ floorL1: "desk", sill: "grass" });
+    expect(roomGoods({}, ["desk"])).toEqual({});
+  });
+
+  test("a new good takes a slot held only by a good the child no longer has", () => {
+    expect(previewLayout({ floorL1: "desk", floorL2: "wheel", floorL3: "house" }, ["wheel", "house", "bookshelf"], "bookshelf")).toEqual({
+      layout: { floorL1: "bookshelf", floorL2: "wheel", floorL3: "house" },
+      full: false,
+    });
+  });
+
+  test("the preview shows where a new good will go, or its usual slot when every slot of its kind is taken", () => {
+    expect(previewLayout({ floorS2: "ball" }, ["ball", "blocks"], "blocks")).toEqual({ layout: { floorS1: "blocks", floorS2: "ball" }, full: false });
+    expect(previewLayout({ floorS1: "tunnel", floorS2: "ball", floorS3: "bowl" }, ["tunnel", "ball", "bowl", "blocks"], "blocks")).toEqual({
+      layout: { floorS1: "tunnel", floorS2: "blocks", floorS3: "bowl" },
+      full: true,
+    });
+  });
+
   test("every slot has its own name to read out", () => {
     const names = Object.keys(SLOTS).map((s) => SLOT_NAME[s as SlotId]);
     expect(names.every((n) => typeof n === "string" && n.length > 0)).toBe(true);

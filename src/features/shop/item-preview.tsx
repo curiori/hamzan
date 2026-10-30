@@ -2,8 +2,7 @@ import { StyleSheet, View } from "react-native";
 import { Hamster } from "@/art/hamster";
 import { ItemThumb } from "@/art/items";
 import { RoomScene } from "@/art/room-scene";
-import { roomGoods } from "@/features/room/stage-rules";
-import { DEFAULT_SLOT, placeIn } from "@/game/room";
+import { previewLayout, roomGoods } from "@/game/room";
 import type { ShopItem } from "@/game/shop";
 import { ownedGoods } from "@/state/profile";
 import type { Profile } from "@/state/types";
@@ -28,20 +27,22 @@ export function ItemPreview({ item, profile, width }: { item: ShopItem; profile:
       </View>
     );
 
-  const room = roomGoods(profile.room.layout, ownedGoods(profile));
-  const slot = DEFAULT_SLOT[item.id];
-  // a good that is not out yet is shown in its usual place, instead of whatever stands there now
-  const layout = item.kind === "good" && slot && !Object.values(room).includes(item.id) ? placeIn(room, slot, item.id) : room;
+  // a good is shown where it would go; with every slot of its kind taken, in its usual place instead of what stands there
+  const owned = ownedGoods(profile);
+  const { layout, full } = item.kind === "good" ? previewLayout(profile.room.layout, owned, item.id) : { layout: roomGoods(profile.room.layout, owned), full: false };
   return (
-    <View style={styles.room}>
-      <RoomScene
-        layout={layout}
-        wallpaper={item.kind === "wallpaper" ? item.id : profile.room.wallpaper}
-        floor={item.kind === "floor" ? item.id : profile.room.floor}
-        wear={profile.wearing}
-        name={profile.nickname}
-        width={width - 2}
-      />
+    <View style={styles.preview}>
+      <View style={styles.room}>
+        <RoomScene
+          layout={layout}
+          wallpaper={item.kind === "wallpaper" ? item.id : profile.room.wallpaper}
+          floor={item.kind === "floor" ? item.id : profile.room.floor}
+          wear={profile.wearing}
+          name={profile.nickname}
+          width={width - 2}
+        />
+      </View>
+      {full ? <AppText style={styles.full}>いまは おく ばしょが いっぱい。もようがえで いれかえてね</AppText> : null}
     </View>
   );
 }
@@ -49,5 +50,7 @@ export function ItemPreview({ item, profile, width }: { item: ShopItem; profile:
 const styles = StyleSheet.create({
   box: { alignItems: "center", justifyContent: "center", gap: 8, minHeight: 150, borderRadius: radius.lg, backgroundColor: colors.amber50, padding: 12 },
   note: { fontSize: 15 },
+  preview: { gap: 6 },
   room: { borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: "hidden" },
+  full: { fontSize: 14, textAlign: "center" },
 });

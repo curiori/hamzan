@@ -257,6 +257,24 @@ export function storedGoods(layout: RoomLayout, owned: string[], kinds: Record<s
   return owned.filter((id) => kinds[id] && !placed.has(id));
 }
 
+/** The saved room without the goods the child no longer has (records deleted, a reward's condition lost). */
+export function roomGoods(layout: RoomLayout, owned: string[]): RoomLayout {
+  const has = new Set(owned);
+  return Object.fromEntries(Object.entries(layout).filter(([, id]) => id !== undefined && has.has(id))) as RoomLayout;
+}
+
+/**
+ * Where a good would go in the child's room: where placeNew puts it (goods the child no longer has give their
+ * slots up), or, when every slot of its kind is taken, its usual slot in place of what stands there (full).
+ */
+export function previewLayout(layout: RoomLayout, owned: string[], goodId: string, kinds: Record<string, SlotKind> = GOOD_KIND): { layout: RoomLayout; full: boolean } {
+  const room = roomGoods(layout, owned);
+  const placed = placeNew(room, goodId, kinds);
+  if (Object.values(placed).includes(goodId)) return { layout: placed, full: false };
+  const slot = DEFAULT_SLOT[goodId];
+  return { layout: slot ? placeIn(room, slot, goodId, kinds) : room, full: true };
+}
+
 /** Rearranging one slot: the owned goods of its kind, stored (from null) or out in another slot, but not the one already there. */
 export function slotChoices(slotId: SlotId, layout: RoomLayout, owned: string[], kinds: Record<string, SlotKind> = GOOD_KIND): { id: string; from: SlotId | null }[] {
   const where = new Map<string, SlotId>();

@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native";
 import { ItemThumb } from "@/art/items";
-import { SLOT_NAME, slotChoices, type SlotId } from "@/game/room";
+import { roomGoods, SLOT_NAME, slotChoices, type SlotId } from "@/game/room";
 import { itemName } from "@/game/shop";
 import { ownedGoods } from "@/state/profile";
 import { useAppStore } from "@/state/store";
@@ -9,7 +9,6 @@ import { Button } from "@/ui/button";
 import { Sheet } from "@/ui/sheet";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
-import { roomGoods } from "./stage-rules";
 
 /** Rearranging one slot: put an owned good of its kind there (stored, or moved from another slot), or store what is there. */
 export function ArrangeSheet({ slot, profile, onClose }: { slot: SlotId | null; profile: Profile; onClose: () => void }) {
