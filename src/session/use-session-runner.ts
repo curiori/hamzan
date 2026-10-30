@@ -17,7 +17,8 @@ export function useSessionRunner() {
 
   const startPlan = useCallback(
     (plan: PlayPlan, replace = false) => {
-      usePlayStore.getState().begin(plan);
+      // a double tap on a start button must not open a second play screen
+      if (!usePlayStore.getState().begin(plan)) return;
       if (replace) router.replace("/play");
       else router.push("/play");
     },
@@ -46,9 +47,9 @@ export function useSessionRunner() {
 
   const finish = useCallback(
     (o: PlayOutcome) => {
-      const { plan, summary: shown } = usePlayStore.getState();
-      // a set is recorded once; the summary is cleared when the next set begins
-      if (!plan || shown) return;
+      const { plan, recorded } = usePlayStore.getState();
+      // a set is recorded once
+      if (!plan || recorded) return;
       const { ctx } = plan;
       const summary = useAppStore.getState().recordSet({
         kind: ctx.kind,

@@ -166,7 +166,8 @@ export function PlayScreen({
   const quit = async () => {
     if (!paused) setUserPause(true);
     const ok = await confirm({ title: "とちゅうで やめますか？", description: "この セットの きろくは のこりません。", confirmLabel: "やめる", cancelLabel: "つづける" });
-    if (!ok || finished.current) return;
+    // leaving always works, even when a finish already happened and recorded nothing
+    if (!ok) return;
     finished.current = true;
     onQuit();
   };
