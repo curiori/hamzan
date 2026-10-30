@@ -16,6 +16,7 @@ import {
   ROOM_W,
   SEATS,
   seatIn,
+  seatMoveMs,
   SLOTS,
   storedGoods,
   toRoom,
@@ -23,6 +24,7 @@ import {
   type SlotId,
   type SlotKind,
 } from "@/game/room";
+import { SHOP } from "@/game/shop";
 
 const ART_BOX = 60;
 
@@ -30,7 +32,9 @@ describe("autoLayout", () => {
   test("every reward good gets its default slot and wearables get none", () => {
     const layout = autoLayout(REWARDS.map((r) => r.id));
     const slotOf = Object.fromEntries(Object.entries(layout).map(([slot, id]) => [id, slot]));
-    expect(slotOf).toEqual(DEFAULT_SLOT);
+    const rewardGoods = REWARDS.map((r) => r.id).filter((id) => GOOD_KIND[id]);
+    expect(slotOf).toEqual(Object.fromEntries(rewardGoods.map((id) => [id, DEFAULT_SLOT[id]])));
+    expect(rewardGoods).toHaveLength(8);
     expect(Object.values(layout)).not.toContain("hachimaki");
     expect(Object.values(layout)).not.toContain("crown");
   });
@@ -86,11 +90,12 @@ describe("slots", () => {
     expect(wheel?.spot).toEqual(SLOTS.floorL2.spot);
   });
 
-  test("a hamster sitting on a hanging good stays inside the room in every ceiling slot", () => {
-    const ceilings = (Object.keys(SLOTS) as SlotId[]).filter((s) => SLOTS[s].kind === "ceiling");
+  test("a hamster on a seat stays inside the room in every slot of the good's kind", () => {
+    expect(Object.keys(SEATS).sort()).toEqual(["hammock", "ladder", "swing"]);
     for (const good of Object.keys(SEATS)) {
-      expect(GOOD_KIND[good]).toBe("ceiling");
-      for (const slot of ceilings) {
+      const slots = (Object.keys(SLOTS) as SlotId[]).filter((s) => SLOTS[s].kind === GOOD_KIND[good]);
+      expect(slots.length).toBeGreaterThan(0);
+      for (const slot of slots) {
         const feet = seatIn(good, slot);
         expect(feet).toBeDefined();
         if (!feet) continue;
@@ -101,6 +106,16 @@ describe("slots", () => {
       }
     }
     expect(seatIn("wheel", "floorL2")).toBeUndefined();
+    expect([seatMoveMs("swing"), seatMoveMs("hammock"), seatMoveMs("ladder"), seatMoveMs("wheel")]).toEqual([300, 300, 900, 0]);
+  });
+
+  test("every shop good has a slot kind and a default slot of that kind", () => {
+    for (const item of SHOP.filter((i) => i.kind === "good")) {
+      expect(GOOD_KIND[item.id]).toBeDefined();
+      expect(SLOTS[DEFAULT_SLOT[item.id]].kind).toBe(GOOD_KIND[item.id]);
+    }
+    expect([GOOD_KIND.ball, GOOD_KIND.ladder, GOOD_KIND.grass, GOOD_KIND.lamp]).toEqual(["floorSmall", "floorSmall", "sill", "wall"]);
+    for (const item of SHOP.filter((i) => i.kind !== "good")) expect(GOOD_KIND[item.id]).toBeUndefined();
   });
 });
 

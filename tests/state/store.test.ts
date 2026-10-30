@@ -214,4 +214,19 @@ describe("app store", () => {
     store.getState().markRoomSeen(["wheel", "bowl"]);
     expect(store.getState().profiles).toBe(before);
   });
+
+  test("buyItem saves a purchase for the active child, and the room setters change its room", () => {
+    const store = createAppStore(memoryStorage().storage, { now: () => NOW });
+    store.getState().addProfile("あに", 5);
+    expect(store.getState().buyItem("ball")).toEqual({ ok: false, reason: "short", need: 60 });
+    store.getState().giftSeeds(100);
+    expect(store.getState().buyItem("ball").ok).toBe(true);
+    expect(activeProfile(store.getState())?.wallet.seeds).toBe(40);
+    expect(store.getState().placeNewGood("ball")).toBe(true);
+    expect(activeProfile(store.getState())?.room.layout).toEqual({ floorS2: "ball" });
+    store.getState().placeGood("floorS2", null);
+    expect(activeProfile(store.getState())?.room.layout).toEqual({});
+    store.getState().setDecor("wallpaper", "wall-sky");
+    expect(activeProfile(store.getState())?.room.wallpaper).toBe("wall-sky");
+  });
 });

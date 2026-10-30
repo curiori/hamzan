@@ -6,6 +6,8 @@ import { planDailySession } from "@/domain/session";
 import { LEVEL } from "@/domain/spec";
 import { writeChildFrom } from "@/domain/timing";
 import { appendLedger } from "@/game/economy";
+import { placeIn, placeNew, type SlotId } from "@/game/room";
+import { buy, type BuyResult } from "@/game/shop";
 import { migrate } from "./migrate";
 import { hashPin, makeSalt } from "./pin";
 import { newProfile, placementOutcome, todayOf } from "./profile";
@@ -43,6 +45,13 @@ export interface AppState {
   giftSeeds: (n: number) => void;
   /** the room goods the active child has seen out in the room (no write when nothing changed) */
   markRoomSeen: (goods: string[]) => void;
+  /** spends the active child's seeds; nothing changes unless the result is ok */
+  buyItem: (itemId: string) => BuyResult;
+  /** puts a good out in a free slot of its kind; false when there is no room (it stays stored) */
+  placeNewGood: (goodId: string) => boolean;
+  /** rearranging: a good into a slot, or null to store what is there */
+  placeGood: (slotId: SlotId, goodId: string | null) => void;
+  setDecor: (kind: "wallpaper" | "floor", id: string | null) => void;
   setDev: (patch: Partial<DevSettings>) => void;
 }
 
@@ -187,6 +196,22 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
             if (!p || (p.room.seen.length === goods.length && goods.every((g) => p.room.seen.includes(g)))) return;
             patchActive((q) => ({ ...q, room: { ...q.room, seen: [...goods] } }));
           },
+          buyItem: (itemId) => {
+            const p = activeProfile(get());
+            if (!p) return { ok: false, reason: "unknown" };
+            const r = buy(p, itemId, { now: now(), date: today() });
+            if (r.ok) patchProfile(p.id, () => r.profile);
+            return r;
+          },
+          placeNewGood: (goodId) => {
+            const p = activeProfile(get());
+            if (!p) return false;
+            const layout = placeNew(p.room.layout, goodId);
+            if (layout !== p.room.layout) patchProfile(p.id, (q) => ({ ...q, room: { ...q.room, layout } }));
+            return Object.values(layout).includes(goodId);
+          },
+          placeGood: (slotId, goodId) => patchActive((p) => ({ ...p, room: { ...p.room, layout: placeIn(p.room.layout, slotId, goodId) } })),
+          setDecor: (kind, id) => patchActive((p) => ({ ...p, room: { ...p.room, [kind]: id } })),
 
           setDev: (patch) => set((s) => ({ dev: { ...s.dev, ...patch } })),
         };

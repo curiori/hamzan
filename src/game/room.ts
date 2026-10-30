@@ -45,7 +45,7 @@ export const SLOTS: Record<SlotId, Slot> = {
 
 const SLOT_IDS = Object.keys(SLOTS) as SlotId[];
 
-/** The slot kind each room good needs (wearables are not room goods). */
+/** The slot kind each room good needs, rewards and shop goods (wearables are not room goods). */
 export const GOOD_KIND: Record<string, SlotKind> = {
   desk: "floorLarge",
   wheel: "floorLarge",
@@ -55,6 +55,12 @@ export const GOOD_KIND: Record<string, SlotKind> = {
   flower: "sill",
   swing: "ceiling",
   hammock: "ceiling",
+  ball: "floorSmall",
+  blocks: "floorSmall",
+  cushion: "floorSmall",
+  ladder: "floorSmall",
+  grass: "sill",
+  lamp: "wall",
 };
 
 export const DEFAULT_SLOT: Record<string, SlotId> = {
@@ -66,20 +72,36 @@ export const DEFAULT_SLOT: Record<string, SlotId> = {
   flower: "sill",
   swing: "ceil1",
   hammock: "ceil2",
+  ball: "floorS2",
+  blocks: "floorS2",
+  cushion: "floorS2",
+  ladder: "floorS2",
+  grass: "sill",
+  lamp: "wall1",
 };
 
 /** good id in each used slot */
 export type RoomLayout = Partial<Record<SlotId, string>>;
 
-/** Where the hamster sits on a hanging good, in the good's 60×60 box; the art hangs low enough to keep it inside the room. */
-export const SEATS: Record<string, Point> = { swing: { x: 30, y: 49 }, hammock: { x: 30, y: 49 } };
+/**
+ * Where the hamster sits on a good, in the good's 60×60 box, and how long getting there takes. The hanging goods
+ * hang low enough to keep a seated hamster inside the room; the ladder is climbed to its top rung.
+ */
+export const SEATS: Record<string, { at: Point; moveMs: number }> = {
+  swing: { at: { x: 30, y: 49 }, moveMs: 300 },
+  hammock: { at: { x: 30, y: 49 }, moveMs: 300 },
+  ladder: { at: { x: 30, y: 6 }, moveMs: 900 },
+};
 
-/** The hamster's feet when it sits on `goodId` hung in `slotId`, in room units; undefined for goods without a seat. */
+/** The hamster's feet when it sits on `goodId` in `slotId`, in room units; undefined for goods without a seat. */
 export function seatIn(goodId: string, slotId: SlotId): Point | undefined {
-  const seat = SEATS[goodId];
+  const seat = SEATS[goodId]?.at;
   const sl = SLOTS[slotId];
   return seat ? { x: sl.x + seat.x * sl.scale, y: sl.y + seat.y * sl.scale } : undefined;
 }
+
+/** How long the hamster takes to get onto a good's seat; 0 for goods without one. */
+export const seatMoveMs = (goodId: string): number => SEATS[goodId]?.moveMs ?? 0;
 
 export const fits = (goodId: string, slotId: SlotId) => GOOD_KIND[goodId] === SLOTS[slotId].kind;
 

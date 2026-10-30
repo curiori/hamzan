@@ -13,7 +13,7 @@ import {
   type SharedValue,
 } from "react-native-reanimated";
 import { createBrain, isNight, stepBrain, type Activity, type Brain, type BrainEvent, type World } from "@/game/hamster-brain";
-import { clampToFloor, type Point } from "@/game/room";
+import { clampToFloor, seatMoveMs, type Point } from "@/game/room";
 import { walkAxis, walkMs } from "./stage-rules";
 
 // The room makes its own calm moves when the system asks to reduce motion (slow walks, a nod instead of a hop),
@@ -55,7 +55,6 @@ export interface Motion {
 }
 
 const HOME: Point = { x: 200, y: 222 };
-const SEAT_MOVE_MS = 300;
 const SURPRISE_MS = 900;
 const TUNNEL_SHIFT = 44;
 
@@ -228,18 +227,19 @@ export function useRoomBrain({
       const good = goodsRef.current.find((g) => g.id === a.good);
       if (good?.seat) {
         // up onto the swing or into the hammock, sway, and back down before the end
-        x.value = tween(good.seat.x, SEAT_MOVE_MS);
-        y.value = tween(good.seat.y, SEAT_MOVE_MS);
+        const moveMs = seatMoveMs(a.good);
+        x.value = tween(good.seat.x, moveMs);
+        y.value = tween(good.seat.y, moveMs);
         const amp = rm ? 4 : 10;
         sway.value = loop(chain(tween(amp, 700), tween(-amp, 700)), -1, true);
         tilt.value = loop(chain(tween(amp * 0.6, 700), tween(-amp * 0.6, 700)), -1, true);
-        later(Math.max(0, a.ms - SEAT_MOVE_MS), () => {
+        later(Math.max(0, a.ms - moveMs), () => {
           cancelAnimation(tilt);
           cancelAnimation(sway);
           tilt.value = tween(0, 150);
           sway.value = tween(0, 400);
-          x.value = tween(from.x, SEAT_MOVE_MS);
-          y.value = tween(from.y, SEAT_MOVE_MS);
+          x.value = tween(from.x, moveMs);
+          y.value = tween(from.y, moveMs);
         });
       } else if (a.good === "wheel") {
         step.value = loop(tween(1, 90), -1, true);

@@ -6,8 +6,10 @@ import { seedOf } from "@/domain/rng";
 import type { StageCheckRecord } from "@/domain/session";
 import { LEVELS, SPEC, STAGES, type Mode } from "@/domain/spec";
 import type { TimeOptions } from "@/domain/timing";
-import type { RewardStats } from "@/game/achievements";
+import { REWARDS, unlockedRewards, type RewardStats } from "@/game/achievements";
 import { emptyWallet } from "@/game/economy";
+import { GOOD_KIND } from "@/game/room";
+import { SHOP, type ShopKind } from "@/game/shop";
 import { DEFAULT_SETTINGS, type Profile } from "./types";
 
 export const todayOf = (dayOffset: number, nowMs: number = Date.now()): LocalDate => toLocalDate(nowMs + dayOffset * 86400000);
@@ -53,6 +55,19 @@ export function rewardStats(p: Profile): RewardStats {
     goalDays: Object.values(p.sessions).filter((d) => d.goal).length,
     stageChecksPassed: Object.values(p.stageChecks).filter((c) => c.passed && !c.byPlacement).length,
   };
+}
+
+const bought = (p: Profile, kind: ShopKind) => SHOP.filter((i) => i.kind === kind && (p.inventory[i.id] ?? 0) > 0).map((i) => i.id);
+
+/** Room goods the child has: rewards practice brought, then goods bought in the shop. */
+export function ownedGoods(p: Profile): string[] {
+  return [...unlockedRewards(rewardStats(p)).filter((id) => GOOD_KIND[id]), ...bought(p, "good")];
+}
+
+/** Wearables the child has: rewards practice brought, then wear bought in the shop. */
+export function ownedWear(p: Profile): string[] {
+  const earned = new Set(unlockedRewards(rewardStats(p)));
+  return [...REWARDS.filter((r) => r.wear && earned.has(r.id)).map((r) => r.id), ...bought(p, "wear")];
 }
 
 /** What the diagnosis hands out: earlier levels as ★2, cleared stages, and the reward baseline. */

@@ -4,8 +4,8 @@ import type { Problem } from "../../src/domain/problem";
 import { freshProgress, isUnlocked } from "../../src/domain/progression";
 import { LEVEL, SPEC } from "../../src/domain/spec";
 import { hashPin, makeSalt } from "../../src/state/pin";
-import { newProfile, setSeed, warmupLevels, weakFacts } from "../../src/state/profile";
-import { DEFAULT_SETTINGS, type FactStat } from "../../src/state/types";
+import { newProfile, ownedGoods, ownedWear, setSeed, warmupLevels, weakFacts } from "../../src/state/profile";
+import { DEFAULT_SETTINGS, type FactStat, type SetAttempt } from "../../src/state/types";
 
 const DATE = "2026-10-29";
 
@@ -37,6 +37,16 @@ describe("profile", () => {
     const b = newProfile("b", 1);
     expect(a.settings).not.toBe(b.settings);
     expect(a.settings).not.toBe(DEFAULT_SETTINGS);
+  });
+
+  test("ownedGoods and ownedWear list what practice brought and what the shop sold", () => {
+    const p = newProfile("t", 3, { id: "p1", now: 0 });
+    const clean: SetAttempt = { id: "s", kind: "main", levelId: "0-1", mode: "H", date: DATE, startedAt: 0, n: 10, errors: 0, perProblemSec: 2, target2: 3, target3: 2, result: "done" };
+    p.sets = [clean];
+    p.stageChecks = { 0: { date: DATE, passed: true } };
+    p.inventory = { ball: 1, scarf: 1, carrot: 2, "wall-sky": 1 };
+    expect(ownedGoods(p)).toEqual(["bowl", "ball"]);
+    expect(ownedWear(p)).toEqual(["hachimaki", "scarf"]);
   });
 
   test("setSeed is fixed while a new S level has fewer fixed days than the spec", () => {
