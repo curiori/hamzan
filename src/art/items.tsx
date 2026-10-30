@@ -1,6 +1,17 @@
 import type { ReactNode } from "react";
 import Svg, { Circle, Ellipse, G, Path, Rect, Text as SvgText } from "react-native-svg";
+import type { Point } from "@/game/room";
 import { Seed } from "./hamster";
+
+const WHEEL_STAND = <Path d="M30 30 L14 58 M30 30 L46 58" stroke="#8B6B4A" strokeWidth={4} strokeLinecap="round" />;
+const WHEEL_ROTOR = (
+  <G>
+    <Circle cx={30} cy={28} r={24} fill="none" stroke="#4E9BD1" strokeWidth={4} />
+    <Circle cx={30} cy={28} r={19} fill="none" stroke="#9CCBEA" strokeWidth={3} strokeDasharray="3 4" />
+    <Path d="M30 4 V52 M6 28 H54 M13 11 L47 45 M47 11 L13 45" stroke="#4E9BD1" strokeWidth={1.5} />
+    <Circle cx={30} cy={28} r={3} fill="#2F6E99" />
+  </G>
+);
 
 // Room goods drawn in a 60×60 box (same shapes as the web prototype).
 export const ART: Record<string, ReactNode> = {
@@ -16,11 +27,8 @@ export const ART: Record<string, ReactNode> = {
   ),
   wheel: (
     <G>
-      <Path d="M30 30 L14 58 M30 30 L46 58" stroke="#8B6B4A" strokeWidth={4} strokeLinecap="round" />
-      <Circle cx={30} cy={28} r={24} fill="none" stroke="#4E9BD1" strokeWidth={4} />
-      <Circle cx={30} cy={28} r={19} fill="none" stroke="#9CCBEA" strokeWidth={3} strokeDasharray="3 4" />
-      <Path d="M30 4 V52 M6 28 H54 M13 11 L47 45 M47 11 L13 45" stroke="#4E9BD1" strokeWidth={1.5} />
-      <Circle cx={30} cy={28} r={3} fill="#2F6E99" />
+      {WHEEL_STAND}
+      {WHEEL_ROTOR}
     </G>
   ),
   house: (
@@ -100,3 +108,17 @@ export function ItemThumb({ id, size = 44 }: { id: string; size?: number }) {
     </Svg>
   );
 }
+
+/** A room good split into the still part and the part that turns or sways around `pivot` (in the 60×60 box). */
+export interface ItemParts {
+  base: ReactNode;
+  moving?: ReactNode;
+  pivot?: Point;
+}
+
+export const ITEM_PARTS: Record<string, ItemParts> = {
+  ...Object.fromEntries(Object.entries(ART).map(([id, art]) => [id, { base: art }])),
+  wheel: { base: WHEEL_STAND, moving: WHEEL_ROTOR, pivot: { x: 30, y: 28 } },
+  swing: { base: null, moving: ART.swing, pivot: { x: 30, y: 0 } },
+  hammock: { base: null, moving: ART.hammock, pivot: { x: 30, y: 6 } },
+};

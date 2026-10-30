@@ -1,5 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
+import { Hamster } from "@/art/hamster";
+import { Bubble, HamsterSide, Heart } from "@/art/hamster-poses";
 import { ItemThumb } from "@/art/items";
 import { RoomScene } from "@/art/room-scene";
 import { REWARDS, unlockedRewards } from "@/game/achievements";
@@ -53,7 +55,35 @@ export function RoomView() {
           </View>
         );
       })}
+      <PosePreview width={Math.min(width - 32, 640)} />
     </ScrollView>
+  );
+}
+
+// Temporary preview of the new room art (plan C task 3); task 4 replaces it with the moving room.
+function PosePreview({ width }: { width: number }) {
+  return (
+    <View style={styles.preview}>
+      <RoomScene owned={REWARDS.map((r) => r.id)} wear={null} name="プレビュー" width={width} />
+      <View style={styles.previewRow}>
+        <HamsterSide frame={0} size={70} />
+        <HamsterSide frame={1} size={70} />
+        <HamsterSide frame={0} size={70} wear="crown" />
+        <HamsterSide frame={1} size={70} cheeks />
+      </View>
+      <View style={styles.previewRow}>
+        <Hamster pose="sleep" size={70} />
+        <Hamster pose="cheeks" size={70} />
+        <Hamster pose="read" size={70} />
+        <Hamster pose="pet" size={70} />
+      </View>
+      <View style={styles.previewRow}>
+        <Bubble text="きゅっ" />
+        <Bubble text="なるほど" />
+        <Bubble text="Zzz" />
+        <Heart />
+      </View>
+    </View>
   );
 }
 
@@ -68,4 +98,6 @@ const styles = StyleSheet.create({
   notOwned: { opacity: 0.35 },
   itemText: { flex: 1, minWidth: 0 },
   need: { fontSize: 13 },
+  preview: { marginTop: 16, gap: 12, borderTopWidth: 1, borderColor: colors.border, paddingTop: 16 },
+  previewRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-end", gap: 12 },
 });
