@@ -5,15 +5,23 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppText } from "./text";
 import { colors, radius } from "./theme";
 
+/**
+ * The dimmed screen behind a sheet or a menu. A press on it closes, for children who see it; VoiceOver skips it and
+ * closes with its escape gesture (a two-finger scrub) on the sheet instead.
+ */
+export function Backdrop({ onClose }: { onClose: () => void }) {
+  return <Pressable style={StyleSheet.absoluteFill} accessible={false} aria-hidden tabIndex={-1} onPress={onClose} />;
+}
+
 /** Bottom sheet over the dimmed screen: a title, a close button and scrolling content. A press outside closes it. */
 export function Sheet({ visible, title, subtitle, onClose, children }: { visible: boolean; title: string; subtitle?: string; onClose: () => void; children: ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
     <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="とじる" onPress={onClose} />
+        <Backdrop onClose={onClose} />
         {visible ? (
-          <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]} accessibilityViewIsModal>
+          <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]} accessibilityViewIsModal onAccessibilityEscape={onClose}>
             <ScrollView contentContainerStyle={styles.content}>
               <View style={styles.head}>
                 <View style={styles.headText}>

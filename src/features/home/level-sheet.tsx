@@ -6,6 +6,7 @@ import { LEVEL, SPEC, type Mode } from "@/domain/spec";
 import { KID_LEVEL_NAME, MODE_LABEL } from "@/i18n/ja";
 import type { Profile } from "@/state/types";
 import { Button } from "@/ui/button";
+import { Backdrop } from "@/ui/sheet";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
 import { STATUS_LABEL } from "./stage-map";
@@ -33,9 +34,9 @@ export function LevelSheet({
   return (
     <Modal transparent visible={!!sel} animationType="slide" onRequestClose={onClose}>
       <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="とじる" onPress={onClose} />
+        <Backdrop onClose={onClose} />
         {sel && lp && status ? (
-          <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]} accessibilityViewIsModal>
+          <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]} accessibilityViewIsModal onAccessibilityEscape={onClose}>
             <ScrollView contentContainerStyle={styles.content}>
               <View style={styles.head}>
                 <View style={styles.headText}>

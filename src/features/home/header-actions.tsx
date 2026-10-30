@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { todayOf } from "@/state/profile";
 import { activeProfile, useAppStore } from "@/state/store";
+import { Backdrop } from "@/ui/sheet";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
 
@@ -41,8 +42,9 @@ export function HeaderActions() {
       ) : null}
       <ParentButton onPress={() => router.push("/parent")} />
       <Modal transparent visible={open} animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.backdrop} accessibilityLabel="とじる" onPress={() => setOpen(false)}>
-          <View style={styles.menu} accessibilityViewIsModal>
+        <View style={styles.backdrop}>
+          <Backdrop onClose={() => setOpen(false)} />
+          <View style={styles.menu} accessibilityViewIsModal onAccessibilityEscape={() => setOpen(false)}>
             <AppText weight="bold" accessibilityRole="header" style={styles.menuTitle}>
               だれが やる？
             </AppText>
@@ -61,7 +63,7 @@ export function HeaderActions() {
               </Pressable>
             ))}
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </View>
   );

@@ -40,7 +40,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       {children}
       <Modal transparent visible={!!open} animationType="fade" onRequestClose={() => close(false)}>
         <View style={styles.backdrop}>
-          <View style={styles.box} accessibilityViewIsModal>
+          <View style={styles.box} accessibilityViewIsModal onAccessibilityEscape={() => close(false)}>
             <AppText weight="bold" style={styles.title}>
               {open?.title}
             </AppText>

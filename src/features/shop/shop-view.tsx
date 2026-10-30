@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "re
 import { SeedIcon } from "@/art/icons";
 import { ItemThumb } from "@/art/items";
 import { SHOP, shopItem, type ShopItem, type ShopKind } from "@/game/shop";
+import { announce } from "@/platform/a11y";
 import { activeProfile, useAppStore } from "@/state/store";
 import type { Profile } from "@/state/types";
 import { Button } from "@/ui/button";
@@ -33,6 +34,8 @@ const countOf = (p: Profile, id: string) => p.inventory[id] ?? 0;
 /** goods, outfits and room styles are bought once; snacks again and again */
 const owns = (p: Profile, item: ShopItem) => item.kind !== "snack" && countOf(p, item.id) > 0;
 const NO_ROOM = "おく ばしょが いっぱい。もようがえで いれかえてね";
+const confirmText = (item: ShopItem) => `${item.name}を ${item.price}こで かう？`;
+const askText = (kind: Exclude<ShopKind, "snack">) => `かったよ！ ${AFTER_BUY[kind].question}`;
 
 function haveNote(p: Profile, item: ShopItem): string | null {
   if (owns(p, item)) return "もっている";
@@ -134,6 +137,11 @@ function ItemSheet({ item, profile, onClose }: { item: ShopItem | null; profile:
     lastPress.current = t;
     fn();
   };
+  // VoiceOver reads the question or the result that takes the place of the button just pressed
+  const news = !item ? null : flow.step === "confirm" ? confirmText(item) : flow.step === "ask" && item.kind !== "snack" ? askText(item.kind) : flow.note;
+  useEffect(() => {
+    if (news) announce(news);
+  }, [flow, news]);
 
   const put = (it: ShopItem) => {
     if (it.kind === "good") go("done", placeNewGood(it.id) ? "おへやに おいたよ！" : NO_ROOM);
@@ -159,7 +167,7 @@ function ItemSheet({ item, profile, onClose }: { item: ShopItem | null; profile:
       return (
         <View style={styles.ask}>
           <AppText weight="bold" style={styles.question}>
-            {it.name}を {it.price}こで かう？
+            {confirmText(it)}
           </AppText>
           <View style={styles.row}>
             <Button
@@ -180,7 +188,7 @@ function ItemSheet({ item, profile, onClose }: { item: ShopItem | null; profile:
       return (
         <View style={styles.ask}>
           <AppText weight="bold" style={styles.question}>
-            かったよ！ {AFTER_BUY[it.kind].question}
+            {askText(it.kind)}
           </AppText>
           <View style={styles.row}>
             <Button size="lg" variant="outline" label="あとで" style={styles.flex} onPress={once(onClose)} />
