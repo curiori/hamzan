@@ -14,7 +14,7 @@ import {
 } from "react-native-reanimated";
 import { createBrain, isNight, stepBrain, type Activity, type Brain, type BrainEvent, type World } from "@/game/hamster-brain";
 import { clampToFloor, seatMoveMs, seatSways, type Point } from "@/game/room";
-import { perchedOn, rearrangedUnder, walkAxis, walkMs, type StageGood } from "./stage-rules";
+import { courseNotes, perchedOn, rearrangedUnder, walkAxis, walkMs, type StageGood } from "./stage-rules";
 
 // The room makes its own calm moves when the system asks to reduce motion (slow walks, a nod instead of a hop),
 // so Reanimated must play them instead of cutting every animation to its end. Callbacks stay on withTiming and
@@ -75,6 +75,7 @@ export function useRoomBrain({
   active,
   reduceMotion,
   wear = null,
+  onNote,
 }: {
   goods: StageGood[];
   start: RoomStart;
@@ -82,6 +83,8 @@ export function useRoomBrain({
   reduceMotion: boolean;
   /** what the hamster has on (headphones make it sway to the music now and then) */
   wear?: string | null;
+  /** a piano key the hamster steps on (0 is the lowest) */
+  onNote?: (key: number) => void;
 }) {
   const x = useSharedValue(HOME.x);
   const y = useSharedValue(HOME.y);
@@ -103,11 +106,13 @@ export function useRoomBrain({
   const goodsRef = useRef(goods);
   const rmRef = useRef(reduceMotion);
   const wearRef = useRef(wear);
+  const noteRef = useRef(onNote);
   const usedStart = useRef<RoomStart | null>(null);
   useEffect(() => {
     goodsRef.current = goods;
     rmRef.current = reduceMotion;
     wearRef.current = wear;
+    noteRef.current = onNote;
   });
 
   const world = useCallback(
@@ -313,6 +318,9 @@ export function useRoomBrain({
             t += st.ms;
             at = st.to;
           }
+        // the piano's keys sound as the hamster steps on them, each time over
+        const notes = courseNotes(good.course);
+        for (let lap = 0; lap < laps; lap++) for (const n of notes) later(lap * lapMs + n.at, () => noteRef.current?.(n.key));
       } else if (WHEELS.includes(a.good)) {
         step.value = loop(tween(1, 90), -1, true);
         spin.value = loop(tween(360, rm ? 1400 : 500, Easing.linear), -1);

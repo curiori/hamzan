@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { encodeWav, renderTones } from "../../scripts/make-sounds";
+import { encodeWav, KEYS, renderTones } from "../../scripts/make-sounds";
 
 const peakOf = (samples: Int16Array) => samples.reduce((m, s) => Math.max(m, Math.abs(s)), 0) / 32767;
 
@@ -26,6 +26,14 @@ describe("make-sounds", () => {
     const out = renderTones([330, 262], 0.12, "triangle");
     expect(Math.abs(out[0])).toBeLessThan(50);
     expect(Math.abs(out[out.length - 1])).toBeLessThan(50);
+  });
+
+  test("the piano keys are five rising notes of a pentatonic scale", () => {
+    // C, D, E, G, A: any of them sound well together, in any order
+    expect(KEYS).toEqual([523.25, 587.33, 659.25, 783.99, 880]);
+    const peak = peakOf(renderTones([KEYS[0]], 0.18, "triangle"));
+    expect(peak).toBeGreaterThan(0.12);
+    expect(peak).toBeLessThan(0.2);
   });
 
   test("encodeWav writes a 16-bit mono PCM RIFF file", () => {

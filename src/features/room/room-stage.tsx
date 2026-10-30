@@ -27,7 +27,7 @@ import {
   type SlotId,
 } from "@/game/room";
 import { itemName, SHOP } from "@/game/shop";
-import { tapFeel } from "@/platform/feedback";
+import { playNote, preloadNotes, tapFeel } from "@/platform/feedback";
 import { useReduceMotion } from "@/platform/reduce-motion";
 import { useAppActive } from "@/platform/use-app-state";
 import { ownedGoods, todayOf } from "@/state/profile";
@@ -351,7 +351,22 @@ export function RoomStage({
     if (focused) markRoomSeen(outKey ? outKey.split(",") : []);
   }, [focused, outKey, markRoomSeen]);
 
-  const { activity, from, motion, surprised, send } = useRoomBrain({ goods, start: visit.start, active: focused && appActive, reduceMotion, wear: profile.wearing });
+  // the piano's keys, with the child's sound setting; loaded when the room opens with a piano out, so the first is not late
+  const sound = profile.settings.sound;
+  const pianoOut = placed.some((g) => g.id === "piano");
+  const onNote = useCallback((key: number) => playNote(key, sound), [sound]);
+  useEffect(() => {
+    if (focused && sound && pianoOut) preloadNotes();
+  }, [focused, sound, pianoOut]);
+
+  const { activity, from, motion, surprised, send } = useRoomBrain({
+    goods,
+    start: visit.start,
+    active: focused && appActive,
+    reduceMotion,
+    wear: profile.wearing,
+    onNote,
+  });
   const s = width / ROOM_W;
   const vibration = profile.settings.vibration;
   const onTap = useCallback(() => {

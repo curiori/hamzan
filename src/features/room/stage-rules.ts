@@ -59,6 +59,21 @@ export function stageGoods(placed: { id: string; slot: SlotId; spot: Point }[]):
 export const perchedOn = (a: Activity): boolean =>
   (a.kind === "play" && (seatMoveMs(a.good) > 0 || !!COURSES[a.good])) || (a.kind === "sleep" && !!a.inBed);
 
+/**
+ * When a course's keys sound, in ms from the start of one time over it: evenly over each leg with notes, each in the
+ * middle of its share of the leg, the keys rising from 0.
+ */
+export function courseNotes(course: { steps: CourseStep[] }): { at: number; key: number }[] {
+  const notes: { at: number; key: number }[] = [];
+  let start = 0;
+  for (const st of course.steps) {
+    const n = st.notes ?? 0;
+    for (let i = 0; i < n; i++) notes.push({ at: Math.round(start + ((i + 0.5) * st.ms) / n), key: notes.length });
+    start += st.ms;
+  }
+  return notes;
+}
+
 /** The goods an activity uses: the good played with, or the house or the bed slept in. */
 const usedGoods = (a: Activity): string[] => {
   if (a.kind === "play") return [a.good];

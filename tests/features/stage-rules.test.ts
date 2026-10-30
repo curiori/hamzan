@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Activity } from "@/game/hamster-brain";
-import { ABOVE_ALL, coveringGood, hamsterDepth, look, nightTint, perchedOn, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
+import { ABOVE_ALL, courseNotes, coveringGood, hamsterDepth, look, nightTint, perchedOn, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
 import { courseIn, placedGoods, pushSpot, seatIn, SLOTS } from "@/game/room";
 
 const at = { x: 200, y: 210 };
@@ -107,6 +107,15 @@ describe("the stage's goods", () => {
     const goods = stageGoods(placedGoods({ floorL3: "slide", floorL2: "wheel" }));
     expect(goods.find((g) => g.id === "slide")?.course).toEqual(courseIn("slide", "floorL3"));
     expect(goods.find((g) => g.id === "wheel")?.course).toBeUndefined();
+  });
+
+  test("the piano plays its five keys in order while the hamster crosses them", () => {
+    const piano = courseIn("piano", "floorL2") ?? { steps: [] };
+    const notes = courseNotes(piano);
+    expect(notes.map((n) => n.key)).toEqual([0, 1, 2, 3, 4]);
+    // evenly over the 2000 ms walk across the keys, which starts 400 ms in: each note in the middle of its fifth
+    expect(notes.map((n) => n.at)).toEqual([600, 1000, 1400, 1800, 2200]);
+    expect(courseNotes(courseIn("slide", "floorL3") ?? { steps: [] })).toEqual([]);
   });
 
   test("perched activities count as standing at the spot", () => {

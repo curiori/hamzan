@@ -10,23 +10,35 @@ const SOURCES: Record<Cue, number> = {
   miss: require("../../assets/sounds/miss.wav"),
   clear: require("../../assets/sounds/clear.wav"),
 };
+/** the room piano's keys, low to high */
+const NOTES: number[] = [
+  require("../../assets/sounds/key1.wav"),
+  require("../../assets/sounds/key2.wav"),
+  require("../../assets/sounds/key3.wav"),
+  require("../../assets/sounds/key4.wav"),
+  require("../../assets/sounds/key5.wav"),
+];
 
-const players: Partial<Record<Cue, AudioPlayer>> = {};
+const players = new Map<number, AudioPlayer>();
 let audioModeSet = false;
 
-function playerFor(kind: Cue): AudioPlayer {
+function playerFor(source: number): AudioPlayer {
   if (!audioModeSet) {
     audioModeSet = true;
     // never stop the music another app is playing, and stay quiet when the silent switch is on
     setAudioModeAsync({ playsInSilentMode: false, interruptionMode: "mixWithOthers" }).catch(() => {});
   }
-  players[kind] ??= createAudioPlayer(SOURCES[kind]);
-  return players[kind];
+  let player = players.get(source);
+  if (!player) {
+    player = createAudioPlayer(source);
+    players.set(source, player);
+  }
+  return player;
 }
 
-function playSound(kind: Cue) {
+function playSound(source: number) {
   try {
-    const player = playerFor(kind);
+    const player = playerFor(source);
     player
       .seekTo(0)
       .then(() => player.play())
@@ -45,7 +57,7 @@ function vibrate(kind: Cue) {
 }
 
 export function cue(kind: Cue, opts: { sound: boolean; vibration: boolean }): void {
-  if (opts.sound) playSound(kind);
+  if (opts.sound) playSound(SOURCES[kind]);
   if (opts.vibration) {
     try {
       vibrate(kind);
@@ -68,7 +80,21 @@ export function tapFeel(vibration: boolean): void {
 /** Loads the sounds ahead of the first answer, so the first cue is not late. */
 export function preloadCues(): void {
   try {
-    (Object.keys(SOURCES) as Cue[]).forEach(playerFor);
+    Object.values(SOURCES).forEach(playerFor);
+  } catch {
+    // audio unavailable
+  }
+}
+
+/** One of the room piano's keys (0 is the lowest), when sounds are on. */
+export function playNote(key: number, sound: boolean): void {
+  if (sound) playSound(NOTES[Math.min(NOTES.length - 1, Math.max(0, key))]);
+}
+
+/** Loads the piano's keys ahead of the first note, so it is not late. */
+export function preloadNotes(): void {
+  try {
+    NOTES.forEach(playerFor);
   } catch {
     // audio unavailable
   }

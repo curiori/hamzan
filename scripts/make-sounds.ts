@@ -1,5 +1,5 @@
-// Renders the web prototype's Web Audio cues into WAV files for expo-audio.
-// Run: bun run scripts/make-sounds.ts  (writes assets/sounds/{ok,miss,clear}.wav)
+// Renders the web prototype's Web Audio cues into WAV files for expo-audio, and the room piano's keys.
+// Run: bun run scripts/make-sounds.ts  (writes assets/sounds/{ok,miss,clear}.wav and key1.wav to key5.wav)
 
 type Wave = "sine" | "triangle";
 
@@ -63,11 +63,17 @@ export const CUES: Record<"ok" | "miss" | "clear", { notes: number[]; step: numb
   clear: { notes: [523, 659, 784, 1047], step: 0.11, type: "triangle" },
 };
 
+/** The toy piano's keys, low to high: C, D, E, G and A, five notes that sound well together in any order. */
+export const KEYS = [523.25, 587.33, 659.25, 783.99, 880];
+/** each key is one short note */
+export const KEY_NOTE: { step: number; type: Wave } = { step: 0.18, type: "triangle" };
+
 if (import.meta.main) {
   const sampleRate = 44100;
-  for (const [name, c] of Object.entries(CUES)) {
-    const path = new URL(`../assets/sounds/${name}.wav`, import.meta.url);
-    await Bun.write(path, encodeWav(renderTones(c.notes, c.step, c.type, sampleRate), sampleRate));
+  const write = async (name: string, samples: Int16Array) => {
+    await Bun.write(new URL(`../assets/sounds/${name}.wav`, import.meta.url), encodeWav(samples, sampleRate));
     console.log(`wrote ${name}.wav`);
-  }
+  };
+  for (const [name, c] of Object.entries(CUES)) await write(name, renderTones(c.notes, c.step, c.type, sampleRate));
+  for (const [i, f] of KEYS.entries()) await write(`key${i + 1}`, renderTones([f], KEY_NOTE.step, KEY_NOTE.type, sampleRate));
 }
