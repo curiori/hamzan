@@ -133,6 +133,27 @@ describe("choosing what to do", () => {
   });
 });
 
+describe("rearranging", () => {
+  test("after the room is rearranged the hamster drops its plan and chooses again", () => {
+    const w = world();
+    const b = createBrain(31, w, HOME, { celebrate: false, newGood: "wheel" });
+    expect(b.now).toMatchObject({ kind: "walk" });
+    const oldSpot = allGoods.find((g) => g.id === "wheel")?.spot;
+    const moved = world({ goods: allGoods.map((g) => (g.id === "wheel" ? { ...g, spot: { x: 300, y: 240 } } : g)) });
+    // "done" goes on to play the wheel where it no longer stands
+    const there = b.now.kind === "walk" ? b.now.to : HOME;
+    expect(stepBrain(b, moved, { type: "done" }, there).now).toMatchObject({ kind: "play", good: "wheel" });
+    for (const seed of [31, 32, 33, 34, 35]) {
+      const next = stepBrain({ ...b, seed }, moved, { type: "rearranged" }, HOME);
+      const acts = [next.now, ...next.plan];
+      expect(acts.some((a) => a.kind === "walk" && a.to.x === oldSpot?.x && a.to.y === oldSpot?.y)).toBe(false);
+      // a wheel play chosen again starts with a walk to the wheel's new place
+      const i = acts.findIndex((a) => a.kind === "play" && a.good === "wheel");
+      if (i >= 0) expect(acts[i - 1]).toMatchObject({ kind: "walk", to: { x: 300, y: 240 } });
+    }
+  });
+});
+
 describe("snacks", () => {
   test("a snack brings the hamster to the front to eat it", () => {
     const w = world();

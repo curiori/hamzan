@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { Activity } from "@/game/hamster-brain";
-import { ABOVE_ALL, hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, roomGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
+import { ABOVE_ALL, hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, rearrangedUnder, roomGoods, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
+import { placedGoods, pushSpot, seatIn, SLOTS } from "@/game/room";
 
 const at = { x: 200, y: 210 };
 
@@ -86,5 +87,43 @@ describe("the saved room", () => {
 
   test("the lamp lights the room but is not played with", () => {
     expect(PLAYABLE_EXCEPT).toEqual(["lamp"]);
+  });
+});
+
+describe("the stage's goods", () => {
+  test("the ball is walked to from the side it is pushed from, and the lamp is left out", () => {
+    const goods = stageGoods(placedGoods({ floorS2: "ball", floorL2: "wheel", ceil1: "swing", wall1: "lamp" }));
+    expect(goods.map((g) => g.id).sort()).toEqual(["ball", "swing", "wheel"]);
+    const ball = goods.find((g) => g.id === "ball");
+    expect(ball?.spot).toEqual(pushSpot("ball", "floorS2")?.at);
+    expect(ball?.push).toEqual(pushSpot("ball", "floorS2"));
+    expect(goods.find((g) => g.id === "wheel")?.spot).toEqual(SLOTS.floorL2.spot);
+    expect(goods.find((g) => g.id === "swing")?.seat).toEqual(seatIn("swing", "ceil1"));
+  });
+});
+
+describe("rearranging under the hamster", () => {
+  const before = stageGoods(placedGoods({ floorL3: "house", floorS2: "ball", floorS3: "bowl", ceil1: "swing" }));
+  const without = (id: string) => before.filter((g) => g.id !== id);
+  // the ball moved to the bowl's slot, the bowl stored
+  const movedBall = stageGoods(placedGoods({ floorL3: "house", floorS3: "ball", ceil1: "swing" }));
+  const play = (good: string): Activity => ({ kind: "play", good, variant: "normal", ms: 5000 });
+  const walk: Activity = { kind: "walk", to: { x: 100, y: 220 }, dash: false, carry: false };
+
+  test("a good the hamster uses, or is on its way to, that is put away or moved", () => {
+    expect(rearrangedUnder({ now: play("swing"), plan: [] }, before, without("swing"))).toBe(true);
+    expect(rearrangedUnder({ now: { kind: "sleep", inHouse: true, ms: 30000 }, plan: [] }, before, without("house"))).toBe(true);
+    expect(rearrangedUnder({ now: play("ball"), plan: [] }, before, movedBall)).toBe(true);
+    expect(rearrangedUnder({ now: walk, plan: [play("ball")] }, before, movedBall)).toBe(true);
+    // the bowl's seeds are carried home to the house
+    expect(rearrangedUnder({ now: play("bowl"), plan: [{ ...walk, carry: true }, play("house")] }, before, without("house"))).toBe(true);
+  });
+
+  test("changes to other goods, or to nothing the hamster uses, leave it alone", () => {
+    expect(rearrangedUnder({ now: play("swing"), plan: [] }, before, movedBall)).toBe(false);
+    expect(rearrangedUnder({ now: { kind: "sleep", inHouse: false, ms: 9000 }, plan: [] }, before, without("house"))).toBe(false);
+    expect(rearrangedUnder({ now: walk, plan: [] }, before, [])).toBe(false);
+    expect(rearrangedUnder({ now: { kind: "eat", snack: "apple", ms: 2600 }, plan: [] }, before, [])).toBe(false);
+    expect(rearrangedUnder({ now: play("swing"), plan: [] }, before, before)).toBe(false);
   });
 });

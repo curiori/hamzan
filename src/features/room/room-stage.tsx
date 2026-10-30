@@ -16,10 +16,8 @@ import {
   HAMSTER_H,
   HAMSTER_W,
   placedGoods,
-  pushSpot,
   ROOM_H,
   ROOM_W,
-  seatIn,
   SLOT_NAME,
   SLOTS,
   toRoom,
@@ -35,8 +33,8 @@ import { ownedGoods, todayOf } from "@/state/profile";
 import { useAppStore } from "@/state/store";
 import type { Profile } from "@/state/types";
 import { colors } from "@/ui/theme";
-import { hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, roomGoods, type Look } from "./stage-rules";
-import { useRoomBrain, type Motion, type RoomStart, type StageGood } from "./use-room-brain";
+import { hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, roomGoods, stageGoods, type Look } from "./stage-rules";
+import { useRoomBrain, type Motion, type RoomStart } from "./use-room-brain";
 
 /** the hamster's feet inside its sprite box, in design units */
 const FEET: Point = { x: HAMSTER_W / 2, y: HAMSTER_H - 1 };
@@ -304,13 +302,7 @@ export function RoomStage({
   // the test switch shows every good without touching the saved room
   const layoutKey = JSON.stringify(allGoods ? autoLayout(ALL_GOODS) : roomGoods(profile.room.layout, owned));
   const placed = useMemo(() => placedGoods(JSON.parse(layoutKey) as RoomLayout), [layoutKey]);
-  const goods = useMemo<StageGood[]>(
-    () =>
-      placed
-        .filter((g) => !PLAYABLE_EXCEPT.includes(g.id))
-        .map((g) => ({ id: g.id, spot: g.spot, seat: seatIn(g.id, g.slot), push: pushSpot(g.id, g.slot) })),
-    [placed],
-  );
+  const goods = useMemo(() => stageGoods(placed), [placed]);
   const focused = useIsFocused();
   const [appActive, setAppActive] = useState(true);
   useAppActive(setAppActive);
@@ -353,8 +345,9 @@ export function RoomStage({
     },
     [send, width],
   );
-  // a snack given from the snack list: the hamster comes to the front and eats it
-  const fed = useRef<object | null>(null);
+  // a snack given from the snack list: the hamster comes to the front and eats it; one given before this room was
+  // shown (to the child before a switch) is not eaten again
+  const fed = useRef<object | null>(feeding);
   useEffect(() => {
     if (!feeding || fed.current === feeding) return;
     fed.current = feeding;

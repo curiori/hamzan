@@ -14,7 +14,7 @@ import {
 } from "react-native-reanimated";
 import { createBrain, isNight, stepBrain, type Activity, type Brain, type BrainEvent, type World } from "@/game/hamster-brain";
 import { clampToFloor, seatMoveMs, seatSways, type Point } from "@/game/room";
-import { walkAxis, walkMs } from "./stage-rules";
+import { rearrangedUnder, walkAxis, walkMs, type StageGood } from "./stage-rules";
 
 // The room makes its own calm moves when the system asks to reduce motion (slow walks, a nod instead of a hop),
 // so Reanimated must play them instead of cutting every animation to its end. Callbacks stay on withTiming and
@@ -26,14 +26,6 @@ const tween = (to: number, duration: number, easing?: EasingFunction) =>
 const chain = (...steps: number[]) => withSequence(KEEP, ...steps);
 const loop = (anim: number, reps: number, reverse = false) => withRepeat(anim, reps, reverse, undefined, KEEP);
 const after = (ms: number, anim: number) => withDelay(ms, anim, KEEP);
-
-/** A placed good as the room needs it: where to stand, where to sit on it, and where to push it from. */
-export interface StageGood {
-  id: string;
-  spot: Point;
-  seat?: Point;
-  push?: { at: Point; face: 1 | -1 };
-}
 
 export interface Motion {
   /** feet position in design units */
@@ -125,10 +117,10 @@ export function useRoomBrain({
     setSurprised(false);
   }, [x, y, hop, tilt, flip, step, spin, sway, blink]);
 
-  /** where the hamster stands now; a hamster up on a swing counts as standing below it */
+  /** where the hamster stands now; a hamster up on a seat counts as standing below it, also when that good was just put away */
   const here = useCallback((): Point => {
     const now = brainRef.current?.now;
-    const up = now?.kind === "play" && goodsRef.current.some((g) => g.id === now.good && g.seat);
+    const up = now?.kind === "play" && seatMoveMs(now.good) > 0;
     return up ? fromRef.current : clampToFloor({ x: x.value, y: y.value });
   }, [x, y]);
 
@@ -157,6 +149,15 @@ export function useRoomBrain({
     },
     [apply, here, stopAll, world, x, y],
   );
+
+  // rearranging the room: when a good the hamster uses or heads for is put away or moved, it stops and chooses again
+  const placedRef = useRef(goods);
+  useEffect(() => {
+    const before = placedRef.current;
+    placedRef.current = goods;
+    const b = brainRef.current;
+    if (b && rearrangedUnder(b, before, goods)) send({ type: "rearranged" });
+  }, [goods, send]);
 
   // pause and resume with the screen: nothing runs while hidden, and the hamster picks up from where it stands;
   // a new visit begins a fresh plan, which opens with the celebration or the new good

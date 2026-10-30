@@ -56,7 +56,9 @@ export type BrainEvent =
   | { type: "press" }
   | { type: "tapGood"; good: string }
   | { type: "tapFloor"; at: Point }
-  | { type: "feed"; snack: string };
+  | { type: "feed"; snack: string }
+  /** the room was rearranged under the hamster: drop the plan and choose again */
+  | { type: "rearranged" };
 
 const IDLE_ACTS: IdleAct[] = ["blink", "ear", "look", "groom"];
 
@@ -175,6 +177,9 @@ export function stepBrain(b: Brain, world: World, ev: BrainEvent, here: Point): 
       case "feed":
         // to the front of the room, where the child can watch it eat
         return [...goTo(here, FRONT), { kind: "eat", snack: ev.snack, ms: EAT_MS }];
+      case "rearranged":
+        // the plan was made for goods that were put away or moved
+        return choose(r, world, here, b.lastGood);
       case "done": {
         const plan = playsOnlyOwned(b.plan, world) ? b.plan : [];
         return plan.length ? plan : choose(r, world, here, b.lastGood);

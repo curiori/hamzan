@@ -1,6 +1,6 @@
 import type { Mood, Pose } from "@/art/hamster";
 import type { Activity } from "@/game/hamster-brain";
-import { GOOD_KIND, type Point, type RoomLayout } from "@/game/room";
+import { GOOD_KIND, pushSpot, seatIn, type Point, type RoomLayout, type SlotId } from "@/game/room";
 import { itemName } from "@/game/shop";
 
 // How the room screen shows each activity: walk speeds, drawing depth, which hamster drawing, and the
@@ -38,6 +38,41 @@ export function roomGoods(layout: RoomLayout, owned: string[]): RoomLayout {
 
 /** Goods that are only looked at: the hamster never goes to play with them. */
 export const PLAYABLE_EXCEPT = ["lamp"];
+
+/** A placed good as the moving room needs it: where to stand to use it, where to sit on it, and where to push it from. */
+export interface StageGood {
+  id: string;
+  spot: Point;
+  seat?: Point;
+  push?: { at: Point; face: 1 | -1 };
+}
+
+/** The goods the hamster plays with; the ball is walked to from the side it is pushed from, so nothing steps back before pushing. */
+export function stageGoods(placed: { id: string; slot: SlotId; spot: Point }[]): StageGood[] {
+  return placed
+    .filter((g) => !PLAYABLE_EXCEPT.includes(g.id))
+    .map((g) => {
+      const push = pushSpot(g.id, g.slot);
+      return { id: g.id, spot: push ? push.at : g.spot, seat: seatIn(g.id, g.slot), push };
+    });
+}
+
+/** The goods an activity uses: the good played with, or the house slept in. */
+const usedGoods = (a: Activity): string[] => (a.kind === "play" ? [a.good] : a.kind === "sleep" && a.inHouse ? ["house"] : []);
+const samePoint = (a?: Point, b?: Point) => a?.x === b?.x && a?.y === b?.y;
+
+/**
+ * Whether rearranging the room put away or moved a good the hamster is using or heading for (now or later in its
+ * plan). It must then stop and choose again, or it goes on using a good that is no longer there.
+ */
+export function rearrangedUnder(b: { now: Activity; plan: Activity[] }, before: StageGood[], after: StageGood[]): boolean {
+  if (before === after) return false;
+  return [b.now, ...b.plan].flatMap(usedGoods).some((id) => {
+    const was = before.find((g) => g.id === id);
+    const is = after.find((g) => g.id === id);
+    return !was || !is || !samePoint(was.spot, is.spot) || !samePoint(was.seat, is.seat);
+  });
+}
 
 /** How dark the room's night blue is: none by day, lighter when a lamp is out. */
 export const nightTint = (night: boolean, lampPlaced: boolean): number => (night ? (lampPlaced ? 0.12 : 0.3) : 0);
