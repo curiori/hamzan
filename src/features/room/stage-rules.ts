@@ -219,3 +219,6 @@ export function look(a: Activity): Look {
     }
   }
 }
+
+/** The hamster thrown out of a wheel: a surprised face from the front, without the good's bubble (the golden wheel's sparkle). */
+export const surprisedLook = (lk: Look): Look => ({ ...lk, view: "front", mood: "oops", pose: undefined, bubble: null });

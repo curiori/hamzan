@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Activity } from "@/game/hamster-brain";
-import { ABOVE_ALL, calmCourse, courseLaps, courseNotes, coveringGood, groovesWithout, hamsterDepth, look, NIGHT_BLUE, nightTint, perchedOn, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
+import { ABOVE_ALL, calmCourse, courseLaps, courseNotes, coveringGood, groovesWithout, hamsterDepth, look, NIGHT_BLUE, nightTint, perchedOn, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, surprisedLook, walkAxis, walkMs } from "@/features/room/stage-rules";
 import { courseIn, placedGoods, pushSpot, seatIn, SLOTS } from "@/game/room";
 
 const at = { x: 200, y: 210 };
@@ -83,6 +83,19 @@ describe("look", () => {
     expect(play("bed")).toMatchObject({ view: "front", pose: "sleep", bubble: "ごろん", label: "ふわふわベッドで あそんで いる" });
     expect(look({ kind: "sleep", inHouse: false, inBed: true, ms: 30000 })).toMatchObject({ view: "front", pose: "sleep", bubble: "Zzz", label: "ベッドで ねて いる" });
     expect(look({ kind: "idle", act: "groove", ms: 3000 })).toMatchObject({ view: "front", mood: "happy", bubble: "♪", label: "おんがくを きいて いる" });
+  });
+
+  test("a surprised hamster shows no bubble", () => {
+    const tumble = look({ kind: "play", good: "goldwheel", variant: "tumble", ms: 3000 });
+    const lk = surprisedLook(tumble);
+    expect(lk.bubble).toBeNull();
+    expect(lk.view).toBe("front");
+    expect(lk.mood).toBe("oops");
+    expect(lk.pose).toBeUndefined();
+    expect(lk.label).toBe(tumble.label);
+    // the wheel, which has no bubble, is surprised as before
+    const wheel = look({ kind: "play", good: "wheel", variant: "tumble", ms: 3000 });
+    expect(surprisedLook(wheel)).toEqual({ ...wheel, view: "front", mood: "oops", pose: undefined });
   });
 });
 

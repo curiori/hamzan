@@ -4,7 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExterna
 import { Pressable, StyleSheet, View, type GestureResponderEvent } from "react-native";
 import Animated, { useAnimatedStyle, ZoomIn } from "react-native-reanimated";
 import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
-import { Hamster, type Mood, type Pose } from "@/art/hamster";
+import { Hamster } from "@/art/hamster";
 import { Bubble, HamsterSide, Heart } from "@/art/hamster-poses";
 import { GOLD_SPARKLES, ITEM_PARTS, ItemThumb } from "@/art/items";
 import { RoomBackground } from "@/art/room-scene";
@@ -34,7 +34,7 @@ import { ownedGoods, todayOf } from "@/state/profile";
 import { useAppStore } from "@/state/store";
 import type { Profile } from "@/state/types";
 import { colors } from "@/ui/theme";
-import { coveringGood, hamsterDepth, look, NIGHT_BLUE, nightTint, PLAYABLE_EXCEPT, stageGoods, type Look } from "./stage-rules";
+import { coveringGood, hamsterDepth, look, NIGHT_BLUE, nightTint, PLAYABLE_EXCEPT, stageGoods, surprisedLook, type Look } from "./stage-rules";
 import { useRoomBrain, type Motion, type RoomStart } from "./use-room-brain";
 
 /** the hamster's feet inside its sprite box, in design units */
@@ -205,9 +205,7 @@ function HamsterSprite({
   const w = HAMSTER_W * s;
   const h = HAMSTER_H * s;
   const snackSize = SNACK_SIZE * s;
-  const view = surprised ? "front" : lk.view;
-  const mood: Mood = surprised ? "oops" : lk.mood;
-  const pose: Pose | undefined = surprised ? undefined : lk.pose;
+  const { view, mood, pose, bubble } = surprised ? surprisedLook(lk) : lk;
   const place = useAnimatedStyle(
     () => ({ transform: [{ translateX: (motion.x.value - FEET.x) * s }, { translateY: (motion.y.value - FEET.y + motion.hop.value) * s }] }),
     [s],
@@ -250,7 +248,7 @@ function HamsterSprite({
           </View>
         ) : null}
       </Animated.View>
-      {lk.bubble || heart ? (
+      {bubble || heart ? (
         <Animated.View
           pointerEvents="none"
           style={bubbleBeside ? [styles.bubble, { right: w - 4, top: 0, alignItems: "flex-end" }] : [styles.bubble, { left: -BUBBLE_PAD, right: -BUBBLE_PAD, bottom: h + 2 }, keepIn]}
@@ -261,7 +259,7 @@ function HamsterSprite({
                 <Heart size={16} />
               </Animated.View>
             ) : null}
-            {lk.bubble ? <Bubble text={lk.bubble} /> : null}
+            {bubble ? <Bubble text={bubble} /> : null}
           </View>
         </Animated.View>
       ) : null}
