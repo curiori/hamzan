@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { LEVEL, LEVELS, STAGES } from "@/domain/spec";
 import { MODE_LABEL } from "@/i18n/ja";
 import { todayOf } from "@/state/profile";
@@ -11,6 +11,9 @@ import { useConfirm } from "@/ui/confirm";
 import { SwitchRow } from "@/ui/switch-row";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
+
+/** the web preview's text sizes: as set, larger, and the most text grows outside practice */
+const TEXT_SCALES = [1, 1.3, 1.5];
 
 /** A stage, then one of its levels. */
 function LevelPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
@@ -68,6 +71,17 @@ export function TestPane({ onExit }: { onExit: () => void }) {
         value={!!dev.roomAllGoods}
         onChange={(v) => setDev({ roomAllGoods: v })}
       />
+      {Platform.OS === "web" ? (
+        <View style={styles.card}>
+          <AppText weight="bold">文字の大きさ（web の確認）</AppText>
+          <AppText style={styles.small}>iPhone で文字を大きくしたときの見た目を、web で確かめるためのものです。出題の画面は 1.3倍までです。</AppText>
+          <View style={styles.chips}>
+            {TEXT_SCALES.map((k) => (
+              <Chip key={k} label={`${k}倍`} selected={(dev.textScale ?? 1) === k} onPress={() => setDev({ textScale: k })} />
+            ))}
+          </View>
+        </View>
+      ) : null}
       {profile ? (
         <View style={styles.card}>
           <AppText weight="bold" style={styles.num}>

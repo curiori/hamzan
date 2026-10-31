@@ -186,10 +186,19 @@ export function PlayScreen({
     <View style={[styles.root, { paddingTop: insets.top + 6, paddingBottom: Math.max(insets.bottom, 10) }]}>
       <View style={styles.header}>
         <View style={styles.titleBox}>
-          <AppText weight="bold" tone="primary" numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.subtitle}>
+          {/* one line each: on the iPhone they shrink to fit rather than cut (the web preview shows an ellipsis) */}
+          <AppText weight="bold" tone="primary" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.subtitle}>
             {req.subtitle}
           </AppText>
-          <AppText weight="bold" numberOfLines={1} accessibilityRole="header" maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.title}>
+          <AppText
+            weight="bold"
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.6}
+            accessibilityRole="header"
+            maxFontSizeMultiplier={MAX_FONT_SCALE}
+            style={styles.title}
+          >
             {req.title}
           </AppText>
         </View>
@@ -253,10 +262,16 @@ export function PlayScreen({
         </Animated.View>
         {paused ? (
           <View style={styles.pauseCover}>
-            <AppText weight="bold" style={styles.pauseText}>
+            <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.pauseText}>
               いちじ ていし ちゅう
             </AppText>
-            <Button label="つづける" size="lg" icon={<Ionicons name="play" size={20} color={colors.primaryForeground} />} onPress={() => setUserPause(false)} />
+            <Button
+              label="つづける"
+              size="lg"
+              maxFontSizeMultiplier={MAX_FONT_SCALE}
+              icon={<Ionicons name="play" size={20} color={colors.primaryForeground} />}
+              onPress={() => setUserPause(false)}
+            />
           </View>
         ) : null}
       </View>

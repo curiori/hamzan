@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 11 },
   tileBody: { flex: 1, minWidth: 0 },
   tileName: { fontSize: 13, lineHeight: 17 },
-  tileMeta: { marginTop: 4, flexDirection: "row", alignItems: "center", gap: 6 },
+  tileMeta: { marginTop: 4, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6, rowGap: 4 },
   mode: { fontSize: 11, backgroundColor: "rgba(255,255,255,0.7)", borderRadius: 4, paddingHorizontal: 4, overflow: "hidden" },
   frontHamster: { position: "absolute", top: -16, right: -6 },
 });

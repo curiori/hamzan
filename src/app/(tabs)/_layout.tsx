@@ -17,6 +17,9 @@ export default function TabLayout() {
         headerTitleAlign: 'left',
         headerTitleStyle: { fontFamily: fonts.heavy, fontWeight: '800', fontSize: 20, color: colors.foreground },
         headerRight: () => <HeaderActions />,
+        // the bars keep their size with larger text, as iOS's own bars do, so the title and the buttons never collide
+        headerTitleAllowFontScaling: false,
+        tabBarAllowFontScaling: false,
         tabBarActiveTintColor: colors.primary,
         sceneStyle: { backgroundColor: colors.background },
       }}

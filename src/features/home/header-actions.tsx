@@ -8,7 +8,7 @@ import { Backdrop } from "@/ui/sheet";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
 
-/** Header buttons: the test date (when moved), who is practicing (switchable), and the parent area. */
+/** Header buttons: the test date (when moved), who is practicing (switchable), and the parent area. Like the bar they sit in, they keep their size with larger text. */
 export function HeaderActions() {
   const router = useRouter();
   const profiles = useAppStore((s) => s.profiles);
@@ -21,9 +21,13 @@ export function HeaderActions() {
   return (
     <View style={styles.row}>
       {dayOffset > 0 ? (
-        <AppText weight="bold" style={styles.testDate}>
-          テスト日付 {todayOf(dayOffset).slice(5)}
-        </AppText>
+        // small, so it never runs into the title on a narrow screen; the dashed ring marks it as a test tool
+        <View style={styles.testDate} accessible accessibilityLabel={`テスト日付 ${todayOf(dayOffset).slice(5)}`}>
+          <Ionicons name="calendar-outline" size={12} color={colors.foreground} />
+          <AppText weight="bold" allowFontScaling={false} style={styles.testDateText}>
+            {todayOf(dayOffset).slice(5)}
+          </AppText>
+        </View>
       ) : null}
       {active ? (
         <Pressable
@@ -34,7 +38,7 @@ export function HeaderActions() {
           style={({ pressed }) => [styles.who, pressed && styles.pressed]}
         >
           <Ionicons name="person" size={15} color={colors.foreground} />
-          <AppText weight="bold" numberOfLines={1} style={styles.whoText}>
+          <AppText weight="bold" numberOfLines={1} allowFontScaling={false} style={styles.whoText}>
             {active.nickname}
           </AppText>
           {many ? <Ionicons name="chevron-down" size={14} color={colors.foreground} /> : null}
@@ -80,7 +84,8 @@ export function ParentButton({ onPress }: { onPress: () => void }) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 6, marginRight: 8 },
-  testDate: { fontSize: 11, borderWidth: 1, borderStyle: "dashed", borderColor: colors.mutedForeground, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  testDate: { flexDirection: "row", alignItems: "center", gap: 3, borderWidth: 1, borderStyle: "dashed", borderColor: colors.mutedForeground, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3 },
+  testDateText: { fontSize: 11, fontVariant: ["tabular-nums"] },
   who: { flexDirection: "row", alignItems: "center", gap: 4, height: 40, maxWidth: 130, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.card },
   whoText: { fontSize: 14, flexShrink: 1 },
   parent: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },

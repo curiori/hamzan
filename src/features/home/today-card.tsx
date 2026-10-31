@@ -70,7 +70,7 @@ export function TodayCard({ profile, date, unlockAll, onStart }: { profile: Prof
                 {i + 1}
               </AppText>
             )}
-            <AppText weight="bold" numberOfLines={1} style={styles.partText}>
+            <AppText weight="bold" style={styles.partText}>
               {partLabel(part, profile, unlockAll)}
             </AppText>
           </View>

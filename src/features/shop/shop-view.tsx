@@ -90,7 +90,7 @@ function ItemCard({ item, note, onPress }: { item: ShopItem; note: string | null
       <View style={styles.thumb}>
         <ItemThumb id={item.id} size={64} />
       </View>
-      <AppText weight="bold" style={styles.name} numberOfLines={2}>
+      <AppText weight="bold" style={styles.name} numberOfLines={3}>
         {item.name}
       </AppText>
       <View style={styles.price}>

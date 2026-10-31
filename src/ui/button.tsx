@@ -13,6 +13,7 @@ export function Button({
   icon,
   disabled,
   accessibilityLabel,
+  maxFontSizeMultiplier,
   style,
 }: {
   label?: string;
@@ -22,6 +23,8 @@ export function Button({
   icon?: ReactNode;
   disabled?: boolean;
   accessibilityLabel?: string;
+  /** how far the label grows with the system's text size (AppText's cap when not given) */
+  maxFontSizeMultiplier?: number;
   style?: StyleProp<ViewStyle>;
 }) {
   const v = VARIANTS[variant];
@@ -37,7 +40,7 @@ export function Button({
       <View style={styles.row}>
         {icon}
         {label ? (
-          <AppText weight="bold" style={[{ color: v.text }, size === "lg" ? styles.lgText : styles.mdText]}>
+          <AppText weight="bold" maxFontSizeMultiplier={maxFontSizeMultiplier} style={[{ color: v.text }, size === "lg" ? styles.lgText : styles.mdText]}>
             {label}
           </AppText>
         ) : null}

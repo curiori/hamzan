@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 12, gap: 10 },
   addCard: { borderStyle: "dashed" },
   row: { flexDirection: "row", alignItems: "center", gap: 8 },
-  nickname: { flex: 1, height: 44, fontSize: 16 },
-  active: { fontSize: 12, color: colors.primaryForeground, backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, overflow: "hidden" },
+  nickname: { flex: 1, minWidth: 0, height: 44, fontSize: 16 },
+  active: { flexShrink: 0, fontSize: 12, color: colors.primaryForeground, backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, overflow: "hidden" },
   small: { fontSize: 12, lineHeight: 17 },
 });

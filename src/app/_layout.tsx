@@ -2,13 +2,13 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { useAppStore } from '@/state/store';
 import { Button } from '@/ui/button';
 import { ConfirmProvider } from '@/ui/confirm';
-import { AppText } from '@/ui/text';
+import { AppText, TextScaleContext } from '@/ui/text';
 import { colors } from '@/ui/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -35,6 +35,8 @@ function LoadErrorNotice({ onContinue }: { onContinue: () => void }) {
 export default function RootLayout() {
   const hydrated = useAppStore((s) => s.hydrated);
   const loadError = useAppStore((s) => s.loadError);
+  // the web preview of larger text (the test pane's switch); on the iPhone the system's own setting does this
+  const textScale = useAppStore((s) => (Platform.OS === 'web' ? (s.dev.textScale ?? 1) : 1));
   const [continued, setContinued] = useState(false);
 
   useEffect(() => {
@@ -45,21 +47,23 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <ConfirmProvider>
-        {loadError && !continued ? (
-          <LoadErrorNotice onContinue={() => setContinued(true)} />
-        ) : (
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
-            <Stack.Screen name="parent" />
-            {/* pushed, not presented: a native modal here would block the confirm dialog's Modal on iOS */}
-            <Stack.Screen name="play" options={{ animation: 'slide_from_bottom', gestureEnabled: false, fullScreenGestureEnabled: false }} />
-            <Stack.Screen name="result" options={{ animation: 'fade', gestureEnabled: false, fullScreenGestureEnabled: false }} />
-          </Stack>
-        )}
-        <StatusBar style="dark" />
-      </ConfirmProvider>
+      <TextScaleContext.Provider value={textScale}>
+        <ConfirmProvider>
+          {loadError && !continued ? (
+            <LoadErrorNotice onContinue={() => setContinued(true)} />
+          ) : (
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+              <Stack.Screen name="parent" />
+              {/* pushed, not presented: a native modal here would block the confirm dialog's Modal on iOS */}
+              <Stack.Screen name="play" options={{ animation: 'slide_from_bottom', gestureEnabled: false, fullScreenGestureEnabled: false }} />
+              <Stack.Screen name="result" options={{ animation: 'fade', gestureEnabled: false, fullScreenGestureEnabled: false }} />
+            </Stack>
+          )}
+          <StatusBar style="dark" />
+        </ConfirmProvider>
+      </TextScaleContext.Provider>
     </GestureHandlerRootView>
   );
 }

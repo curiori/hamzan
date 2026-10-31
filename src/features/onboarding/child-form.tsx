@@ -2,11 +2,14 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Button } from "@/ui/button";
-import { AppText } from "@/ui/text";
+import { AppText, useTextScale } from "@/ui/text";
 import { colors, fonts, radius } from "@/ui/theme";
 
 const GRADES = [1, 2, 3, 4, 5, 6];
 export const NICKNAME_MAX = 10;
+const GRADE_GAP = 6;
+/** a year's cell needs this much width at the regular text size, for 小1 and its border */
+const GRADE_MIN = 38;
 
 /** The child's nickname and school year; nothing else about the child is asked. */
 export function ChildForm({ onSubmit }: { onSubmit: (nickname: string, grade: number) => void }) {
@@ -48,8 +51,12 @@ export function ChildForm({ onSubmit }: { onSubmit: (nickname: string, grade: nu
 
 /** School year 1–6 as one row of choices. */
 export function GradePicker({ value, onChange }: { value: number; onChange: (grade: number) => void }) {
+  const scale = useTextScale();
+  const [width, setWidth] = useState(0);
+  // six in a row when each year fits; on a narrow screen or with larger text, two rows of three
+  const rows = width && (width - GRADE_GAP * 5) / 6 < GRADE_MIN * scale ? styles.gradeThird : styles.gradeSixth;
   return (
-    <View style={styles.grades} accessibilityRole="radiogroup" accessibilityLabel="学年">
+    <View style={styles.grades} accessibilityRole="radiogroup" accessibilityLabel="学年" onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       {GRADES.map((g) => (
         <Pressable
           key={g}
@@ -57,7 +64,7 @@ export function GradePicker({ value, onChange }: { value: number; onChange: (gra
           accessibilityState={{ checked: value === g }}
           accessibilityLabel={`小学${g}年`}
           onPress={() => onChange(g)}
-          style={[styles.grade, value === g && styles.gradeOn]}
+          style={[styles.grade, rows, value === g && styles.gradeOn]}
         >
           <AppText weight="bold" style={value === g ? styles.gradeTextOn : undefined}>
             小{g}
@@ -86,8 +93,11 @@ const styles = StyleSheet.create({
   note: { fontSize: 14, lineHeight: 21 },
   label: { fontSize: 14, marginTop: 4 },
   input: textInputStyle,
-  grades: { flexDirection: "row", gap: 6 },
-  grade: { flex: 1, height: 48, borderRadius: radius.md, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" },
+  grades: { flexDirection: "row", flexWrap: "wrap", gap: GRADE_GAP },
+  grade: { height: 48, borderRadius: radius.md, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" },
+  gradeSixth: { flex: 1 },
+  // three a row: a third of the width, less the gaps between them
+  gradeThird: { flexGrow: 1, flexBasis: "30%" },
   gradeOn: { borderColor: colors.primary, backgroundColor: colors.primary },
   gradeTextOn: { color: colors.primaryForeground },
 });

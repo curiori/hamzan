@@ -160,6 +160,8 @@ export interface DevSettings {
   shortPlacement: boolean;
   /** test tool: the room shows every good (records are untouched); missing in older saves means off */
   roomAllGoods?: boolean;
+  /** test tool on the web only: text shown at this many times its size, as an iPhone set to larger text shows it (missing means 1) */
+  textScale?: number;
 }
 
 export interface PinRecord {
