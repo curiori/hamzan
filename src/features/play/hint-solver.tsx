@@ -12,7 +12,7 @@ import { Keypad } from "./keypad";
 import { useFields, type SolverProps } from "./solver";
 import { Visual } from "./visuals";
 
-const RULE_CARD = "2・5は いちのくらい／4は したの 2けた／8は したの 3けた／3・9は かくくらいの かずを たす／6は 2と 3の りょうほう";
+const RULE_CARD = ["2・5は いちのくらい", "4は したの 2けた", "8は したの 3けた", "3・9は かくくらいの かずを たす", "6は 2と 3の りょうほう"];
 const LINE_SIZE = 22;
 // "かくくらいの かずを たすと" and its box share one line on a 375pt screen only below 22
 const LINE_SIZE_COMPACT = 20;
@@ -65,9 +65,13 @@ export function HintSolver(props: SolverProps) {
     body: (
       <>
         {sc.kind === "DIVISIBILITY_RULE" ? (
-          <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={[styles.rule, compact && styles.ruleCompact]}>
-            {RULE_CARD}
-          </AppText>
+          <View accessible accessibilityLabel={RULE_CARD.join("、")} style={[styles.rule, compact && styles.ruleCompact]}>
+            {RULE_CARD.map((rule, i) => (
+              <AppText key={rule} weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={[styles.ruleText, compact && styles.ruleTextCompact]}>
+                {i < RULE_CARD.length - 1 ? `${rule}／` : rule}
+              </AppText>
+            ))}
+          </View>
         ) : null}
         <View accessibilityLabel="ヒント" style={[styles.lines, compact && styles.linesCompact]}>
           {lines.map((line, li) => (
@@ -113,8 +117,11 @@ const lineCompact = lineStyles(LINE_SIZE_COMPACT);
 
 const styles = StyleSheet.create({
   visual: { alignSelf: "stretch", alignItems: "center", marginBottom: 6 },
-  rule: { fontSize: 12, lineHeight: 17, backgroundColor: colors.muted, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 6, overflow: "hidden" },
-  ruleCompact: { fontSize: 11, lineHeight: 15, paddingVertical: 4, marginBottom: 4 },
+  // the card breaks its lines only between rules
+  rule: { flexDirection: "row", flexWrap: "wrap", backgroundColor: colors.muted, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 6 },
+  ruleCompact: { paddingVertical: 4, marginBottom: 4 },
+  ruleText: { fontSize: 12, lineHeight: 17, flexShrink: 1 },
+  ruleTextCompact: { fontSize: 11, lineHeight: 15 },
   lines: { gap: 6, alignSelf: "stretch" },
   linesCompact: { gap: 4 },
   line: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", rowGap: 4 },
