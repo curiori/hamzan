@@ -34,9 +34,17 @@ const STARS: [number, number, number][] = [
   [64, 160, 1.8],
   [196, 150, 1.4],
 ];
+/** the window's sky at night; a circle of it over the moon leaves a crescent */
+const NIGHT_SKY = "#2E3F7F";
+const WINDOW_STARS: [number, number][] = [
+  [166, 34],
+  [184, 58],
+  [204, 30],
+  [176, 76],
+];
 
-/** Wall, window and floor of the 400×260 room, in the child's wallpaper and floor (null is the original look). */
-export function RoomBackground({ wallpaper = null, floor = null }: { wallpaper?: string | null; floor?: string | null }) {
+/** Wall, window and floor of the 400×260 room, in the child's wallpaper and floor (null is the original look). At night the window shows the moon and stars. */
+export function RoomBackground({ wallpaper = null, floor = null, night = false }: { wallpaper?: string | null; floor?: string | null; night?: boolean }) {
   const grass = floor === "floor-grass";
   return (
     <G>
@@ -71,8 +79,20 @@ export function RoomBackground({ wallpaper = null, floor = null }: { wallpaper?:
           <Path d="M332 34 A24 24 0 1 0 356 74 A19 19 0 1 1 332 34 Z" fill="#FDE68A" />
         </G>
       ) : null}
-      <Rect x={150} y={22} width={92} height={66} rx={6} fill="#BFE3F7" stroke="#D9B57A" strokeWidth={4} />
-      <Circle cx={222} cy={40} r={8} fill="#FFD25A" />
+      <Rect x={150} y={22} width={92} height={66} rx={6} fill={night ? NIGHT_SKY : "#BFE3F7"} stroke="#D9B57A" strokeWidth={4} />
+      {night ? (
+        <G>
+          <Circle cx={222} cy={40} r={9} fill="#FFF1B5" />
+          <Circle cx={226} cy={37} r={8} fill={NIGHT_SKY} />
+          <G fill="#fff">
+            {WINDOW_STARS.map(([x, y]) => (
+              <Circle key={`${x}-${y}`} cx={x} cy={y} r={1.3} />
+            ))}
+          </G>
+        </G>
+      ) : (
+        <Circle cx={222} cy={40} r={8} fill="#FFD25A" />
+      )}
       <Path d="M196 22 V88 M150 55 H242" stroke="#D9B57A" strokeWidth={3} />
       <Rect x={144} y={86} width={104} height={7} rx={2} fill="#D9B57A" />
       <Rect y={175} width={ROOM_W} height={ROOM_H - 175} fill={grass ? "#A8D98F" : "#EFD3A0"} />

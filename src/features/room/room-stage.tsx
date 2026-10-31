@@ -34,7 +34,7 @@ import { ownedGoods, todayOf } from "@/state/profile";
 import { useAppStore } from "@/state/store";
 import type { Profile } from "@/state/types";
 import { colors } from "@/ui/theme";
-import { coveringGood, hamsterDepth, look, nightTint, PLAYABLE_EXCEPT, stageGoods, type Look } from "./stage-rules";
+import { coveringGood, hamsterDepth, look, NIGHT_BLUE, nightTint, PLAYABLE_EXCEPT, stageGoods, type Look } from "./stage-rules";
 import { useRoomBrain, type Motion, type RoomStart } from "./use-room-brain";
 
 /** the hamster's feet inside its sprite box, in design units */
@@ -47,7 +47,6 @@ const SNACK_SIZE = 22;
 /** the test switch's "every good": rewards first, then shop goods (those finding no free slot stay stored) */
 const ALL_GOODS = [...REWARDS.map((r) => r.id), ...SHOP.filter((i) => i.kind === "good").map((i) => i.id)];
 const SLOT_IDS = Object.keys(SLOTS) as SlotId[];
-const NIGHT_BLUE = "#0B1E4D";
 /** the night blue and the lamp's light lie over every good and the hamster; the rearranging ＋ over all of it */
 const NIGHT_Z = 2000;
 const MARKER_Z = 3000;
@@ -73,11 +72,11 @@ function pressPoint(e: GestureResponderEvent): Point | null {
   return x !== undefined && y !== undefined && Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
 }
 
-const Background = memo(function Background({ width, wallpaper, floor }: { width: number; wallpaper: string | null; floor: string | null }) {
+const Background = memo(function Background({ width, wallpaper, floor, night }: { width: number; wallpaper: string | null; floor: string | null; night: boolean }) {
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <Svg width={width} height={(width * ROOM_H) / ROOM_W} viewBox={`0 0 ${ROOM_W} ${ROOM_H}`}>
-        <RoomBackground wallpaper={wallpaper} floor={floor} />
+        <RoomBackground wallpaper={wallpaper} floor={floor} night={night} />
       </Svg>
     </View>
   );
@@ -398,7 +397,7 @@ export function RoomStage({
 
   return (
     <View style={{ width, height: (width * ROOM_H) / ROOM_W, overflow: "hidden" }}>
-      <Background width={width} wallpaper={profile.room.wallpaper} floor={profile.room.floor} />
+      <Background width={width} wallpaper={profile.room.wallpaper} floor={profile.room.floor} night={night} />
       <Pressable accessibilityRole="button" accessibilityLabel="ゆか" accessibilityHint="ハムスターが そこへ あるいて くる" onPress={onFloor} style={StyleSheet.absoluteFill} />
       {placed.map((g) => (
         <Good

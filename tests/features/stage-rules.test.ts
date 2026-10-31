@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Activity } from "@/game/hamster-brain";
-import { ABOVE_ALL, calmCourse, courseLaps, courseNotes, coveringGood, groovesWithout, hamsterDepth, look, nightTint, perchedOn, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
+import { ABOVE_ALL, calmCourse, courseLaps, courseNotes, coveringGood, groovesWithout, hamsterDepth, look, NIGHT_BLUE, nightTint, perchedOn, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
 import { courseIn, placedGoods, pushSpot, seatIn, SLOTS } from "@/game/room";
 
 const at = { x: 200, y: 210 };
@@ -85,6 +85,20 @@ describe("the saved room", () => {
     expect(nightTint(false, true)).toBe(0);
     expect(nightTint(true, false)).toBe(0.3);
     expect(nightTint(true, true)).toBe(0.12);
+  });
+
+  test("the night blue reads blue, not gray, over the plain wall", () => {
+    const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    const wall = rgb("#FBF1DF");
+    const blue = rgb(NIGHT_BLUE);
+    // the wall as seen through the night blue laid over it at strength a
+    const seen = (a: number) => wall.map((w, i) => (1 - a) * w + a * blue[i]);
+    const [r, g, b] = seen(nightTint(true, false));
+    expect(b - r).toBeGreaterThanOrEqual(20);
+    expect(b - g).toBeGreaterThanOrEqual(15);
+    // a lamp out lightens the night
+    const sum = (c: number[]) => c.reduce((total, v) => total + v, 0);
+    expect(sum(seen(nightTint(true, true)))).toBeGreaterThan(sum(seen(nightTint(true, false))));
   });
 
   test("the lamp lights the room but is not played with", () => {

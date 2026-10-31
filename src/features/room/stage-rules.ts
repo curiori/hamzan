@@ -118,6 +118,9 @@ export function rearrangedUnder(b: { now: Activity; plan: Activity[] }, before: 
   });
 }
 
+/** the color laid over the room at night at nightTint's strength: a clear blue, so the warm wall does not turn gray */
+export const NIGHT_BLUE = "#1C3AB0";
+
 /** How dark the room's night blue is: none by day, lighter when a lamp is out. */
 export const nightTint = (night: boolean, lampPlaced: boolean): number => (night ? (lampPlaced ? 0.12 : 0.3) : 0);
 
