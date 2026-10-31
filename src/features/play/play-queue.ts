@@ -30,6 +30,3 @@ export function answerCurrent(q: PlayQueue, r: { correct: boolean; given: Answer
 export const advance = (q: PlayQueue): PlayQueue => ({ ...q, pos: q.pos + 1 });
 
 export const isFinished = (q: PlayQueue) => q.pos >= q.items.length;
-
-/** first answers given so far (for the progress bar) */
-export const firstAnswered = (q: PlayQueue) => q.results.length;

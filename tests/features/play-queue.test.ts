@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { buildSet } from "../../src/domain/setBuilder";
-import { advance, answerCurrent, currentItem, firstAnswered, initQueue, isFinished } from "../../src/features/play/play-queue";
+import { advance, answerCurrent, currentItem, initQueue, isFinished } from "../../src/features/play/play-queue";
 
 const problems = buildSet("1-1", 3, 1);
 const right = { correct: true, given: null, latencyMs: 800 };
@@ -28,7 +28,6 @@ describe("play queue", () => {
     q = answerCurrent(q, wrong, false);
     expect(q.items.length).toBe(4);
     expect(q.results.length).toBe(3);
-    expect(firstAnswered(q)).toBe(3);
     expect(isFinished(advance(q))).toBe(true);
   });
 

@@ -20,7 +20,6 @@ export interface PlayState {
   /** false when a set began less than START_GUARD_MS ago */
   begin: (plan: PlayPlan, now?: number) => boolean;
   showResult: (summary: SetSummary, ctx: PlayContext) => void;
-  clear: () => void;
 }
 
 export const usePlayStore = create<PlayState>()((set, get) => ({
@@ -35,5 +34,4 @@ export const usePlayStore = create<PlayState>()((set, get) => ({
     return true;
   },
   showResult: (summary, ctx) => set({ summary, resultCtx: ctx, recorded: true }),
-  clear: () => set({ plan: null, summary: null, resultCtx: null, recorded: false }),
 }));
