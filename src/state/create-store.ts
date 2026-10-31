@@ -182,7 +182,7 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
           recordSet: (run) => {
             const p0 = activeProfile(get());
             if (!p0) throw new Error("no profile");
-            const { profile, summary } = recordSetPure(p0, run, { date: today(), now: now() });
+            const { profile, summary } = recordSetPure(p0, run, { date: today(), now: now(), unlockAll: get().dev.unlockAll });
             set((s) => ({ profiles: s.profiles.map((q) => (q.id === profile.id ? profile : q)) }));
             return summary;
           },

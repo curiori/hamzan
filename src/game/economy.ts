@@ -94,7 +94,13 @@ export interface SeedAward {
 export function awardSeeds(w0: Wallet, input: SeedInput, date: LocalDate): SeedAward {
   const w: Wallet = w0.day === date ? w0 : { ...w0, day: date, earnedToday: 0, bestToday: [] };
   const free = input.kind === "extra";
-  if (input.interrupted || (free && input.levelMasteredBefore)) return { lines: [], total: 0, capped: false, wallet: w };
+  if (input.interrupted) {
+    // the set itself earns nothing, but the day's goal it reaches is a milestone of the day
+    const goal = input.goalReached ? SEEDS.goal : 0;
+    const wallet = { ...w, seeds: w.seeds + goal, lifetime: w.lifetime + goal };
+    return { lines: goal ? [{ kind: "goal", seeds: goal }] : [], total: goal, capped: false, wallet };
+  }
+  if (free && input.levelMasteredBefore) return { lines: [], total: 0, capped: false, wallet: w };
 
   const lines: SeedLine[] = [];
   const add = (kind: SeedLineKind, seeds: number, count?: number) => {

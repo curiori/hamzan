@@ -124,11 +124,17 @@ describe("awardSeeds", () => {
     ]);
   });
 
-  test("an interrupted set pays nothing", () => {
-    const a = awardSeeds(wallet({ seeds: 7 }), input({ firstCorrect: 12, goalReached: true, events: ["star2"], interrupted: true }), TODAY);
-    expect(a.total).toBe(0);
-    expect(a.lines).toEqual([]);
-    expect(a.wallet.seeds).toBe(7);
+  test("an interrupted set pays only the day's goal it reaches", () => {
+    const w = wallet({ seeds: 7, lifetime: 40, earnedToday: 12, bestToday: ["3-1"] });
+    const set = input({ inSession: true, interrupted: true, firstCorrect: 10, events: ["star2"], goalReached: true });
+    const a = awardSeeds(w, set, TODAY);
+    expect(a.lines).toEqual([{ kind: "goal", seeds: 20 }]);
+    expect(a.total).toBe(20);
+    expect(a.wallet).toEqual({ ...w, seeds: w.seeds + 20, lifetime: w.lifetime + 20 });
+    const none = awardSeeds(w, { ...set, goalReached: false }, TODAY);
+    expect(none.lines).toEqual([]);
+    expect(none.total).toBe(0);
+    expect(none.wallet).toEqual(w);
   });
 
   test("a day of today's practice beats a whole day of free practice", () => {

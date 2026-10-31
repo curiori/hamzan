@@ -9,6 +9,7 @@ import { mixedTargetSec, targetSec } from "@/domain/timing";
 import { REWARDS, unlockedRewards } from "@/game/achievements";
 import { appendLedger, awardSeeds } from "@/game/economy";
 import { GOOD_KIND, placeNew, roomGoods } from "@/game/room";
+import { sessionPartPlan } from "@/session/requests";
 import { ownedGoods, placementOutcome, rewardStats, timeOpts } from "./profile";
 import type { Profile, ProblemResult, SetAttempt, SetRun, SetSummary } from "./types";
 
@@ -19,7 +20,7 @@ const ERROR_KEEP_DAYS = 60;
 const round2 = (x: number) => Math.round(x * 100) / 100;
 
 /** Records one finished (or interrupted) set. Pure: returns a new profile and the summary for the result screen. */
-export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now: number }): { profile: Profile; summary: SetSummary } {
+export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now: number; unlockAll?: boolean }): { profile: Profile; summary: SetSummary } {
   const { date, now } = ctx;
   const opts = timeOpts(p0);
   const rewardsBefore = new Set(unlockedRewards(rewardStats(p0)));
@@ -164,7 +165,10 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
     const day = run.sessionDate ?? date;
     const d = p.sessions[day];
     if (d) {
-      const done = Math.max(d.done, run.sessionPart + 1);
+      let done = Math.max(d.done, run.sessionPart + 1);
+      // the next parts with nothing to ask (as the profile stands after this set) are passed now, so the last set with
+      // problems reaches the goal and pays it; the runner skipping them later would reach it without seeds
+      while (done < d.plan.length && !sessionPartPlan(d.plan[done], done, p, day, ctx.unlockAll ?? false)) done++;
       const goal = d.goal || done >= d.plan.length;
       summary.goalReached = goal && !d.goal;
       p.sessions[day] = { ...d, done, goal };

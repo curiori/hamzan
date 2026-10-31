@@ -4,6 +4,7 @@ import { applyPlacementResult, miniLevel, startPlacement, type PlacementState } 
 import type { Answer } from "../../src/domain/problem";
 import { freshProgress, type LevelProgress } from "../../src/domain/progression";
 import { applyReview, scheduleOnMastery } from "../../src/domain/review";
+import type { SessionPart } from "../../src/domain/session";
 import { buildSet } from "../../src/domain/setBuilder";
 import { LEVEL, RULE_NUMBERS, SPEC, STAGES } from "../../src/domain/spec";
 import { newProfile } from "../../src/state/profile";
@@ -129,6 +130,44 @@ describe("recordSet", () => {
     expect(profile.sessions[DATE]).toEqual({ plan, done: 0, goal: false });
     expect(profile.sessions[yesterday]).toEqual({ plan, done: 2, goal: true });
     expect(summary.goalReached).toBe(true);
+  });
+
+  test("an interrupted last part reaches the goal once and pays only the goal", () => {
+    const p = profileWith({ "1-1": { mode: "S", practiced: true } });
+    p.sessions[DATE] = { plan: [{ kind: "warmup" }, { kind: "slot", slot: "frontier" }], done: 1, goal: false };
+    const run = { ...sSet(), sessionPart: 1, interrupted: true };
+    const first = recordSet(p, run, ctx());
+    expect(first.summary.result).toBe("interrupted");
+    expect(first.summary.goalReached).toBe(true);
+    expect(first.summary.seeds.lines).toEqual([{ kind: "goal", seeds: 20 }]);
+    expect(first.profile.wallet.seeds).toBe(p.wallet.seeds + 20);
+    expect(first.profile.ledger.at(-1)).toEqual({ at: NOW, date: DATE, delta: 20, reason: "set", ref: "main" });
+    const again = recordSet(first.profile, run, ctx());
+    expect(again.summary.goalReached).toBe(false);
+    expect(again.summary.seeds.lines.map((l) => l.kind)).not.toContain("goal");
+    expect(again.profile.wallet.seeds).toBe(first.profile.wallet.seeds);
+  });
+
+  test("parts left with nothing to ask are passed, so the set before them reaches the goal", () => {
+    // no review item is left for 1-1, so the review part has nothing to ask
+    const p = profileWith({ "1-1": { mode: "S", practiced: true } });
+    const plan: SessionPart[] = [{ kind: "warmup" }, { kind: "slot", slot: "frontier" }, { kind: "review", levelIds: ["1-1"] }];
+    p.sessions[DATE] = { plan, done: 1, goal: false };
+    const { profile, summary } = recordSet(p, { ...sSet(), sessionPart: 1 }, ctx());
+    expect(profile.sessions[DATE]).toEqual({ plan, done: 3, goal: true });
+    expect(summary.goalReached).toBe(true);
+    expect(summary.seeds.lines).toContainEqual({ kind: "goal", seeds: 20 });
+  });
+
+  test("a later part with something to ask keeps the goal for later", () => {
+    const p = profileWith({ "1-1": { mode: "S", practiced: true } });
+    p.reviews = [scheduleOnMastery("1-1", DATE, 0)];
+    const plan: SessionPart[] = [{ kind: "warmup" }, { kind: "slot", slot: "frontier" }, { kind: "review", levelIds: ["1-1"] }];
+    p.sessions[DATE] = { plan, done: 1, goal: false };
+    const { profile, summary } = recordSet(p, { ...sSet(), sessionPart: 1 }, ctx());
+    expect(profile.sessions[DATE]).toEqual({ plan, done: 2, goal: false });
+    expect(summary.goalReached).toBe(false);
+    expect(summary.seeds.lines.map((l) => l.kind)).not.toContain("goal");
   });
 
   test("the first clean set unlocks the bowl reward", () => {

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { StateStorage } from "zustand/middleware";
+import type { SessionPart } from "../../src/domain/session";
 import { buildSet } from "../../src/domain/setBuilder";
 import { emptyWallet } from "../../src/game/economy";
 import { STORAGE_KEY, activeProfile, createAppStore } from "../../src/state/create-store";
@@ -174,6 +175,30 @@ describe("app store", () => {
     expect(stored.version).toBe(2);
     expect(stored.state.profiles[0].sets.length).toBe(1);
     expect(stored.state.hydrated).toBeUndefined();
+  });
+
+  test("a set recorded through the store reaches the goal when the rest of the session has nothing to ask", () => {
+    const today = todayOf(0, NOW);
+    const child = newProfile("あに", 5, { id: "pA", now: NOW });
+    // the child has no review item left, so the review part has nothing to ask
+    const plan: SessionPart[] = [{ kind: "warmup" }, { kind: "slot", slot: "frontier" }, { kind: "review", levelIds: ["1-1"] }];
+    child.sessions[today] = { plan, done: 1, goal: false };
+    const { data, storage } = memoryStorage();
+    data.set(STORAGE_KEY, saved([child]));
+    const store = createAppStore(storage, { now: () => NOW });
+    const run: SetRun = {
+      kind: "main",
+      mode: "S",
+      levelId: "1-1",
+      results: buildSet("1-1", 3, 1).map((inst) => ({ inst, correct: true, given: null, latencyMs: 900 })),
+      interrupted: false,
+      activeSec: 3,
+      sessionPart: 1,
+      sessionDate: today,
+    };
+    const summary = store.getState().recordSet(run);
+    expect(summary.goalReached).toBe(true);
+    expect(activeProfile(store.getState())?.sessions[today]).toEqual({ plan, done: 3, goal: true });
   });
 
   test("version 1 data moves to version 2 with an empty wallet and the earned goods in the room", async () => {
