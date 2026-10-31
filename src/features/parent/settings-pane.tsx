@@ -6,6 +6,7 @@ import { textInputStyle } from "@/features/onboarding/child-form";
 import { useAppStore } from "@/state/store";
 import type { Profile, Settings } from "@/state/types";
 import { Button } from "@/ui/button";
+import { MAX_FONT_SCALE_UI } from "@/ui/font-scale";
 import { SwitchRow } from "@/ui/switch-row";
 import { AppText } from "@/ui/text";
 import { colors } from "@/ui/theme";
@@ -42,6 +43,7 @@ function NumberField({ label, value, onCommit }: { label: string; value: number;
           if (t.trim() && v > 0) onCommit(v);
         }}
         onBlur={() => setFocused(false)}
+        maxFontSizeMultiplier={MAX_FONT_SCALE_UI}
         style={[textInputStyle, styles.numberInput]}
       />
     </View>

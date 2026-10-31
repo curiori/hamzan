@@ -5,6 +5,7 @@ import { SPEC } from "@/domain/spec";
 import { GradePicker, NICKNAME_MAX, textInputStyle } from "@/features/onboarding/child-form";
 import { useAppStore } from "@/state/store";
 import { Button } from "@/ui/button";
+import { MAX_FONT_SCALE_UI } from "@/ui/font-scale";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
 
@@ -30,6 +31,7 @@ function NicknameField({ value, onCommit }: { value: string; onCommit: (v: strin
       onChangeText={setText}
       onEndEditing={commit}
       onBlur={commit}
+      maxFontSizeMultiplier={MAX_FONT_SCALE_UI}
       style={[textInputStyle, styles.nickname]}
     />
   );
@@ -68,7 +70,16 @@ export function ProfilesPane() {
       {profiles.length < max ? (
         <View style={[styles.card, styles.addCard]}>
           <AppText weight="bold">こどもを追加</AppText>
-          <TextInput value={nick} onChangeText={setNick} maxLength={NICKNAME_MAX} placeholder="ニックネーム" accessibilityLabel="追加するニックネーム" autoCorrect={false} style={textInputStyle} />
+          <TextInput
+            value={nick}
+            onChangeText={setNick}
+            maxLength={NICKNAME_MAX}
+            placeholder="ニックネーム"
+            accessibilityLabel="追加するニックネーム"
+            autoCorrect={false}
+            maxFontSizeMultiplier={MAX_FONT_SCALE_UI}
+            style={textInputStyle}
+          />
           <GradePicker value={grade} onChange={setGrade} />
           <Button
             label="追加"

@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Button } from "@/ui/button";
+import { MAX_FONT_SCALE_UI } from "@/ui/font-scale";
 import { AppText, useTextScale } from "@/ui/text";
 import { colors, fonts, radius } from "@/ui/theme";
 
@@ -38,6 +39,7 @@ export function ChildForm({ onSubmit }: { onSubmit: (nickname: string, grade: nu
         autoCapitalize="none"
         returnKeyType="done"
         onSubmitEditing={submit}
+        maxFontSizeMultiplier={MAX_FONT_SCALE_UI}
         style={styles.input}
       />
       <AppText weight="bold" style={styles.label}>

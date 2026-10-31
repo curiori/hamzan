@@ -7,6 +7,7 @@ import { textInputStyle } from "@/features/onboarding/child-form";
 import { PinPad } from "@/features/onboarding/pin-pad";
 import { useAppStore } from "@/state/store";
 import { Button } from "@/ui/button";
+import { MAX_FONT_SCALE_UI } from "@/ui/font-scale";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
 
@@ -67,6 +68,7 @@ export function ParentGate({ onUnlock, onBack }: { onUnlock: () => void; onBack:
                 keyboardType="number-pad"
                 accessibilityLabel="数字で入力"
                 placeholder="数字で入力"
+                maxFontSizeMultiplier={MAX_FONT_SCALE_UI}
                 style={textInputStyle}
               />
               {error ? (
