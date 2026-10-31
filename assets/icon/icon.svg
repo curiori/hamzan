@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- ハムざん's app icon: the room hamster from the front, holding a sunflower seed, on amber.
+       iOS rounds the corners itself, so the amber fills them. The PNGs are exported from this file
+       (the splash image without the background group). -->
+  <defs>
+    <linearGradient id="amber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FDE68A" />
+      <stop offset="1" stop-color="#FBBF24" />
+    </linearGradient>
+  </defs>
+  <g id="background">
+    <rect width="1024" height="1024" fill="url(#amber)" />
+    <circle cx="512" cy="520" r="410" fill="#FFFBEB" opacity="0.55" />
+    <ellipse cx="512" cy="880" rx="320" ry="34" fill="#B45309" opacity="0.18" />
+  </g>
+  <!-- src/art/hamster.tsx HamsterBody (idle, holding a seed), in its 132 x 114 box -->
+  <g id="hamster" transform="translate(44 34) scale(7.8)">
+    <circle cx="30" cy="30" r="12" fill="#E99A4E" />
+    <circle cx="90" cy="30" r="12" fill="#E99A4E" />
+    <circle cx="30" cy="31" r="6.5" fill="#F6B8AE" />
+    <circle cx="90" cy="31" r="6.5" fill="#F6B8AE" />
+    <ellipse cx="40" cy="103" rx="10" ry="5" fill="#F6B8AE" />
+    <ellipse cx="80" cy="103" rx="10" ry="5" fill="#F6B8AE" />
+    <ellipse cx="60" cy="63" rx="46" ry="42" fill="#E99A4E" />
+    <path d="M20 70 C 24 47, 96 47, 100 70 C 98 98, 22 98, 20 70 Z" fill="#FFF4E2" />
+    <circle cx="44" cy="51" r="5.5" fill="#3A2A20" />
+    <circle cx="76" cy="51" r="5.5" fill="#3A2A20" />
+    <circle cx="45.6" cy="49.2" r="1.7" fill="#FFFFFF" />
+    <circle cx="77.6" cy="49.2" r="1.7" fill="#FFFFFF" />
+    <ellipse cx="31" cy="66" rx="8" ry="5" fill="#F59E9E" opacity="0.75" />
+    <ellipse cx="89" cy="66" rx="8" ry="5" fill="#F59E9E" opacity="0.75" />
+    <ellipse cx="60" cy="60" rx="3.4" ry="2.4" fill="#E07A7A" />
+    <path d="M54 64 Q57 68 60 64 Q63 68 66 64" fill="none" stroke="#3A2A20" stroke-width="1.8" stroke-linecap="round" />
+    <g transform="translate(60 83) rotate(-8)">
+      <ellipse rx="4.2" ry="7.2" fill="#3F3A36" />
+      <path d="M0 -6 V6 M-2.2 -4 Q-2.8 0 -1.6 4.5 M2.2 -4 Q2.8 0 1.6 4.5" stroke="#F3EBDD" stroke-width="0.9" fill="none" />
+    </g>
+    <ellipse cx="50" cy="86" rx="7" ry="5" fill="#F6B8AE" />
+    <ellipse cx="70" cy="86" rx="7" ry="5" fill="#F6B8AE" />
+  </g>
+</svg>
