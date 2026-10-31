@@ -76,15 +76,24 @@ export function ParentGate({ onUnlock, onBack }: { onUnlock: () => void; onBack:
                   {error}
                 </AppText>
               ) : null}
-              <Button label="確認" onPress={() => (Number(answer) === challenge ? setForgot("new") : setError("数字がちがいます"))} />
+              <Button
+                label="確認"
+                onPress={() => {
+                  if (Number(answer) !== challenge) return setError("数字がちがいます");
+                  setError(null);
+                  setForgot("new");
+                }}
+              />
             </View>
           ) : null}
           {forgot === "new" ? (
             <PinPad
               key="new"
               title="新しいPIN（4桁）"
+              error={error}
               onComplete={(p) => {
                 setNewPin(p);
+                setError(null);
                 setForgot("new2");
               }}
             />
@@ -94,7 +103,10 @@ export function ParentGate({ onUnlock, onBack }: { onUnlock: () => void; onBack:
               key="new2"
               title="もう一度入力"
               onComplete={(p) => {
-                if (p !== newPin) return setForgot("new");
+                if (p !== newPin) {
+                  setError("一致しませんでした。最初からやり直してください");
+                  return setForgot("new");
+                }
                 setPin(p);
                 onUnlock();
               }}
