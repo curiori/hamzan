@@ -238,7 +238,7 @@ function ItemSheet({ item, profile, onClose }: { item: ShopItem | null; profile:
     <Sheet visible={!!item} title={item?.name ?? ""} onClose={once(onClose)}>
       {item ? (
         <>
-          <ItemPreview item={item} profile={profile} width={Math.min(width - 40, 480)} />
+          <ItemPreview item={item} profile={profile} width={Math.min(width - 40, 480)} showFull={flow.step !== "done"} />
           <View style={styles.priceLine}>
             <View style={styles.price} accessible accessibilityLabel={`たね ${item.price}こ`}>
               <SeedIcon size={20} />

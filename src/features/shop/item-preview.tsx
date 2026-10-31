@@ -10,7 +10,7 @@ import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
 
 /** How an item would look: the hamster wearing it, the child's room with the good out or restyled, or the snack itself. */
-export function ItemPreview({ item, profile, width }: { item: ShopItem; profile: Profile; width: number }) {
+export function ItemPreview({ item, profile, width, showFull = true }: { item: ShopItem; profile: Profile; width: number; showFull?: boolean }) {
   if (item.kind === "wear")
     return (
       <View style={styles.box} accessible accessibilityRole="image" accessibilityLabel={`${item.name}を つけた ハムスター`}>
@@ -42,7 +42,7 @@ export function ItemPreview({ item, profile, width }: { item: ShopItem; profile:
           width={width - 2}
         />
       </View>
-      {full ? <AppText style={styles.full}>いまは おく ばしょが いっぱい。もようがえで いれかえてね</AppText> : null}
+      {full && showFull ? <AppText style={styles.full}>いまは おく ばしょが いっぱい。もようがえで いれかえてね</AppText> : null}
     </View>
   );
 }
