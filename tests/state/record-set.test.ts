@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { addDays } from "../../src/domain/dates";
+import { applyPlacementResult, miniLevel, startPlacement, type PlacementState } from "../../src/domain/placement";
 import type { Answer } from "../../src/domain/problem";
 import { freshProgress, type LevelProgress } from "../../src/domain/progression";
-import { scheduleOnMastery } from "../../src/domain/review";
+import { applyReview, scheduleOnMastery } from "../../src/domain/review";
 import { buildSet } from "../../src/domain/setBuilder";
-import { LEVEL, RULE_NUMBERS, SPEC } from "../../src/domain/spec";
+import { LEVEL, RULE_NUMBERS, SPEC, STAGES } from "../../src/domain/spec";
 import { newProfile } from "../../src/state/profile";
 import { recordSet } from "../../src/state/record-set";
 import type { FactStat, Profile, ProblemResult, SetAttempt, SetRun } from "../../src/state/types";
@@ -170,6 +171,80 @@ describe("recordSet", () => {
     const rs = results("0-1", 6, { wrong: Array.from({ length: RULE_NUMBERS.stageCheckMaxMisses }, (_, i) => i) });
     const { summary } = recordSet(p, mkRun({ kind: "stage_check", mode: "S", levelId: null, stage: 0, results: rs }), ctx());
     expect(summary.stageCheck).toEqual({ stage: 0, passed: true });
+  });
+});
+
+describe("recordSet: diagnosis, challenge and reviews", () => {
+  test("the set that finishes the diagnosis applies its result and marks it done", () => {
+    // the child knows the levels before 3-3: stage 2's check passes fast enough to count as mastered, stage 3's check
+    // fails, and the mini checks of stage 3 pass 3-1 and 3-2 and stop at 3-3
+    const knows = (levelId: string) => LEVEL[levelId].order < LEVEL["3-3"].order;
+    const diagnosisSet = (st: PlacementState): SetRun => {
+      const phase = st.phase === "mini" ? "mini" : "stageCheck";
+      const levelId = phase === "mini" ? miniLevel(st) : null;
+      const levelIds = levelId ? [levelId] : STAGES[st.stage].stageCheck.levels;
+      // five problems of each level the set asks about; one of them is missed when the child does not know the level
+      const rs = levelIds.flatMap((id) => results(id, RULE_NUMBERS.miniCheckProblems, { wrong: knows(id) ? [] : [0] }));
+      return mkRun({ kind: "placement", mode: "S", levelId, placementPhase: phase, results: rs });
+    };
+    let p = profileWith();
+    p.placement = startPlacement(4);
+    let last = null as ReturnType<typeof recordSet> | null;
+    for (let sets = 0; p.placement && p.placement.phase !== "done"; sets++) {
+      if (sets === 40) throw new Error("the diagnosis did not finish within 40 sets");
+      expect(p.placementDone).toBe(false);
+      last = recordSet(p, diagnosisSet(p.placement), ctx());
+      p = last.profile;
+    }
+    const end = last?.summary.placement;
+    expect(end?.phase).toBe("done");
+    expect(end).toMatchObject({ masteredStages: [2], result: { frontier: "3-3", mode: "H" } });
+    expect(p.placementDone).toBe(true);
+    const applied = applyPlacementResult(end!, DATE);
+    expect(p.progress).toEqual(applied.progress);
+    expect(p.reviews).toEqual(applied.reviews);
+  });
+
+  test("an interrupted diagnosis set adds its time but does not move the diagnosis on", () => {
+    const before: PlacementState = { ...startPlacement(4), phase: "mini", miniIndex: 1, day: DATE, secondsToday: 100 };
+    const p = profileWith();
+    p.placement = before;
+    const levelId = miniLevel(before);
+    const rs = results(levelId, RULE_NUMBERS.miniCheckProblems, { wrong: [0] });
+    const run = mkRun({ kind: "placement", mode: "S", levelId, placementPhase: "mini", results: rs, interrupted: true, activeSec: 30 });
+    // judged, the miss in this mini check would end the diagnosis
+    expect(recordSet(p, { ...run, interrupted: false }, ctx()).profile.placementDone).toBe(true);
+    const { profile } = recordSet(p, run, ctx());
+    expect(profile.placement?.phase).toBe(before.phase);
+    expect(profile.placementDone).toBe(false);
+    expect(profile.placement?.secondsToday).toBe(before.secondsToday + 30);
+  });
+
+  test("a clean challenge sets the best, and a slower, wrong or interrupted one keeps it", () => {
+    const n = SPEC.rules.dailySession.weeklyChallenge.problems;
+    const challenge = (latencyMs: number, wrong: number[] = []) =>
+      mkRun({ kind: "challenge", mode: "S", levelId: null, results: results("1-1", n, { latencyMs, wrong }) });
+    const first = recordSet(profileWith(), challenge(1500), ctx());
+    expect(first.summary.challengeBest).toEqual({ sec: 1.5, isNew: true });
+    expect(first.profile.challenge).toEqual({ lastDate: DATE, bestSec: 1.5 });
+    for (const run of [challenge(2000), challenge(1000, [0]), { ...challenge(1000), interrupted: true }]) {
+      const { profile, summary } = recordSet(first.profile, run, ctx());
+      expect(summary.challengeBest).toEqual({ sec: 1.5, isNew: false });
+      expect(profile.challenge.lastDate).toBe(DATE);
+    }
+  });
+
+  test("a passed review keeps the mastery and moves the review to its next date", () => {
+    const p = profileWith({ "1-1": { mode: "S", practiced: true, star2At: DATE, star3Dates: [DATE], masteredAt: DATE, bestStars: 3 } });
+    const item = scheduleOnMastery("1-1", DATE);
+    p.reviews = [item];
+    const n = SPEC.rules.spacedReview.problemsPerLevel;
+    const run = mkRun({ kind: "review", mode: "S", levelId: null, results: results("1-1", n, { latencyMs: 100 }) });
+    const { profile, summary } = recordSet(p, run, ctx(item.dueDate));
+    expect(summary.reviews).toEqual([{ levelId: "1-1", passed: true, demoted: false }]);
+    expect(profile.reviews).toEqual([applyReview(item, true, item.dueDate).item]);
+    expect(profile.progress["1-1"].masteredAt).toBe(DATE);
+    expect(summary.seeds.lines).toEqual([{ kind: "review", seeds: 5 }]);
   });
 });
 
