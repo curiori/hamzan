@@ -3,6 +3,7 @@ import { Modal, StyleSheet, View } from "react-native";
 import { Button } from "./button";
 import { AppText } from "./text";
 import { colors, radius } from "./theme";
+import { useKept } from "./use-kept";
 
 export interface ConfirmOptions {
   title: string;
@@ -19,6 +20,8 @@ const ConfirmContext = createContext<Confirm | null>(null);
 /** Promise-based confirm dialog, same call shape as the web prototype's useConfirm. */
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState<ConfirmOptions | null>(null);
+  // the closing dialog fades out with its own words (not the default labels), and takes no presses meanwhile
+  const shown = useKept(open);
   const resolver = useRef<((v: boolean) => void) | null>(null);
 
   const confirm = useCallback<Confirm>((o) => {
@@ -40,16 +43,16 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       {children}
       <Modal transparent visible={!!open} animationType="fade" onRequestClose={() => close(false)}>
         <View style={styles.backdrop}>
-          <View style={styles.box} accessibilityViewIsModal onAccessibilityEscape={() => close(false)}>
+          <View style={styles.box} pointerEvents={open ? "auto" : "none"} accessibilityViewIsModal onAccessibilityEscape={() => close(false)}>
             <AppText weight="bold" style={styles.title}>
-              {open?.title}
+              {shown?.title}
             </AppText>
-            {open?.description ? <AppText style={styles.desc}>{open.description}</AppText> : null}
+            {shown?.description ? <AppText style={styles.desc}>{shown.description}</AppText> : null}
             <View style={styles.actions}>
-              <Button variant="outline" label={open?.cancelLabel ?? "キャンセル"} onPress={() => close(false)} style={styles.action} />
+              <Button variant="outline" label={shown?.cancelLabel ?? "キャンセル"} onPress={() => close(false)} style={styles.action} />
               <Button
-                variant={open?.destructive ? "destructive" : "primary"}
-                label={open?.confirmLabel ?? "OK"}
+                variant={shown?.destructive ? "destructive" : "primary"}
+                label={shown?.confirmLabel ?? "OK"}
                 onPress={() => close(true)}
                 style={styles.action}
               />

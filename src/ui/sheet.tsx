@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppText } from "./text";
 import { colors, radius } from "./theme";
+import { useKept } from "./use-kept";
 
 /**
  * The dimmed screen behind a sheet or a menu. A press on it closes, for children who see it; VoiceOver skips it and
@@ -16,25 +17,34 @@ export function Backdrop({ onClose }: { onClose: () => void }) {
 /** Bottom sheet over the dimmed screen: a title, a close button and scrolling content. A press outside closes it. */
 export function Sheet({ visible, title, subtitle, onClose, children }: { visible: boolean; title: string; subtitle?: string; onClose: () => void; children: ReactNode }) {
   const insets = useSafeAreaInsets();
+  // a closing sheet slides down with what it showed (callers clear theirs on close); it takes no presses and VoiceOver skips it
+  const shown = useKept(visible ? { title, subtitle, children } : null);
   return (
     <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <Backdrop onClose={onClose} />
-        {visible ? (
-          <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]} accessibilityViewIsModal onAccessibilityEscape={onClose}>
+        {shown ? (
+          <View
+            style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}
+            pointerEvents={visible ? "auto" : "none"}
+            importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
+            accessibilityElementsHidden={!visible}
+            accessibilityViewIsModal
+            onAccessibilityEscape={onClose}
+          >
             <ScrollView contentContainerStyle={styles.content}>
               <View style={styles.head}>
                 <View style={styles.headText}>
                   <AppText weight="bold" accessibilityRole="header" style={styles.title}>
-                    {title}
+                    {shown.title}
                   </AppText>
-                  {subtitle ? <AppText style={styles.sub}>{subtitle}</AppText> : null}
+                  {shown.subtitle ? <AppText style={styles.sub}>{shown.subtitle}</AppText> : null}
                 </View>
                 <Pressable accessibilityRole="button" accessibilityLabel="とじる" onPress={onClose} hitSlop={8} style={styles.close}>
                   <Ionicons name="close" size={24} color={colors.foreground} />
                 </Pressable>
               </View>
-              {children}
+              {shown.children}
             </ScrollView>
           </View>
         ) : null}

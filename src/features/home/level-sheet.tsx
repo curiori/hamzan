@@ -9,6 +9,7 @@ import { Button } from "@/ui/button";
 import { Backdrop } from "@/ui/sheet";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
+import { useKept } from "@/ui/use-kept";
 import { STATUS_LABEL } from "./stage-map";
 
 /** Bottom sheet for one level: example, mode, best time, mastery progress, and the practice button. */
@@ -26,17 +27,27 @@ export function LevelSheet({
   onPractice: (levelId: string, mode: Mode) => void;
 }) {
   const insets = useSafeAreaInsets();
-  const sel = levelId ? LEVEL[levelId] : null;
+  // a closing sheet slides down with the level it showed; it takes no presses and VoiceOver skips it
+  const shownId = useKept(levelId);
+  const closing = !levelId;
+  const sel = shownId ? LEVEL[shownId] : null;
   const lp = sel ? lpOf(profile.progress, sel.id) : null;
   const status = sel ? statusOf(profile.progress, sel.id, unlockAll) : null;
   const masteryDays = SPEC.rules.stars.mastery.star3OnDistinctLocalDates;
 
   return (
-    <Modal transparent visible={!!sel} animationType="slide" onRequestClose={onClose}>
+    <Modal transparent visible={!!levelId} animationType="slide" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <Backdrop onClose={onClose} />
         {sel && lp && status ? (
-          <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]} accessibilityViewIsModal onAccessibilityEscape={onClose}>
+          <View
+            style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}
+            pointerEvents={closing ? "none" : "auto"}
+            importantForAccessibility={closing ? "no-hide-descendants" : "auto"}
+            accessibilityElementsHidden={closing}
+            accessibilityViewIsModal
+            onAccessibilityEscape={onClose}
+          >
             <ScrollView contentContainerStyle={styles.content}>
               <View style={styles.head}>
                 <View style={styles.headText}>
