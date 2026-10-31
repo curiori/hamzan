@@ -14,7 +14,7 @@ import {
 } from "react-native-reanimated";
 import { createBrain, isNight, stepBrain, type Activity, type Brain, type BrainEvent, type World } from "@/game/hamster-brain";
 import { clampToFloor, seatMoveMs, seatSways, type Point } from "@/game/room";
-import { courseNotes, perchedOn, rearrangedUnder, walkAxis, walkMs, type StageGood } from "./stage-rules";
+import { calmCourse, courseLaps, courseNotes, groovesWithout, perchedOn, rearrangedUnder, walkAxis, walkMs, type StageGood } from "./stage-rules";
 
 // The room makes its own calm moves when the system asks to reduce motion (slow walks, a nod instead of a hop),
 // so Reanimated must play them instead of cutting every animation to its end. Callbacks stay on withTiming and
@@ -175,6 +175,12 @@ export function useRoomBrain({
     if (b && rearrangedUnder(b, before, goods)) send({ type: "rearranged" });
   }, [goods, send]);
 
+  // a change of outfit: with the headphones off, a sway to the music stops and the hamster chooses again
+  useEffect(() => {
+    const b = brainRef.current;
+    if (b && groovesWithout(b.now, wear)) send({ type: "rearranged" });
+  }, [wear, send]);
+
   // pause and resume with the screen: nothing runs while hidden, and the hamster picks up from where it stands;
   // a new visit begins a fresh plan, which opens with the celebration or the new good
   useEffect(() => {
@@ -297,10 +303,11 @@ export function useRoomBrain({
         spin.value = after(PUSH_MOVE_MS, loop(tween(360 * face, rm ? 2400 : 1200, Easing.linear), -1));
       } else if (good?.course) {
         // over the good's course (up the ladder and down the slide, across the bridge and back, over the keys) as many
-        // times as the play lasts, the last time to its end
-        const { steps, ms: lapMs } = good.course;
-        const laps = Math.max(1, Math.floor(a.ms / lapMs));
-        ends = Math.max(a.ms, laps * lapMs);
+        // whole times as fit the play; with reduce motion no faster than a calm walk
+        const course = rm ? calmCourse(good.course, from) : good.course;
+        const { steps, ms: lapMs } = course;
+        const { laps, ends: courseEnds } = courseLaps(lapMs, a.ms);
+        ends = courseEnds;
         const legs = (axis: "x" | "y") => chain(...steps.map((st) => tween(st.to[axis], st.ms, st.ease === "in" ? Easing.in(Easing.quad) : Easing.linear)));
         x.value = loop(legs("x"), laps);
         y.value = loop(legs("y"), laps);
@@ -319,7 +326,7 @@ export function useRoomBrain({
             at = st.to;
           }
         // the piano's keys sound as the hamster steps on them, each time over
-        const notes = courseNotes(good.course);
+        const notes = courseNotes(course);
         for (let lap = 0; lap < laps; lap++) for (const n of notes) later(lap * lapMs + n.at, () => noteRef.current?.(n.key));
       } else if (WHEELS.includes(a.good)) {
         step.value = loop(tween(1, 90), -1, true);

@@ -74,6 +74,29 @@ export function courseNotes(course: { steps: CourseStep[] }): { at: number; key:
   return notes;
 }
 
+/**
+ * How many times the hamster goes over a course in a play of about `ms`, and when the play ends: with the last time
+ * over it, so the hamster never walks on the spot after arriving back.
+ */
+export function courseLaps(lapMs: number, ms: number): { laps: number; ends: number } {
+  const laps = Math.max(1, Math.round(ms / lapMs));
+  return { laps, ends: laps * lapMs };
+}
+
+/** A course as the hamster goes over it with reduce motion: no leg faster than a calm walk (and its notes slower with it). */
+export function calmCourse(course: { steps: CourseStep[]; ms: number }, from: Point): { steps: CourseStep[]; ms: number } {
+  let was = from;
+  const steps = course.steps.map((st) => {
+    const ms = Math.max(st.ms, walkMs(was, st.to, false, true));
+    was = st.to;
+    return { ...st, ms };
+  });
+  return { steps, ms: steps.reduce((sum, st) => sum + st.ms, 0) };
+}
+
+/** Whether the hamster is swaying to music it no longer has: the headphones came off. */
+export const groovesWithout = (a: Activity, wear: string | null | undefined): boolean => a.kind === "idle" && a.act === "groove" && wear !== "headphones";
+
 /** The goods an activity uses: the good played with, or the house or the bed slept in. */
 const usedGoods = (a: Activity): string[] => {
   if (a.kind === "play") return [a.good];

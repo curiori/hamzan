@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Activity } from "@/game/hamster-brain";
-import { ABOVE_ALL, courseNotes, coveringGood, hamsterDepth, look, nightTint, perchedOn, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
+import { ABOVE_ALL, calmCourse, courseLaps, courseNotes, coveringGood, groovesWithout, hamsterDepth, look, nightTint, perchedOn, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, walkAxis, walkMs } from "@/features/room/stage-rules";
 import { courseIn, placedGoods, pushSpot, seatIn, SLOTS } from "@/game/room";
 
 const at = { x: 200, y: 210 };
@@ -116,6 +116,44 @@ describe("the stage's goods", () => {
     // evenly over the 2000 ms walk across the keys, which starts 400 ms in: each note in the middle of its fifth
     expect(notes.map((n) => n.at)).toEqual([600, 1000, 1400, 1800, 2200]);
     expect(courseNotes(courseIn("slide", "floorL3") ?? { steps: [] })).toEqual([]);
+  });
+
+  test("a course play ends when its last time over the course does, so the hamster never steps in place", () => {
+    // the bridge (4600 ms a time), the piano (2900) and the slide (2350) in plays the brain makes 4 to 8 s long
+    expect(courseLaps(4600, 5000)).toEqual({ laps: 1, ends: 4600 });
+    expect(courseLaps(4600, 7000)).toEqual({ laps: 2, ends: 9200 });
+    expect(courseLaps(2900, 8000)).toEqual({ laps: 3, ends: 8700 });
+    expect(courseLaps(2350, 4000)).toEqual({ laps: 2, ends: 4700 });
+    // a course longer than the play still goes over once
+    expect(courseLaps(13900, 4000)).toEqual({ laps: 1, ends: 13900 });
+  });
+
+  test("with reduce motion no leg of a course is faster than a calm walk", () => {
+    const bridge = courseIn("bridge", "ceil1") ?? { steps: [], ms: 0 };
+    const from = SLOTS.ceil1.spot;
+    const calm = calmCourse(bridge, from);
+    let was = from;
+    for (const [i, st] of calm.steps.entries()) {
+      expect(st.to).toEqual(bridge.steps[i].to);
+      expect(st.ms).toBeGreaterThanOrEqual(Math.max(bridge.steps[i].ms, walkMs(was, st.to, false, true)));
+      was = st.to;
+    }
+    expect(calm.ms).toBe(calm.steps.reduce((sum, st) => sum + st.ms, 0));
+    // up from the floor onto the bridge in about five seconds rather than half of one
+    expect(calm.steps[0].ms).toBeGreaterThan(4000);
+    // the piano's five keys spread over its slower walk across them
+    const piano = calmCourse(courseIn("piano", "floorL2") ?? { steps: [], ms: 0 }, SLOTS.floorL2.spot);
+    const notes = courseNotes(piano);
+    expect(notes.map((n) => n.key)).toEqual([0, 1, 2, 3, 4]);
+    expect(notes[4].at).toBeGreaterThan(notes[0].at + 4 * 400);
+  });
+
+  test("taking the headphones off ends a sway to the music", () => {
+    const groove: Activity = { kind: "idle", act: "groove", ms: 3000 };
+    expect(groovesWithout(groove, null)).toBe(true);
+    expect(groovesWithout(groove, "ribbon")).toBe(true);
+    expect(groovesWithout(groove, "headphones")).toBe(false);
+    expect(groovesWithout({ kind: "idle", act: "blink", ms: 1000 }, null)).toBe(false);
   });
 
   test("perched activities count as standing at the spot", () => {
