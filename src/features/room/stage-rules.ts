@@ -124,6 +124,9 @@ export const NIGHT_BLUE = "#1C3AB0";
 /** How dark the room's night blue is: none by day, lighter when a lamp is out. */
 export const nightTint = (night: boolean, lampPlaced: boolean): number => (night ? (lampPlaced ? 0.12 : 0.3) : 0);
 
+/** The goods to save as seen after a visit: none under the test switch's every good, which leaves the records alone. */
+export const roomSeenToSave = (allGoods: boolean, shown: string[]): string[] | null => (allGoods ? null : shown);
+
 /** Goods whose bottom edge is above this are drawn behind the hamster. */
 export function hamsterDepth(a: Activity, from: Point): number {
   if (a.kind === "walk") return Math.max(from.y, a.to.y);

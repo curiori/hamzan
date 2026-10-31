@@ -34,7 +34,7 @@ import { ownedGoods, todayOf } from "@/state/profile";
 import { useAppStore } from "@/state/store";
 import type { Profile } from "@/state/types";
 import { colors } from "@/ui/theme";
-import { coveringGood, hamsterDepth, look, NIGHT_BLUE, nightTint, PLAYABLE_EXCEPT, stageGoods, surprisedLook, type Look } from "./stage-rules";
+import { coveringGood, hamsterDepth, look, NIGHT_BLUE, nightTint, PLAYABLE_EXCEPT, roomSeenToSave, stageGoods, surprisedLook, type Look } from "./stage-rules";
 import { useRoomBrain, type Motion, type RoomStart } from "./use-room-brain";
 
 /** the hamster's feet inside its sprite box, in design units */
@@ -345,8 +345,9 @@ export function RoomStage({
   const [visit, setVisit] = useState(() => ({ focused, start: visitStart() }));
   if (visit.focused !== focused) setVisit({ focused, start: focused ? visitStart() : visit.start });
   useEffect(() => {
-    if (focused) markRoomSeen(outKey ? outKey.split(",") : []);
-  }, [focused, outKey, markRoomSeen]);
+    const seen = roomSeenToSave(allGoods, outKey ? outKey.split(",") : []);
+    if (focused && seen) markRoomSeen(seen);
+  }, [focused, allGoods, outKey, markRoomSeen]);
 
   // the piano's keys, with the child's sound setting; loaded when the room opens with a piano out, so the first is not late
   const sound = profile.settings.sound;

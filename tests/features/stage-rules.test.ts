@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Activity } from "@/game/hamster-brain";
-import { ABOVE_ALL, calmCourse, courseLaps, courseNotes, coveringGood, groovesWithout, hamsterDepth, look, NIGHT_BLUE, nightTint, perchedOn, PLAYABLE_EXCEPT, rearrangedUnder, stageGoods, surprisedLook, walkAxis, walkMs } from "@/features/room/stage-rules";
+import { ABOVE_ALL, calmCourse, courseLaps, courseNotes, coveringGood, groovesWithout, hamsterDepth, look, NIGHT_BLUE, nightTint, perchedOn, PLAYABLE_EXCEPT, rearrangedUnder, roomSeenToSave, stageGoods, surprisedLook, walkAxis, walkMs } from "@/features/room/stage-rules";
 import { courseIn, placedGoods, pushSpot, seatIn, SLOTS } from "@/game/room";
 
 const at = { x: 200, y: 210 };
@@ -123,6 +123,11 @@ describe("the saved room", () => {
 
   test("the lamp lights the room but is not played with", () => {
     expect(PLAYABLE_EXCEPT).toEqual(["lamp"]);
+  });
+
+  test("the test view of every good leaves the room's seen list alone", () => {
+    expect(roomSeenToSave(true, ["bowl", "wheel"])).toBeNull();
+    expect(roomSeenToSave(false, ["bowl", "wheel"])).toEqual(["bowl", "wheel"]);
   });
 });
 
