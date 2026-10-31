@@ -1,11 +1,11 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useCallback, useEffect, useRef, useState, type ReactElement } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactElement, type RefObject } from "react";
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, { FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Hamster, type Mood } from "@/art/hamster";
 import { RULE_NUMBERS, type Mode } from "@/domain/spec";
-import { commitItem, createClock, isInterrupted, itemElapsedMs, pauseFor, resumeFor, startItem } from "@/platform/active-clock";
+import { commitItem, createClock, isInterrupted, liveMs, pauseFor, resumeFor, startItem, warmupLeftMs, type ClockState } from "@/platform/active-clock";
 import { cue, preloadCues } from "@/platform/feedback";
 import { useScreenAwake } from "@/platform/keep-awake";
 import { useAppActive } from "@/platform/use-app-state";
@@ -44,6 +44,30 @@ function IconButton({ name, label, onPress, ghost, pressed: on }: { name: keyof 
   );
 }
 
+/** The set's answer time, read again every 250 ms; only the part that shows it draws again, not the solver around it. */
+function useLiveMs(clock: RefObject<ClockState>, asking: boolean) {
+  const [ms, setMs] = useState(() => liveMs(clock.current, clockNow(), asking));
+  useEffect(() => {
+    const id = setInterval(() => setMs(liveMs(clock.current, clockNow(), asking)), 250);
+    return () => clearInterval(id);
+  }, [clock, asking]);
+  return ms;
+}
+
+function LiveTime({ clock, asking }: { clock: RefObject<ClockState>; asking: boolean }) {
+  const ms = useLiveMs(clock, asking);
+  return (
+    <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.timer}>
+      {(ms / 1000).toFixed(1)}びょう
+    </AppText>
+  );
+}
+
+function WarmupBar({ clock, asking, seconds }: { clock: RefObject<ClockState>; asking: boolean; seconds: number }) {
+  const ms = useLiveMs(clock, asking);
+  return <ProgressBar value={Math.min(100, (ms / (seconds * 1000)) * 100)} label="ウォームアップの のこり" style={styles.progressWarm} />;
+}
+
 export function PlayScreen({
   req,
   settings,
@@ -67,7 +91,9 @@ export function PlayScreen({
   const [reveal, setReveal] = useState("");
   const [paused, setPaused] = useState(false);
   const [now, setNow] = useState(clockNow);
-  const clock = useRef(createClock(clockNow()));
+  // one clock per screen (an argument to useRef would be built again on every render)
+  const [firstClock] = useState(() => createClock(clockNow()));
+  const clock = useRef(firstClock);
   const finished = useRef(false);
   const answeredPos = useRef(-1);
   const { sound, vibration } = settings;
@@ -85,15 +111,6 @@ export function PlayScreen({
     setNow(t);
   });
 
-  const ticking = warm || settings.timer;
-  useEffect(() => {
-    if (!ticking) return;
-    const id = setInterval(() => setNow(clockNow()), 250);
-    return () => clearInterval(id);
-  }, [ticking]);
-
-  const live = clock.current.activeTotal + (phase === "ask" ? itemElapsedMs(clock.current, now) : 0);
-
   const finish = useCallback(
     (q: PlayQueue) => {
       if (finished.current) return;
@@ -109,9 +126,19 @@ export function PlayScreen({
     [onFinish],
   );
 
+  // the warm-up ends when its answer time is used up: the timer moves now to look again, and a pause, the background or the next problem sets it again
   useEffect(() => {
-    if (warm && phase === "ask" && !paused && live >= (req.warmupSec ?? 0) * 1000) finish(queue);
-  }, [warm, phase, paused, live, req.warmupSec, finish, queue]);
+    if (!warm || phase !== "ask" || paused) return;
+    const left = warmupLeftMs(clock.current, clockNow(), true, req.warmupSec ?? 0);
+    if (left === 0) {
+      finish(queue);
+      return;
+    }
+    // in the background the time stands still; coming back moves now and sets the timer
+    if (clock.current.reasons.length) return;
+    const id = setTimeout(() => setNow(clockNow()), left);
+    return () => clearTimeout(id);
+  }, [warm, phase, paused, now, req.warmupSec, finish, queue]);
 
   // after the feedback, the next problem; the feedback waits while paused so a quit question cannot race the end of the set
   useEffect(() => {
@@ -164,10 +191,15 @@ export function PlayScreen({
   };
 
   const quit = async () => {
-    if (!paused) setUserPause(true);
+    const wasPaused = paused;
+    if (!wasPaused) setUserPause(true);
     const ok = await confirm({ title: "とちゅうで やめますか？", description: "この セットの きろくは のこりません。", confirmLabel: "やめる", cancelLabel: "つづける" });
+    if (!ok) {
+      // つづける goes back to the problem, or to the pause cover when the child had paused before
+      if (!wasPaused) setUserPause(false);
+      return;
+    }
     // leaving always works, even when a finish already happened and recorded nothing
-    if (!ok) return;
     finished.current = true;
     onQuit();
   };
@@ -202,17 +234,13 @@ export function PlayScreen({
             {req.title}
           </AppText>
         </View>
-        {settings.timer && !warm ? (
-          <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.timer}>
-            {(live / 1000).toFixed(1)}びょう
-          </AppText>
-        ) : null}
+        {settings.timer && !warm ? <LiveTime clock={clock} asking={phase === "ask"} /> : null}
         <IconButton name={paused ? "play" : "pause"} label={paused ? "つづける" : "いちじ ていし"} pressed={paused} onPress={() => setUserPause(!paused)} />
         <IconButton name="close" label="やめる" ghost onPress={quit} />
       </View>
 
       {warm ? (
-        <ProgressBar value={Math.min(100, (live / ((req.warmupSec ?? 60) * 1000)) * 100)} label="ウォームアップの のこり" style={styles.progressWarm} />
+        <WarmupBar clock={clock} asking={phase === "ask"} seconds={req.warmupSec ?? 60} />
       ) : (
         <View style={styles.progressRow}>
           <ProgressBar value={(doneCount / Math.max(1, firstCount)) * 100} label="すすみぐあい" style={styles.progressBar} />

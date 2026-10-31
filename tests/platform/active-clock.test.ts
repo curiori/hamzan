@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { RULE_NUMBERS } from "../../src/domain/spec";
-import { backgroundMs, commitItem, createClock, isInterrupted, itemElapsedMs, pauseFor, resumeFor, startItem } from "../../src/platform/active-clock";
+import { backgroundMs, commitItem, createClock, isInterrupted, itemElapsedMs, liveMs, pauseFor, resumeFor, startItem, warmupLeftMs } from "../../src/platform/active-clock";
 
 // createClock(0) starts the first item after the 150 ms grace period, at 150.
 describe("active clock", () => {
@@ -58,5 +58,24 @@ describe("active clock", () => {
     const second = commitItem(next, 2650);
     expect(second.latencyMs).toBe(500);
     expect(second.clock.activeTotal).toBe(1500);
+  });
+
+  test("live time adds the open item only while a problem is asked, and never the paused time", () => {
+    const c = createClock(0);
+    expect(liveMs(c, 1150, true)).toBe(1000);
+    expect(liveMs(c, 1150, false)).toBe(0);
+    const c2 = pauseFor(c, "user", 1150);
+    expect(liveMs(c2, 3150, true)).toBe(1000);
+    const c3 = resumeFor(c2, "user", 3150);
+    expect(liveMs(c3, 4150, true)).toBe(2000);
+  });
+
+  test("the warm-up time left leaves out the background and stops at zero", () => {
+    const c = createClock(0);
+    expect(warmupLeftMs(c, 20150, true, 60)).toBe(40000);
+    const c2 = pauseFor(c, "background", 20150);
+    expect(warmupLeftMs(c2, 50150, true, 60)).toBe(40000);
+    const c3 = resumeFor(c2, "background", 50150);
+    expect(warmupLeftMs(c3, 100150, true, 60)).toBe(0);
   });
 });

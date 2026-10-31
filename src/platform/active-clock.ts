@@ -67,6 +67,15 @@ export function commitItem(c: ClockState, now: number): { clock: ClockState; lat
   return { clock: { ...c, activeTotal: c.activeTotal + latencyMs }, latencyMs };
 }
 
+/** answer time of the set so far; the open item counts only while its problem is asked (not during the feedback) */
+export function liveMs(c: ClockState, now: number, asking: boolean): number {
+  return c.activeTotal + (asking ? itemElapsedMs(c, now) : 0);
+}
+
+export function warmupLeftMs(c: ClockState, now: number, asking: boolean, warmupSec: number): number {
+  return Math.max(0, warmupSec * 1000 - liveMs(c, now, asking));
+}
+
 export function backgroundMs(c: ClockState, now: number): number {
   return c.backgroundTotal + (c.backgroundSince !== null ? now - c.backgroundSince : 0);
 }
