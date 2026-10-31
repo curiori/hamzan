@@ -38,6 +38,6 @@ Run typecheck, lint, `bun test`, and the domain tests before declaring any task 
 
 * Routes live in `src/app/`; every file there is a screen and `_layout.tsx` files define navigators. Keep components, hooks, and logic outside `src/app/`.
 * Do not edit `src/domain/` or `src/domain/curriculum.json`. The domain tests (`bun run test:domain`) must stay green.
-* Pure logic (`src/state`, `src/session`, `src/game`, `src/platform/active-clock.ts`) must not import `react-native` or Expo modules, so `bun test` can load it.
+* Keep the logic `bun test` loads free of `react-native` and Expo imports: `src/game`, `src/session/requests.ts`, `src/platform/active-clock.ts`, `src/ui/font-scale.ts`, `src/features/room/stage-rules.ts`, and every module in `src/state` except `store.ts`. `src/state/store.ts` is the one state module that reaches the device: it hands AsyncStorage (through `src/platform/storage.ts`) to the store built in `create-store.ts`, and tests build that store with their own storage.
 * Child-facing copy is hiragana-centred Japanese.
 * Records stay on the device (AsyncStorage key `hamzan-ios-v1`).
