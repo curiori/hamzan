@@ -1,12 +1,17 @@
 import { mulberry32, type Rng } from "@/domain/rng";
-import { clampToFloor, FLOOR, FRONT, type Point } from "./room";
+import { clampToFloor, COURSES, FLOOR, FRONT, type Point } from "./room";
 
 // What the room hamster does next. Pure and seeded: the room screen animates each activity and asks again
 // when it ends or when the child touches something. There are no needs to fill (no hunger, no energy).
 
 export const MIN_ACTIVITY_MS = 600;
-/** walks shorter than this are skipped, so nothing ends the moment it starts */
+/** walks shorter than this are skipped, so nothing ends the moment it starts; only a course's spot is walked to from closer */
 export const MIN_WALK = 24;
+/**
+ * A course is gone over from its good's spot and comes back there each time, so a play on it walks to the spot from
+ * this close too: begun off the spot, it would jump back to it. A shift under 1 unit does not show.
+ */
+const COURSE_NEAR = 1;
 
 const IDLE_MS: [number, number] = [1500, 4000];
 const PLAY_MS: [number, number] = [4000, 8000];
@@ -79,8 +84,8 @@ function pickWeighted<K extends string>(r: Rng, weights: Record<K, number>): K {
   return entries[entries.length - 1][0];
 }
 
-/** A walk to `to`, or nothing when the hamster is already there. */
-const goTo = (from: Point, to: Point, dash = false, carry = false): Activity[] => (dist(from, to) < MIN_WALK ? [] : [{ kind: "walk", to, dash, carry }]);
+/** A walk to `to`, or nothing when the hamster is already there (closer than `near`). */
+const goTo = (from: Point, to: Point, dash = false, carry = false, near = MIN_WALK): Activity[] => (dist(from, to) < near ? [] : [{ kind: "walk", to, dash, carry }]);
 
 /** A random floor point far enough away to be worth walking to. */
 function farPoint(r: Rng, from: Point): Point {
@@ -99,7 +104,8 @@ const house = (w: World) => w.goods.find((g) => g.id === "house") ?? null;
 /** Walk to a good, use it, and for the food bowl carry the seeds home afterwards. */
 function playPlan(r: Rng, w: World, from: Point, good: { id: string; spot: Point }, dash = false): Activity[] {
   const tumble = wheels.has(good.id) && !w.reduceMotion && r.next() < TUMBLE_CHANCE;
-  const acts: Activity[] = [...goTo(from, good.spot, dash), { kind: "play", good: good.id, variant: tumble ? "tumble" : "normal", ms: r.int(...PLAY_MS) }];
+  const near = COURSES[good.id] ? COURSE_NEAR : MIN_WALK;
+  const acts: Activity[] = [...goTo(from, good.spot, dash, false, near), { kind: "play", good: good.id, variant: tumble ? "tumble" : "normal", ms: r.int(...PLAY_MS) }];
   const h = house(w);
   if (good.id === "bowl" && h) acts.push(...goTo(good.spot, h.spot, false, true), { kind: "play", good: "house", variant: "normal", ms: STORE_FOOD_MS });
   return acts;

@@ -33,6 +33,13 @@ describe("timing and depth", () => {
     // eating at the very front, the hamster is in front of any small good standing there
     expect(hamsterDepth({ kind: "eat", snack: "apple", ms: 2600 }, at)).toBe(ABOVE_ALL);
   });
+
+  test("a hamster on a course is drawn in front of its good in every slot of the good's kind", () => {
+    const play = (good: string): Activity => ({ kind: "play", good, variant: "normal", ms: 3000 });
+    for (const good of ["slide", "piano"])
+      for (const s of ["floorL1", "floorL2", "floorL3"] as const) expect(hamsterDepth(play(good), SLOTS[s].spot)).toBeGreaterThan(SLOTS[s].depth);
+    for (const s of ["ceil1", "ceil2"] as const) expect(hamsterDepth(play("bridge"), SLOTS[s].spot)).toBe(ABOVE_ALL);
+  });
 });
 
 describe("look", () => {

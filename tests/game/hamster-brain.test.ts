@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { REWARDS } from "@/game/achievements";
 import { createBrain, EAT_MS, isNight, MIN_ACTIVITY_MS, MIN_WALK, newlyOwned, stepBrain, type Activity, type Brain, type World } from "@/game/hamster-brain";
-import { autoLayout, FLOOR, FRONT, placedGoods, SLOTS, type Point } from "@/game/room";
+import { autoLayout, FLOOR, FRONT, placedGoods, SLOTS, type Point, type SlotId } from "@/game/room";
 
 const allGoods = placedGoods(autoLayout(REWARDS.map((r) => r.id))).map(({ id, spot }) => ({ id, spot }));
 const only = (...ids: string[]) => allGoods.filter((g) => ids.includes(g.id));
@@ -121,6 +121,27 @@ describe("choosing what to do", () => {
         if (a.kind === "walk") expect(dist(from, a.to)).toBeGreaterThanOrEqual(MIN_WALK);
         else expect(a.ms).toBeGreaterThanOrEqual(MIN_ACTIVITY_MS);
       }
+  });
+
+  test("a course play starts on its spot, even from a step away", () => {
+    // a step closer than MIN_WALK, which other goods are not walked to from
+    const step = 10;
+    expect(step).toBeLessThan(MIN_WALK);
+    const tapFrom = (good: string, spot: Point) => {
+      const w = world({ goods: [{ id: good, spot }] });
+      const near = { x: spot.x - step, y: spot.y };
+      const b = stepBrain(createBrain(61, w, near, calm), w, { type: "tapGood", good }, near);
+      return [b.now, ...b.plan];
+    };
+    const courses: [string, SlotId[]][] = [
+      ["slide", ["floorL1", "floorL2", "floorL3"]],
+      ["piano", ["floorL1", "floorL2", "floorL3"]],
+      ["bridge", ["ceil1", "ceil2"]],
+    ];
+    for (const [good, slots] of courses)
+      for (const s of slots) expect(tapFrom(good, SLOTS[s].spot)).toMatchObject([{ kind: "walk", to: SLOTS[s].spot }, { kind: "play", good }]);
+    // the wheel is played where the hamster stands, as before
+    expect(tapFrom("wheel", SLOTS.floorL2.spot)).toMatchObject([{ kind: "play", good: "wheel" }]);
   });
 
   test("goods that left the world are dropped from the plan", () => {
