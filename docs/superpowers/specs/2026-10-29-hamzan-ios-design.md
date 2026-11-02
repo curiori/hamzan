@@ -29,7 +29,7 @@ Web 版「ハムざん」は、学習エンジン（6 ステージ・61 レベ�
 ご要望にない部分は次のように決めました。違っていれば、開発を始める前に変更します。
 
 1. Web 版は置き換えます。同じリポジトリを Expo アプリに作り替え、Web 版は最初のコミットとタグ `web-prototype` で Git の履歴に残します。
-2. 対象は App Store 版の Expo Go を入れた iPhone（縦向き）です。App Store 版の Expo Go は SDK 54 で更新が止まっているため（2026 年 9 月の公式ドキュメント）、Expo SDK 54 を使い、開発中も上げません。最新の SDK 58 を使う方法（`eas go` で作った Expo Go を TestFlight で配る）もありますが、Apple Developer Program（年額 99 ドル）が必要になるため採りません。
+2. 対象は App Store 版の Expo Go を入れた iPhone（縦向き）です。App Store 版の Expo Go は、その時点の SDK のプロジェクトしか開けず、iPhone には古い版を入れられません。2026 年 9 月の公式ドキュメントでは SDK 54 で更新が止まっていたため SDK 54 で作りましたが、2026 年 11 月に App Store 版が SDK 58 に上がり、SDK 54 のプロジェクトを開けなくなったので SDK 58 へ上げました。これからも App Store 版の Expo Go と同じ SDK にそろえます。
 3. ショップの通貨は「ひまわりのたね」です。練習でしか手に入らず、お金では買えません。ランダム要素（ガチャ）もありません。
 4. 元の仕様にある「アプリ内通貨は使わない」（C-7）は、上の線を守る前提でショップに限って見直します。学習ルール（curriculum.json）は変えません。
 5. パッケージ管理は README と同じ Bun を使い、テストも Bun で動かします。
@@ -72,8 +72,8 @@ Web 版「ハムざん」は、学習エンジン（6 ステージ・61 レベ�
 
 * Expo Go に入っているネイティブモジュールだけを使い、独自のネイティブコードや prebuild が必要な設定プラグインは使わない
 * 使う予定のモジュールは expo-router、react-native-reanimated、react-native-gesture-handler、react-native-svg、react-native-safe-area-context、@react-native-async-storage/async-storage、expo-haptics、expo-audio、expo-keep-awake、expo-splash-screen
-* どれも SDK 54 の expo パッケージの対応表（bundledNativeModules.json）に含まれる。主な版は React Native 0.81、React 19.1、Reanimated 4.1、Expo Router 6、react-native-svg 15.12、expo-audio 1.1、AsyncStorage 2.2
-* App Store 版の Expo Go は SDK 54 で止まっているので、SDK は 54 に固定する。依存は `bunx expo install` で SDK 54 に合う版を入れ、`expo@latest` へは上げない
+* どれも SDK 58 の expo パッケージの対応表（bundledNativeModules.json）に含まれる。主な版は React Native 0.88、React 19.3、Reanimated 4.7、Expo Router 58、react-native-svg 15.16、expo-audio 58、AsyncStorage 2.2
+* SDK は App Store 版の Expo Go と同じ版（いまは 58）にそろえる。依存は `bunx expo install` で SDK 58 に合う版を入れる。Expo Go の SDK が上がったら、`bunx expo install expo@^<SDK>.0.0` と `bunx expo install --fix` でプロジェクトも上げる
 * 実機の iPhone で開くには、PC の Expo CLI と iPhone の Expo Go を、同じ Expo アカウント（無料）でサインインしておく（`bunx expo login`）
 * 学習ルールの数値は curriculum.json だけから読む（C-9）
 * 記録は端末の中だけに保存する（C-1）
@@ -88,7 +88,7 @@ Web 版「ハムざん」は、学習エンジン（6 ステージ・61 レベ�
 
 | 用途         | 採用                                        | Web 版                            |
 |------------|-------------------------------------------|----------------------------------|
-| 土台         | Expo SDK 54（React Native 0.81、React 19.1） | Vite と React 19                  |
+| 土台         | Expo SDK 58（React Native 0.88、React 19.3） | Vite と React 19                  |
 | 画面とナビゲーション | Expo Router（タブとスタック）                      | 1 ページの中で状態を切り替え                  |
 | UI 部品      | View、Text、Pressable と StyleSheet、テーマ定数    | shadcn/ui、Radix、Tailwind         |
 | 絵          | react-native-svg（hamster-art.tsx を移植）     | インライン SVG                        |
@@ -528,7 +528,8 @@ Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 
 ## リスクと対策
 
-* SDK 54 は 1 年前の版なので、困ったことが起きたら、SDK 58 と `eas go`（Apple Developer Program が必要）か開発ビルドへ移ることを相談する。それまでは依存を必ず `bunx expo install` で入れ、`expo@latest` へは上げない
+* App Store 版の Expo Go は最新の SDK にしか対応しないので、Expo Go の SDK が上がると、それまでの SDK のプロジェクトは開けなくなる（2026 年 11 月に SDK 54 から 58 へ上げたのはこのため）。Expo Go の SDK が上がったら、プロジェクトの SDK も上げる。依存は必ず `bunx expo install` で入れる
+* この PC の npm の取得先は、新しい版が npm に出てから 1 週間ほど遅れて届く。`bunx expo install --fix` が新しい版を見つけられないときは、`EXPO_OFFLINE=1` を付けて、入っている expo に同梱の対応表の版にそろえる
 * Expo Go の中の記録は、将来の App Store 版へは移らない。毎日使うようになったら、記録の書き出しと読み込み（expo-sharing、expo-file-system）を追加する
 * 社内ネットワークで実機につながらない場合は、`--tunnel` かテザリングを使う
 * `bun install` の接続エラーには `--network-concurrency 4` で対応する

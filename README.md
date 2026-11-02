@@ -15,12 +15,12 @@ Web 版のプロトタイプ（タグ `web-prototype`）を、iPhone の Expo Go
 
 ## 必要なもの
 
-* iPhone と、App Store 版の [Expo Go](https://expo.dev/go)（SDK 54 に対応）
+* iPhone と、App Store 版の [Expo Go](https://expo.dev/go)（SDK 58 に対応）
 * PC に [Bun](https://bun.sh) と [Node.js](https://nodejs.org)（LTS）
 * Expo のアカウント（無料。PC の Expo CLI と iPhone の Expo Go で同じものを使います）
 * PC と iPhone が同じネットワークにつながっていること（つながらないときは下の `--tunnel` を使います）
 
-App Store 版の Expo Go は SDK 54 までなので、`expo` の版は上げないでください。
+App Store 版の Expo Go は、最新の SDK（いまは 58）のプロジェクトしか開けず、iPhone には古い版を入れられません。Expo Go の SDK が上がったら、`bunx expo install expo@^<SDK>.0.0` と `bunx expo install --fix` でプロジェクトも上げてください。
 
 ## 動かし方
 
@@ -29,7 +29,7 @@ bun install
 bunx expo start
 ```
 
-1. PC で `bunx expo login` を実行し、iPhone の Expo Go でも同じ Expo アカウントでサインインします
+1. PC で `bunx expo login` を実行し（ブラウザでサインインします）、iPhone の Expo Go でも同じ Expo アカウントでサインインします
 2. `bunx expo start` で表示される QR コードを、iPhone のカメラで読みます。Expo Go でアプリが開きます
 3. 社内ネットワークなどで iPhone からつながらないときは、`bunx expo start --tunnel` を使います
 4. `bun install` が接続エラーで止まるときは、`bun install --network-concurrency 4` で同時に開く接続を減らします
