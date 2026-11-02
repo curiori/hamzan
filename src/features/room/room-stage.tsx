@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused } from "expo-router/react-navigation";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Pressable, StyleSheet, View, type GestureResponderEvent } from "react-native";
 import Animated, { useAnimatedStyle, ZoomIn } from "react-native-reanimated";

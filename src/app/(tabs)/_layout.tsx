@@ -1,9 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect, Tabs } from 'expo-router';
+import type { ColorValue } from 'react-native';
 import { HeaderActions } from '@/features/home/header-actions';
 import { onboardingStep } from '@/features/onboarding/gate';
 import { activeProfile, useAppStore } from '@/state/store';
 import { colors, fonts } from '@/ui/theme';
+
+// the tab bar types its tint as any ColorValue; the tints set here are always strings, which the icons take
+const tint = (color: ColorValue) => (typeof color === 'string' ? color : undefined);
 
 export default function TabLayout() {
   const step = useAppStore((s) => onboardingStep(s.pin, activeProfile(s)));
@@ -26,11 +30,11 @@ export default function TabLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: 'ちず', tabBarIcon: ({ color, size }) => <Ionicons name="map" color={color} size={size} /> }}
+        options={{ title: 'ちず', tabBarIcon: ({ color, size }) => <Ionicons name="map" color={tint(color)} size={size} /> }}
       />
       <Tabs.Screen
         name="room"
-        options={{ title: 'おへや', tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={size} /> }}
+        options={{ title: 'おへや', tabBarIcon: ({ color, size }) => <Ionicons name="home" color={tint(color)} size={size} /> }}
       />
       <Tabs.Screen
         name="shop"
@@ -38,7 +42,7 @@ export default function TabLayout() {
           title: 'ショップ',
           // a parent can turn the shop off; the seeds keep coming in
           href: shopOn ? undefined : null,
-          tabBarIcon: ({ color, size }) => <Ionicons name="storefront" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="storefront" color={tint(color)} size={size} />,
         }}
       />
     </Tabs>

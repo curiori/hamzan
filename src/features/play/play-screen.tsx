@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   wrongBox: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: colors.red50, borderRadius: radius.lg, paddingHorizontal: 14, paddingVertical: 6 },
   wrongText: { fontSize: 19, color: colors.red800, flexShrink: 1 },
   hamster: { position: "absolute", top: -34, right: 14 },
-  pauseCover: { ...StyleSheet.absoluteFillObject, borderRadius: radius.xl, backgroundColor: colors.card, alignItems: "center", justifyContent: "center", gap: 14 },
+  pauseCover: { ...StyleSheet.absoluteFill, borderRadius: radius.xl, backgroundColor: colors.card, alignItems: "center", justifyContent: "center", gap: 14 },
   pauseText: { fontSize: 22 },
   keypad: { marginTop: 10 },
   hidden: { opacity: 0 },
