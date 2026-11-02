@@ -38,7 +38,7 @@ const STARS: [number, number, number][] = [
 const NIGHT_SKY = "#2E3F7F";
 const WINDOW_STARS: [number, number][] = [
   [166, 34],
-  [184, 58],
+  [230, 68],
   [204, 30],
   [176, 76],
 ];
