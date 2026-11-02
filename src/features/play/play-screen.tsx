@@ -96,7 +96,7 @@ export function PlayScreen({
   const clock = useRef(firstClock);
   const finished = useRef(false);
   const answeredPos = useRef(-1);
-  // while the quit question is open, another やめる (a second confirm answers the first with つづける) and the pause button do nothing, so the set cannot go on behind it
+  // while the quit question is open, another やめる (a second confirm answers the first with つづける) and the pause buttons do nothing, so the set cannot go on behind it
   const quitting = useRef(false);
   const { sound, vibration } = settings;
   const sfx = useCallback((k: "ok" | "miss") => cue(k, { sound, vibration }), [sound, vibration]);
@@ -212,8 +212,8 @@ export function PlayScreen({
     }
   };
 
-  const pressPause = () => {
-    if (!quitting.current) setUserPause(!paused);
+  const pressPause = (on: boolean) => {
+    if (!quitting.current) setUserPause(on);
   };
 
   const item = currentItem(queue);
@@ -247,7 +247,7 @@ export function PlayScreen({
           </AppText>
         </View>
         {settings.timer && !warm ? <LiveTime clock={clock} asking={phase === "ask"} /> : null}
-        <IconButton name={paused ? "play" : "pause"} label={paused ? "つづける" : "いちじ ていし"} pressed={paused} onPress={pressPause} />
+        <IconButton name={paused ? "play" : "pause"} label={paused ? "つづける" : "いちじ ていし"} pressed={paused} onPress={() => pressPause(!paused)} />
         <IconButton name="close" label="やめる" ghost onPress={quit} />
       </View>
 
@@ -310,7 +310,7 @@ export function PlayScreen({
               size="lg"
               maxFontSizeMultiplier={MAX_FONT_SCALE}
               icon={<Ionicons name="play" size={20} color={colors.primaryForeground} />}
-              onPress={() => setUserPause(false)}
+              onPress={() => pressPause(false)}
             />
           </View>
         ) : null}
