@@ -96,6 +96,8 @@ export function PlayScreen({
   const clock = useRef(firstClock);
   const finished = useRef(false);
   const answeredPos = useRef(-1);
+  // while the quit question is open, another やめる (a second confirm answers the first with つづける) and the pause button do nothing, so the set cannot go on behind it
+  const quitting = useRef(false);
   const { sound, vibration } = settings;
   const sfx = useCallback((k: "ok" | "miss") => cue(k, { sound, vibration }), [sound, vibration]);
 
@@ -191,17 +193,27 @@ export function PlayScreen({
   };
 
   const quit = async () => {
-    const wasPaused = paused;
-    if (!wasPaused) setUserPause(true);
-    const ok = await confirm({ title: "とちゅうで やめますか？", description: "この セットの きろくは のこりません。", confirmLabel: "やめる", cancelLabel: "つづける" });
-    if (!ok) {
-      // つづける goes back to the problem, or to the pause cover when the child had paused before
-      if (!wasPaused) setUserPause(false);
-      return;
+    if (quitting.current) return;
+    quitting.current = true;
+    try {
+      const wasPaused = paused;
+      if (!wasPaused) setUserPause(true);
+      const ok = await confirm({ title: "とちゅうで やめますか？", description: "この セットの きろくは のこりません。", confirmLabel: "やめる", cancelLabel: "つづける" });
+      if (!ok) {
+        // つづける goes back to the problem, or to the pause cover when the child had paused before
+        if (!wasPaused) setUserPause(false);
+        return;
+      }
+      // leaving always works, even when a finish already happened and recorded nothing
+      finished.current = true;
+      onQuit();
+    } finally {
+      quitting.current = false;
     }
-    // leaving always works, even when a finish already happened and recorded nothing
-    finished.current = true;
-    onQuit();
+  };
+
+  const pressPause = () => {
+    if (!quitting.current) setUserPause(!paused);
   };
 
   const item = currentItem(queue);
@@ -235,7 +247,7 @@ export function PlayScreen({
           </AppText>
         </View>
         {settings.timer && !warm ? <LiveTime clock={clock} asking={phase === "ask"} /> : null}
-        <IconButton name={paused ? "play" : "pause"} label={paused ? "つづける" : "いちじ ていし"} pressed={paused} onPress={() => setUserPause(!paused)} />
+        <IconButton name={paused ? "play" : "pause"} label={paused ? "つづける" : "いちじ ていし"} pressed={paused} onPress={pressPause} />
         <IconButton name="close" label="やめる" ghost onPress={quit} />
       </View>
 
