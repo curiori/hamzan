@@ -117,8 +117,8 @@ const lineCompact = lineStyles(LINE_SIZE_COMPACT);
 
 const styles = StyleSheet.create({
   visual: { alignSelf: "stretch", alignItems: "center", marginBottom: 6 },
-  // the card breaks its lines only between rules
-  rule: { flexDirection: "row", flexWrap: "wrap", backgroundColor: colors.muted, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 6 },
+  // the card breaks its lines only between rules, and spans the width of the hint lines (iOS sizes a centred wrapping row to its longest line)
+  rule: { flexDirection: "row", flexWrap: "wrap", alignSelf: "stretch", backgroundColor: colors.muted, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 6 },
   ruleCompact: { paddingVertical: 4, marginBottom: 4 },
   ruleText: { fontSize: 12, lineHeight: 17, flexShrink: 1 },
   ruleTextCompact: { fontSize: 11, lineHeight: 15 },
