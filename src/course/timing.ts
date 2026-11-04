@@ -1,4 +1,4 @@
-// Target times of any level: T = read × R + think × K + write × D (R is 1 for stages 0–5, so their
+// Target times of any level: T = read × R + think × K + write × D (R is 1 for curriculum.json levels, so their
 // targets are exactly those of src/domain/timing.ts).
 import { LEVEL } from "@/domain/spec";
 import { coeffsFor, round1, targetSec, type TimeOptions } from "@/domain/timing";

@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
-import { LEVEL, LEVELS, STAGES } from "@/domain/spec";
+import { ALL_LEVELS, ALL_STAGES, levelLabel, levelSpec, stageSpec } from "@/course/levels";
 import { MODE_LABEL } from "@/i18n/ja";
 import { todayOf } from "@/state/profile";
 import { activeProfile, useAppStore } from "@/state/store";
@@ -15,24 +15,24 @@ import { colors, radius } from "@/ui/theme";
 /** the web preview's text sizes: as set, larger, and the most text grows outside practice */
 const TEXT_SCALES = [1, 1.3, 1.5];
 
-/** A stage, then one of its levels. */
+/** A stage of the course, then one of its levels (numbers as on screen). */
 function LevelPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
-  const [stage, setStage] = useState(LEVEL[value].stage);
-  const levelIds = STAGES.find((s) => s.id === stage)?.levelIds ?? [];
+  const [stage, setStage] = useState(levelSpec(value).stage);
+  const levelIds = stageSpec(stage).levelIds;
   return (
     <View style={styles.picker}>
       <View style={styles.chips}>
-        {STAGES.map((st) => (
-          <Chip key={st.id} label={`ステージ${st.id}`} selected={st.id === stage} onPress={() => setStage(st.id)} />
+        {ALL_STAGES.map((st) => (
+          <Chip key={st.id} label={`ステージ${st.no}`} selected={st.id === stage} onPress={() => setStage(st.id)} />
         ))}
       </View>
       <View style={styles.chips}>
         {levelIds.map((id) => (
-          <Chip key={id} label={id} accessibilityLabel={`${id} ${LEVEL[id].name}`} selected={id === value} onPress={() => onChange(id)} />
+          <Chip key={id} label={levelLabel(id)} accessibilityLabel={`${levelLabel(id)} ${levelSpec(id).name}`} selected={id === value} onPress={() => onChange(id)} />
         ))}
       </View>
       <AppText weight="bold" style={styles.small}>
-        {value} {LEVEL[value].name}（{LEVEL[value].modes.map((m) => MODE_LABEL[m]).join("→")}）
+        {levelLabel(value)} {levelSpec(value).name}（{levelSpec(value).modes.map((m) => MODE_LABEL[m]).join("→")}）
       </AppText>
     </View>
   );
@@ -46,7 +46,7 @@ export function TestPane({ onExit }: { onExit: () => void }) {
   const resetProfileData = useAppStore((s) => s.resetProfileData);
   const skipPlacementTo = useAppStore((s) => s.skipPlacementTo);
   const giftSeeds = useAppStore((s) => s.giftSeeds);
-  const [startLevel, setStartLevel] = useState(LEVELS[0].id);
+  const [startLevel, setStartLevel] = useState(ALL_LEVELS[0].id);
   const confirm = useConfirm();
 
   return (
@@ -103,7 +103,7 @@ export function TestPane({ onExit }: { onExit: () => void }) {
             onPress={async () => {
               if (
                 await confirm({
-                  title: `レベル ${startLevel} から始めますか？`,
+                  title: `レベル ${levelLabel(startLevel)} から始めますか？`,
                   description: `${profile.nickname}さんの今の進み具合は、この設定で上書きされます。`,
                   confirmLabel: "このレベルから始める",
                   destructive: true,

@@ -323,32 +323,6 @@
       "enumerable": false, "approxDistinctProblems": 17932, "referenceTag": "MIX", "reference": "交互練習（Taylor & Rohrer 2010）"
     }
   ],
-  "units": [
-    {
-      "id": "pi-cylinder", "name": "円と円柱の 3.14", "juku": "4年下 第11回「角柱と円柱」", "when": "11月なかば",
-      "levelIds": ["pi-table", "pi-shift", "pi-two-digit", "pi-divide"]
-    },
-    {
-      "id": "speed-units", "name": "速さの 単位", "juku": "4年下 第13回「速さの表し方」", "when": "11月下旬",
-      "levelIds": ["unit-length-weight", "unit-time", "unit-speed", "unit-trip"]
-    },
-    {
-      "id": "pi-cone", "name": "角すい・円すいの 3.14と 単位", "juku": "4年下 第16回「角すいと円すい」", "when": "12月なかば",
-      "levelIds": ["unit-area", "unit-volume", "pi-factor", "pi-figure", "pi-mix"]
-    },
-    {
-      "id": "review-g4", "name": "小数と分数・見積もりの 復習", "juku": "入塾前の 第1〜10回の やり直し", "when": "冬休み",
-      "levelIds": ["frac-mixed", "frac-reduce", "frac-decimal", "frac-eighths", "frac-percent", "est-round", "est-magnitude"]
-    },
-    {
-      "id": "unit-mix", "name": "単位の まとめ", "juku": "4年下 第17回「水量とグラフ」", "when": "1月",
-      "levelIds": ["unit-mix"]
-    },
-    {
-      "id": "toward-g5", "name": "5年の 割合・比・速さに むけて", "juku": "新5年（2月〜）割合・比・速さ", "when": "2月から",
-      "levelIds": ["dec-multiply", "dec-divide", "frac-mix", "est-decimal", "est-benchmark", "est-plausible", "est-mix"]
-    }
-  ],
   "scaffoldKinds": {
     "NONE": { "use": "ミックスのレベル。スピードのみ。" },
     "FRACTION_FORM": { "use": "frac-mixed。仮分数へ：分母×整数＋分子。帯分数へ：分子÷分母の商とあまり。" },

@@ -3,6 +3,7 @@ import Constants from "expo-constants";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { COURSE } from "@/course/course";
 import { ALL_LEVELS, ALL_STAGES } from "@/course/levels";
 import { SPEC } from "@/domain/spec";
 import { InputTest } from "@/features/onboarding/input-test";
@@ -15,17 +16,15 @@ import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
 import { Dashboard } from "./dashboard";
 import { DataPane } from "./data-pane";
-import { JukuPane } from "./juku-pane";
 import { ProfilesPane } from "./profiles-pane";
 import { SettingsPane } from "./settings-pane";
 import { TestPane } from "./test-pane";
 
-type Pane = "dash" | "juku" | "settings" | "profiles" | "data" | "test" | "info";
+type Pane = "dash" | "settings" | "profiles" | "data" | "test" | "info";
 
 const TEST_TOOLS = Constants.expoConfig?.extra?.enableTestTools === true;
 const PANES: [Pane, string][] = [
   ["dash", "ダッシュボード"],
-  ["juku", "塾の単元"],
   ["settings", "設定"],
   ["profiles", "プロフィール"],
   ["data", "データ"],
@@ -38,7 +37,7 @@ function Info() {
     <View style={styles.info}>
       <AppText weight="bold">カリキュラム</AppText>
       <AppText style={styles.body}>
-        {SPEC.title}（仕様 v{SPEC.specVersion}）と、{JSPEC.title}（仕様 v{JSPEC.specVersion}）。あわせて{ALL_LEVELS.length}レベル・{ALL_STAGES.length}ステージ
+        {SPEC.title}（仕様 v{SPEC.specVersion}）と、{JSPEC.title}（仕様 v{JSPEC.specVersion}）を1本のコースにしています。あわせて{ALL_LEVELS.length}レベル・{ALL_STAGES.length}ステージ（コースの版 {COURSE.version}）
       </AppText>
       <AppText weight="bold">データの保存</AppText>
       <AppText style={styles.body}>この端末の中だけに保存します。外部への送信、広告、分析ツールはありません。</AppText>
@@ -131,7 +130,6 @@ export function ParentArea({ onExit }: { onExit: () => void }) {
         </ScrollView>
         <View style={styles.card}>
           {pane === "dash" ? p ? <Dashboard key={p.id} p={p} /> : <AppText>プロフィールがありません。</AppText> : null}
-          {pane === "juku" ? p ? <JukuPane key={p.id} p={p} /> : <AppText>プロフィールがありません。</AppText> : null}
           {pane === "settings" && p ? (
             <SettingsPane
               key={p.id}

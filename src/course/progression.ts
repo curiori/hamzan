@@ -1,5 +1,5 @@
 // How a child moves through the one course, with the rules of src/domain/progression.ts and session.ts
-// (rules.progression, rules.dailySession) laid over the course order. With only stages 0–5 in the course this is
+// (rules.progression, rules.dailySession) laid over the course order. With only curriculum.json's stages in the course this is
 // exactly src/domain (tests/course/progression.test.ts). Levels waiting for their check are never the frontier.
 import { diffDays, type LocalDate } from "@/domain/dates";
 import { freshProgress, hasStar2, isMastered, type LevelProgress, type LevelStatus, type ProgressMap } from "@/domain/progression";

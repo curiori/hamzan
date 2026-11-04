@@ -1,4 +1,4 @@
-// Problem generators for stages 6–9. Like src/domain/generators.ts, every generator draws from a
+// Problem generators for the juku.json levels. Like src/domain/generators.ts, every generator draws from a
 // seeded Rng (never Math.random), so a set can be built again from its seed.
 import type { Rng } from "@/domain/rng";
 import { BENCHMARKS, PLAUSIBLES } from "./benchmarks";

@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { addDays } from "../../src/domain/dates";
-import { miniLevel, startPlacement } from "../../src/domain/placement";
+import { COURSE } from "../../src/course/course";
+import { miniLevel, startPlacement } from "../../src/course/placement";
 import { freshProgress } from "../../src/domain/progression";
 import { planDailySession } from "../../src/domain/session";
-import { LEVEL, RULE_NUMBERS, SPEC, STAGES } from "../../src/domain/spec";
+import { LEVEL, RULE_NUMBERS, SPEC } from "../../src/domain/spec";
 import { challengePlan, levelPlan, nextSessionPlan, placementPlan, sessionPartPlan } from "../../src/session/requests";
 import { newProfile } from "../../src/state/profile";
 import type { SessionDay } from "../../src/state/types";
@@ -73,7 +74,7 @@ describe("session requests", () => {
 
   test("short placement asks at most 6 problems in a stage check", () => {
     const p = { ...fresh(), placementDone: false, placement: startPlacement(4) };
-    const sc = STAGES[p.placement.stage].stageCheck;
+    const sc = COURSE.stage[p.placement.stage].stageCheck;
     expect(placementPlan(p, DATE, true)?.req.problems.length).toBe(Math.min(6, sc.problems));
     expect(placementPlan(p, DATE, false)?.req.problems.length).toBe(sc.problems);
     expect(placementPlan(p, DATE, false)?.ctx).toMatchObject({ kind: "placement", placementPhase: "stageCheck", levelId: null });

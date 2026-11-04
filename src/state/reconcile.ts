@@ -21,7 +21,7 @@ const numbered = (id: string): [number, number] | null => {
   return m ? [Number(m[1]), Number(m[2])] : null;
 };
 
-/** Records saved before the course was recorded: the 61 levels of stages 0–5 in their order, then any other level with progress. */
+/** Records saved before the course was recorded: the 61 levels of curriculum.json in their order, then any other level with progress. */
 export function legacyCourseRecord(p: Pick<Profile, "progress">): CourseRecord {
   const core = LEVELS.map((l) => l.id);
   const inCore = new Set(core);

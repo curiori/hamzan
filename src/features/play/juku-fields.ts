@@ -2,7 +2,7 @@ import { decLength, parseDec } from "@/juku/num";
 import type { JAnswer } from "@/juku/problem";
 import type { FieldDef } from "./field-set";
 
-// Answer boxes of stage 6–9 answers (and hint blanks): a number with a point, fraction boxes, two numbers
+// Answer boxes of juku.json answers (and hint blanks): a number with a point, fraction boxes, two numbers
 // with units between them, options, or ○×. Units are shown next to the boxes, never typed.
 
 const len = (n: number) => String(n).length;

@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { addDays } from "../../src/domain/dates";
-import { applyPlacementResult, miniLevel, startPlacement, type PlacementState } from "../../src/domain/placement";
+import { COURSE } from "../../src/course/course";
+import { applyPlacementResult, miniLevel, startPlacement, type PlacementState } from "../../src/course/placement";
 import type { Answer } from "../../src/domain/problem";
 import { freshProgress, type LevelProgress } from "../../src/domain/progression";
 import { applyReview, scheduleOnMastery } from "../../src/domain/review";
 import type { SessionPart } from "../../src/domain/session";
 import { buildSet } from "../../src/domain/setBuilder";
-import { LEVEL, RULE_NUMBERS, SPEC, STAGES } from "../../src/domain/spec";
+import { LEVEL, RULE_NUMBERS, SPEC } from "../../src/domain/spec";
 import { newProfile } from "../../src/state/profile";
 import { recordSet } from "../../src/state/record-set";
 import type { FactStat, Profile, ProblemResult, SetAttempt, SetRun } from "../../src/state/types";
@@ -221,7 +222,7 @@ describe("recordSet: diagnosis, challenge and reviews", () => {
     const diagnosisSet = (st: PlacementState): SetRun => {
       const phase = st.phase === "mini" ? "mini" : "stageCheck";
       const levelId = phase === "mini" ? miniLevel(st) : null;
-      const levelIds = levelId ? [levelId] : STAGES[st.stage].stageCheck.levels;
+      const levelIds = levelId ? [levelId] : COURSE.stage[st.stage].stageCheck.levels;
       // five problems of each level the set asks about; one of them is missed when the child does not know the level
       const rs = levelIds.flatMap((id) => results(id, RULE_NUMBERS.miniCheckProblems, { wrong: knows(id) ? [] : [0] }));
       return mkRun({ kind: "placement", mode: "S", levelId, placementPhase: phase, results: rs });

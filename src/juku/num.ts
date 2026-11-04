@@ -1,4 +1,4 @@
-// Exact decimals and fractions for stages 6–9. Answers never go through floating point:
+// Exact decimals and fractions for the juku.json levels. Answers never go through floating point:
 // a decimal is an integer with a count of digits after the point.
 
 /** value = n / 10^s, with s ≥ 0 and n a safe integer */

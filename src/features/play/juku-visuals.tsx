@@ -5,7 +5,7 @@ import { JLEVEL } from "@/juku/spec";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
 
-// Picture hints of stages 6–9 (hint mode; the child types or picks the answer only).
+// Picture hints of the juku.json levels (hint mode; the child types or picks the answer only).
 
 function PiTable({ inst }: { inst: JInstance }) {
   const { rows, mark, shift } = piTable(inst.problem);

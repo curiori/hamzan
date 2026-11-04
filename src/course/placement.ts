@@ -1,6 +1,6 @@
 // The diagnosis (rules.placement) over the one course, with the rules of src/domain/placement.ts: stage checks from
 // the grade's first stage, then 5-problem mini checks, in course order. The saved state keeps stage ids, so a
-// diagnosis begun before an update goes on. With only stages 0–5 this is exactly src/domain
+// diagnosis begun before an update goes on. With only curriculum.json's stages this is exactly src/domain
 // (tests/course/placement.test.ts).
 import { addDays, type LocalDate } from "@/domain/dates";
 import { addPlacementTime, placementBudgetLeft, type PlacementState } from "@/domain/placement";

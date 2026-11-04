@@ -6,7 +6,7 @@ import { jSameValue } from "../../src/juku/judge";
 import { dec, decText, decValue, gcd } from "../../src/juku/num";
 import { jAnswer, jSpeech, jText, jTokens, jWriteUnits, makeJInstance, type JAnswer, type JProblem } from "../../src/juku/problem";
 import { jScaffoldOf } from "../../src/juku/scaffolds";
-import { JLEVEL, JLEVELS, JSTAGES, JUNITS, validateJukuSpec } from "../../src/juku/spec";
+import { JLEVEL, JLEVELS, JSTAGES, validateJukuSpec } from "../../src/juku/spec";
 import { SPEED, UNITS, unitShift } from "../../src/juku/units";
 
 const N = 2000;
@@ -156,18 +156,11 @@ describe("juku spec", () => {
     for (const l of JLEVELS) expect(l.id).not.toMatch(/^\d+-\d+$/);
   });
 
-  test("juku.json is valid and fills stages 6–9 with 28 levels in six units", () => {
+  test("juku.json is valid and fills four stages with 28 levels", () => {
     expect(validateJukuSpec()).toEqual([]);
     expect(JLEVELS.length).toBe(28);
     expect(JSTAGES.map((s) => s.id)).toEqual([6, 7, 8, 9]);
-    expect(JUNITS.map((u) => u.levelIds.length).reduce((a, b) => a + b, 0)).toBe(28);
     expect(Object.keys(JGENERATORS).sort()).toEqual(JLEVELS.map((l) => l.id).sort());
-  });
-
-  test("the units follow the juku year and open contiguous levels of each stage", () => {
-    expect(JUNITS.map((u) => u.id)).toEqual(["pi-cylinder", "speed-units", "pi-cone", "review-g4", "unit-mix", "toward-g5"]);
-    expect(JUNITS[0].levelIds).toEqual(["pi-table", "pi-shift", "pi-two-digit", "pi-divide"]);
-    expect(JUNITS[1].levelIds).toEqual(["unit-length-weight", "unit-time", "unit-speed", "unit-trip"]);
   });
 });
 

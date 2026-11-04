@@ -1,4 +1,4 @@
-// Judging answers of stages 6–9 and naming the mistake (juku.json errorTypes and errorTypeOrder).
+// Judging answers of the juku.json levels and naming the mistake (juku.json errorTypes and errorTypeOrder).
 import type { ErrorTypeId } from "@/domain/errors";
 import { cmpDec, dec, decText, decValue, eqDec, fracEq, gcd, improperOf, mulDec, decInt, parseDec, powerOfTenRatio, shiftDec, subDec, addDec, divDec, type Dec } from "./num";
 import { jAnswer, type JAnswer, type JInstance, type JProblem } from "./problem";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
-import { challengeOpen } from "@/course/progress";
+import { challengeOpen } from "@/course/progression";
 import { LevelSheet } from "@/features/home/level-sheet";
 import { StageMap } from "@/features/home/stage-map";
 import { ChallengeCard, TodayCard } from "@/features/home/today-card";

@@ -1,11 +1,11 @@
-// Problems, answers and mistakes of any level. Stage 0–5 problems go to src/domain, stage 6–9 problems
+// Problems, answers and mistakes of any level. Problems of curriculum.json levels go to src/domain, those of juku.json levels
 // (shape "juku") to src/juku; the two never share a shape or an answer kind.
 import { classifyError } from "@/domain/errors";
 import { makeInstance } from "@/domain/generators";
 import { answerText, display, sameAnswer, speech, type Answer, type Problem, type ProblemInstance } from "@/domain/problem";
 import { JUDGE_NOTE_TEXT, jClassifyError, jJudge, jRevealNote } from "@/juku/judge";
 import { jAnswerText, jSpeech, jText, makeJInstance, type JAnswer, type JInstance, type JProblem } from "@/juku/problem";
-import type { CourseErrorTypeId } from "./levels";
+import { isCourseLevel, type CourseErrorTypeId } from "./levels";
 
 export type CourseProblem = Problem | JProblem;
 export type CourseAnswer = Answer | JAnswer;
@@ -19,6 +19,20 @@ export const isJukuAnswer = (a: CourseAnswer): a is JAnswer => JUKU_ANSWERS.has(
 
 export function instanceOf(levelId: string, p: CourseProblem): CourseInstance {
   return isJukuProblem(p) ? makeJInstance(levelId, p) : makeInstance(levelId, p);
+}
+
+/**
+ * A stored problem made again, or null when this version cannot: its level is not in the course, or the problem's
+ * shape is one this version does not know (records written by another version).
+ */
+export function tryInstanceOf(levelId: string, p: CourseProblem): CourseInstance | null {
+  if (!isCourseLevel(levelId) || !p || typeof p !== "object") return null;
+  try {
+    const inst = instanceOf(levelId, p);
+    return problemText(inst.problem) && judgeAnswer(inst.answer, inst.answer).correct ? inst : null;
+  } catch {
+    return null;
+  }
 }
 
 /** the problem as one line ("3.14×7＝", "1.2km＝□m") */
@@ -36,13 +50,13 @@ export function judgeAnswer(expected: CourseAnswer, given: CourseAnswer): { corr
   return { correct: !isJukuAnswer(given) && sameAnswer(expected, given), note: null };
 }
 
-/** rules.errorTypes (and juku.json errorTypes for stage 6–9 problems) */
+/** rules.errorTypes (and juku.json errorTypes for its problems) */
 export function classifyMistake(inst: CourseInstance, given: CourseAnswer, sameFactErrorsIn14Days: number): CourseErrorTypeId {
   if (isJukuInstance(inst)) return isJukuAnswer(given) ? jClassifyError(inst, given, sameFactErrorsIn14Days) : "procedure";
   return isJukuAnswer(given) ? "procedure" : classifyError(inst, given, sameFactErrorsIn14Days);
 }
 
-/** what the play screen shows after a wrong answer: the right answer, and for stages 6–9 the rule behind the slip */
+/** what the play screen shows after a wrong answer: the right answer, and for juku.json problems the rule behind the slip */
 export function revealOf(inst: CourseInstance, given: CourseAnswer | null): { answer: string; note: string | null } {
   const answer = answerTextOf(inst.answer);
   if (!isJukuInstance(inst) || !given || !isJukuAnswer(given)) return { answer, note: null };

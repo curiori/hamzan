@@ -27,21 +27,25 @@ function profileV2(p: ProfileV1): ProfileV2 {
 }
 
 /** what version 2 could hold that version 3 has no more: the 塾 build's units, its day parts and its check sets */
-type V2Extras = { juku?: unknown; sessions: Record<string, { plan: { kind: string; slot?: "frontier" | "pending" }[] }>; sets: { kind: string }[] };
+type StoredV2 = Omit<ProfileV2, "sessions" | "sets"> & {
+  juku?: unknown;
+  sessions: Record<string, Omit<Profile["sessions"][string], "plan"> & { plan: { kind: string; slot?: "frontier" | "pending" }[] }>;
+  sets: (Omit<Profile["sets"][number], "kind"> & { kind: string })[];
+};
 
 /** Version 2 → 3: one course. The 塾 units go, a 塾 day part becomes the main part it was, its checks become checks. */
-function profileV3(p: ProfileV2 & V2Extras): Profile {
+function profileV3(p: StoredV2): Profile {
   const { juku: _units, ...rest } = p;
   const sessions = Object.fromEntries(
     Object.entries(rest.sessions).map(([d, day]) => [d, { ...day, plan: day.plan.map((part) => (part.kind === "juku" ? { kind: "slot", slot: part.slot ?? "frontier" } : part)) }]),
   );
   const sets = rest.sets.map((s) => (s.kind === "juku_check" ? { ...s, kind: "check" } : s));
-  return { ...(rest as unknown as Profile), sessions: sessions as unknown as Profile["sessions"], sets: sets as Profile["sets"], course: legacyCourseRecord(rest) };
+  return { ...rest, sessions: sessions as Profile["sessions"], sets: sets as Profile["sets"], course: legacyCourseRecord(rest) };
 }
 
 export function migrate(persisted: unknown, version: number): unknown {
   if (version !== 1 && version !== 2) throw new Error(`saved data version ${version} is not supported`);
   const s = persisted as { profiles?: unknown[] };
-  const v2 = version === 1 ? (s.profiles ?? []).map((p) => profileV2(p as ProfileV1)) : ((s.profiles ?? []) as ProfileV2[]);
-  return { ...s, profiles: v2.map((p) => profileV3(p as ProfileV2 & V2Extras)) };
+  const v2 = version === 1 ? (s.profiles ?? []).map((p) => profileV2(p as ProfileV1)) : (s.profiles ?? []);
+  return { ...s, profiles: v2.map((p) => profileV3(p as StoredV2)) };
 }

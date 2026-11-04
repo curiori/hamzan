@@ -1,20 +1,17 @@
 import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
-import { planDay } from "@/course/day";
-import { isJukuLevel, isJukuStage } from "@/course/levels";
-import { jukuEntries, jukuOf } from "@/course/progress";
+import { isCourseLevel, isCourseStage, levelSpec } from "@/course/levels";
+import { applyPlacementResult, startPlacement, type PlacementState } from "@/course/placement";
+import { planDay } from "@/course/plan";
 import type { LocalDate } from "@/domain/dates";
-import { applyPlacementResult, startPlacement, type PlacementState } from "@/domain/placement";
-import { LEVEL } from "@/domain/spec";
 import { writeChildFrom } from "@/domain/timing";
 import { appendLedger } from "@/game/economy";
 import { placeIn, placeNew, roomGoods, type SlotId } from "@/game/room";
 import { buy, shopItem, type BuyResult } from "@/game/shop";
-import { closeUnit, openUnit } from "@/juku/track";
 import { migrate } from "./migrate";
 import { hashPin, makeSalt } from "./pin";
 import { reconcileProfile } from "./reconcile";
-import { newProfile, ownedGoods, placementOutcome, todayOf } from "./profile";
+import { newProfile, outsideCourse, ownedGoods, placementOutcome, todayOf } from "./profile";
 import { recordSet as recordSetPure } from "./record-set";
 import type { DevSettings, PinRecord, Profile, SessionDay, SetRun, SetSummary } from "./types";
 
@@ -42,8 +39,6 @@ export interface AppState {
   /** test tool: finish the diagnosis as if it ended at levelId (null = everything ★2) */
   skipPlacementTo: (levelId: string | null) => void;
   ackPlacement: () => void;
-  /** parent: opens or closes a 塾の単元 of one child; a day whose practice has not started is planned again */
-  setJukuUnit: (profileId: string, unitId: string, open: boolean) => void;
   ensureSession: () => { day: SessionDay; date: LocalDate } | null;
   skipSessionPart: (index: number) => void;
   recordSet: (run: SetRun) => SetSummary;
@@ -142,7 +137,7 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
                 phase: "done",
                 masteredStages: [],
                 pendingFrontier: null,
-                result: { frontier: levelId, mode: levelId ? LEVEL[levelId].modes[0] : "S" },
+                result: { frontier: levelId, mode: levelId ? levelSpec(levelId).modes[0] : "S" },
               };
               const applied = applyPlacementResult(st, date);
               const outcome = placementOutcome(applied, date);
@@ -153,26 +148,16 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
                 placement: st,
                 placementDone: true,
                 placementSeen: true,
-                // the diagnosis writes stages 0–5 only; 塾の単元 keep their records
-                progress: { ...jukuEntries(p.progress), ...applied.progress },
-                reviews: [...applied.reviews, ...p.reviews.filter((r) => isJukuLevel(r.levelId))],
-                stageChecks: { ...Object.fromEntries(Object.entries(p.stageChecks).filter(([s]) => isJukuStage(Number(s)))), ...outcome.stageChecks },
+                // the levels of the course are written; records of levels this version does not have stay
+                progress: { ...outsideCourse(p.progress), ...applied.progress },
+                reviews: [...applied.reviews, ...p.reviews.filter((r) => !isCourseLevel(r.levelId))],
+                stageChecks: { ...Object.fromEntries(Object.entries(p.stageChecks).filter(([s]) => !isCourseStage(Number(s)))), ...outcome.stageChecks },
+                course: { ...p.course, checks: [] },
                 sessions,
               };
             });
           },
           ackPlacement: () => patchActive((p) => ({ ...p, placementSeen: true })),
-
-          setJukuUnit: (profileId, unitId, open) => {
-            const date = today();
-            patchProfile(profileId, (p) => {
-              const juku = open ? openUnit(jukuOf(p), unitId, date, p.progress) : closeUnit(jukuOf(p), unitId);
-              if (juku === jukuOf(p)) return p;
-              // today's plan is made again with (or without) the unit, unless the child has already started it
-              const sessions = Object.fromEntries(Object.entries(p.sessions).filter(([d, day]) => d !== date || day.done > 0));
-              return { ...p, juku, sessions };
-            });
-          },
 
           ensureSession: () => {
             const s = get();
@@ -182,7 +167,7 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
             const existing = p.sessions[date];
             if (existing) return { day: existing, date };
             const day: SessionDay = {
-              plan: planDay({ progress: p.progress, reviews: p.reviews, stageChecks: p.stageChecks, date, unlockAll: s.dev.unlockAll, juku: jukuOf(p) }),
+              plan: planDay({ progress: p.progress, reviews: p.reviews, stageChecks: p.stageChecks, date, unlockAll: s.dev.unlockAll, checks: p.course.checks }),
               done: 0,
               goal: false,
             };

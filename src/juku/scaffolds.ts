@@ -1,4 +1,4 @@
-// Hints for stages 6–9: the blanks (steps) of hint mode, the memo numbers of memo mode, and the
+// Hints for the juku.json levels: the blanks (steps) of hint mode, the memo numbers of memo mode, and the
 // lines that show them. The last step is always the answer, so filling every blank solves the problem.
 // Lines use the same tokens as src/domain/scaffolds.ts: "→" separates lines and "[i]" is a blank for steps[i].
 import type { HintLine, HintToken } from "@/domain/problem";

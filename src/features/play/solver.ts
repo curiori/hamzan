@@ -32,9 +32,9 @@ export interface SolverProps {
   render: (parts: SolverParts) => ReactElement;
 }
 
-/** a solver for stage 0–5 problems (src/domain) */
+/** a solver for curriculum.json problems (src/domain) */
 export type CoreSolverProps = Omit<SolverProps, "inst"> & { inst: ProblemInstance };
-/** a solver for stage 6–9 problems (src/juku) */
+/** a solver for juku.json problems (src/juku) */
 export type JukuSolverProps = Omit<SolverProps, "inst"> & { inst: JInstance };
 
 /** Fields for one question. A new resetKey starts empty fields; a filled set is sent to onComplete once. */

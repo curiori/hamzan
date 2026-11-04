@@ -65,7 +65,7 @@ function KeyButton({ k, label, caption, onKey, disabled, slot, primary, a11y, he
 
 /**
  * Number keypad (or ○/× for yes-no answers, or the options of a 4択); the system keyboard is never used. Every pad has
- * the same height. `dot` adds the decimal point next to 0 (stages 6–9); `next` turns the middle key into つぎ (the next
+ * the same height. `dot` adds the decimal point next to 0 (juku.json answers); `next` turns the middle key into つぎ (the next
  * box of a fraction or a pair) instead of あまり.
  */
 export function Keypad({

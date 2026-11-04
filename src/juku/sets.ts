@@ -1,4 +1,4 @@
-// Building sets for stages 6–9, with the rules of src/domain/setBuilder.ts (rules.setGeneration): no fact twice
+// Building sets for the juku.json levels, with the rules of src/domain/setBuilder.ts (rules.setGeneration): no fact twice
 // while the level has enough facts, never the same fact twice in a row, weak facts weighted ×2 on enumerable levels.
 import { mulberry32, seedOf, type Rng } from "@/domain/rng";
 import { SPEC } from "@/domain/spec";

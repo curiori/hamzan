@@ -1,4 +1,4 @@
-// Problems and answers of stages 6–9 (塾の単元). A problem is plain data (stored in the records);
+// Problems and answers of the juku.json levels (小数と分数・円周率・単位・見積もり). A problem is plain data (stored in the records);
 // its picture (tokens), reading, answer and fact key are worked out here.
 import { yomi } from "@/domain/problem";
 import { benchmark, partSpeech, partText, plausible, type Part } from "./benchmarks";

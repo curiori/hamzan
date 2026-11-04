@@ -6,8 +6,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Hamster } from "@/art/hamster";
 import { Crown, Paw, SeedIcon } from "@/art/icons";
 import { ItemThumb } from "@/art/items";
+import { levelName, stageName, stageNo } from "@/course/levels";
 import { REWARDS } from "@/game/achievements";
-import { KID_LEVEL_NAME, KID_STAGE_NAME } from "@/i18n/ja";
 import type { SetSummary } from "@/state/types";
 import { Button } from "@/ui/button";
 import { Star } from "@/ui/stars";
@@ -164,7 +164,7 @@ export function ResultScreen({
             {s.reviews.map((r) => (
               <View key={r.levelId} style={styles.review}>
                 <AppText weight="bold" style={styles.reviewName}>
-                  {KID_LEVEL_NAME[r.levelId]}
+                  {levelName(r.levelId)}
                 </AppText>
                 <AppText weight="bold" style={[styles.reviewState, { color: r.passed ? colors.green700 : colors.orange800 }]}>
                   {r.passed ? "ごうかく" : r.demoted ? "もういちど ★3を めざそう" : "また こんど"}
@@ -175,7 +175,7 @@ export function ResultScreen({
         ) : null}
         {s.stageCheck ? (
           <AppText weight="bold" style={styles.line}>
-            ステージ{s.stageCheck.stage}「{KID_STAGE_NAME[s.stageCheck.stage]}」
+            ステージ{stageNo(s.stageCheck.stage)}「{stageName(s.stageCheck.stage)}」
           </AppText>
         ) : null}
 

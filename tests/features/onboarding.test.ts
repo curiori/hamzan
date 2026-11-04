@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { onboardingStep } from "@/features/onboarding/gate";
 import { pressInputKey, startInputTest } from "@/features/onboarding/input-test-flow";
 import { emptyPin, pinPress } from "@/features/onboarding/pin-entry";
-import { startPlacement } from "@/domain/placement";
+import { startPlacement } from "@/course/placement";
 import { newProfile } from "@/state/profile";
 
 const pin = { hash: "h", salt: "s" };

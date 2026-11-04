@@ -120,8 +120,8 @@ export function awardSeeds(w0: Wallet, input: SeedInput, date: LocalDate): SeedA
     add("complete", complete);
   } else if (input.kind === "warmup") {
     add("warmup", SEEDS.warmup);
-  } else if (input.kind === "placement" || input.kind === "juku_check") {
-    // the diagnosis and the starting check of a 塾の単元 pay for right answers only
+  } else if (input.kind === "placement" || input.kind === "check") {
+    // the diagnosis and the check of new levels pay for right answers only
     add("correct", input.firstCorrect * SEEDS.placementCorrect, input.firstCorrect);
   } else if (input.kind === "challenge") {
     add("correct", input.firstCorrect * SEEDS.challengeCorrect, input.firstCorrect);

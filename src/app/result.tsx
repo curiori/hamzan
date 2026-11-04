@@ -1,4 +1,4 @@
-import { lpAny } from "@/course/progress";
+import { lpAny } from "@/course/progression";
 import { hasStar2 } from "@/domain/progression";
 import { ResultScreen } from "@/features/result/result-screen";
 import { levelPlan } from "@/session/requests";

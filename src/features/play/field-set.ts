@@ -3,7 +3,7 @@ import { digitsOf, type Answer, type StepValue } from "@/domain/problem";
 // Answer fields filled from the on-screen keypad (rules of the web prototype's useFieldSet).
 
 /**
- * One answer box. Stage 6–9 answers add: "dec" (a number that may have a decimal point), "choice" (one of the
+ * One answer box. juku.json answers add: "dec" (a number that may have a decimal point), "choice" (one of the
  * options, tapped), boxes that are typed to the end by hand (fractions: an unreduced answer can be longer than
  * the right one), and a unit shown after a box.
  */

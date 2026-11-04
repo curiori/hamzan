@@ -1,11 +1,11 @@
-import { ALL_LEVELS } from "@/course/levels";
-import { instanceOf, type CourseInstance } from "@/course/problems";
-import { lpAny } from "@/course/progress";
+import { ALL_LEVELS, ALL_STAGES, isCourseLevel } from "@/course/levels";
+import { tryInstanceOf, type CourseInstance } from "@/course/problems";
+import { isUnlocked, lpAny, pendingList, practiceTarget } from "@/course/progression";
 import { addDays, diffDays, toLocalDate, type LocalDate } from "@/domain/dates";
-import { hasStar2, isMastered, isUnlocked, pendingStar3, practiceTarget, type ProgressMap } from "@/domain/progression";
+import { hasStar2, isMastered, type ProgressMap } from "@/domain/progression";
 import { seedOf } from "@/domain/rng";
 import type { StageCheckRecord } from "@/domain/session";
-import { LEVELS, SPEC, STAGES, type Mode } from "@/domain/spec";
+import { SPEC, type Mode } from "@/domain/spec";
 import type { TimeOptions } from "@/domain/timing";
 import { REWARDS, unlockedRewards, type RewardStats } from "@/game/achievements";
 import { emptyWallet } from "@/game/economy";
@@ -54,7 +54,7 @@ export function rewardStats(p: Profile): RewardStats {
   const lps = Object.values(p.progress);
   const base = p.rewardBaseline ?? { star2: 0, mastered: 0 };
   return {
-    cleanSets: p.sets.filter((s) => s.kind !== "warmup" && s.kind !== "placement" && s.kind !== "juku_check" && s.n > 0 && s.errors === 0).length,
+    cleanSets: p.sets.filter((s) => s.kind !== "warmup" && s.kind !== "placement" && s.kind !== "check" && s.n > 0 && s.errors === 0).length,
     star2Levels: Math.max(0, lps.filter(hasStar2).length - base.star2),
     mastered: Math.max(0, lps.filter(isMastered).length - base.mastered),
     goalDays: Object.values(p.sessions).filter((d) => d.goal).length,
@@ -84,6 +84,9 @@ export function placementOutcome(applied: { progress: ProgressMap; clearedStages
   };
 }
 
+/** progress of levels this version does not have (kept when the diagnosis writes the course's levels) */
+export const outsideCourse = (map: ProgressMap): ProgressMap => Object.fromEntries(Object.entries(map).filter(([id]) => !isCourseLevel(id)));
+
 /** factKeys to weight ×2: wrong, or slower than T★2, within the last weakFactWindowDays. */
 export function weakFacts(p: Profile, levelId: string, date: LocalDate): Set<string> {
   const win = SPEC.rules.setGeneration.weakFactWindowDays;
@@ -108,21 +111,28 @@ export function setSeed(p: Profile, levelId: string, mode: Mode, date: LocalDate
   return { seed: seedOf(p.id, levelId, date, setIndexToday(p, levelId, date)), fixed: false };
 }
 
-/** Problems missed yesterday (warm-up source), stage 0–9 alike. */
+/** Problems missed yesterday (warm-up source) that this version can make again: its levels, problems it can still build. */
 export function yesterdaysMisses(p: Profile, date: LocalDate): CourseInstance[] {
   const y = addDays(date, -1);
-  return p.errors.filter((e) => e.date === y).map((e) => instanceOf(e.levelId, e.problem));
+  return p.errors.filter((e) => e.date === y).flatMap((e) => {
+    const inst = tryInstanceOf(e.levelId, e.problem);
+    return inst ? [inst] : [];
+  });
 }
 
-/** Current stage = the stage of today's practice target. */
+/** Current stage = the stage of today's practice target (course order; levels waiting for their check are skipped). */
 export function currentStage(p: Profile, unlockAll: boolean): number {
-  const t = practiceTarget(p.progress, unlockAll)?.level ?? pendingStar3(p.progress);
-  return t ? t.stage : STAGES[STAGES.length - 1].id;
+  const opts = { unlockAll, waiting: p.course.checks };
+  const t = practiceTarget(p.progress, opts)?.level ?? pendingList(p.progress, opts)[0];
+  return t ? t.stage : ALL_STAGES[ALL_STAGES.length - 1].id;
 }
 
+/** Enumerable open levels of the current stage, or of every stage up to it in course order. */
 export function warmupLevels(p: Profile, unlockAll: boolean): string[] {
   const stage = currentStage(p, unlockAll);
-  const open = (id: string) => isUnlocked(p.progress, id, unlockAll);
-  const here = LEVELS.filter((l) => l.stage === stage && l.enumerable && open(l.id)).map((l) => l.id);
-  return here.length ? here : LEVELS.filter((l) => l.enumerable && open(l.id) && l.stage <= stage).map((l) => l.id);
+  const open = (id: string) => isUnlocked(p.progress, id, { unlockAll });
+  const here = ALL_LEVELS.filter((l) => l.stage === stage && l.enumerable && open(l.id)).map((l) => l.id);
+  if (here.length) return here;
+  const upTo = new Set(ALL_STAGES.slice(0, ALL_STAGES.findIndex((s) => s.id === stage) + 1).map((s) => s.id));
+  return ALL_LEVELS.filter((l) => l.enumerable && open(l.id) && upTo.has(l.stage)).map((l) => l.id);
 }

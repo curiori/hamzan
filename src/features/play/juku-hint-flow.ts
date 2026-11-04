@@ -1,7 +1,7 @@
 import { jJudge, JUDGE_NOTE_TEXT } from "@/juku/judge";
 import { jAnswerText, type JAnswer } from "@/juku/problem";
 
-// Hint mode (H) for stages 6–9, with the rules of hint-flow.ts: fill the blanks one by one; two misses on a
+// Hint mode (H) for the juku.json levels, with the rules of hint-flow.ts: fill the blanks one by one; two misses on a
 // blank reveal it and the problem counts as missed. A fraction of the right value in the wrong form is a miss
 // that says what to fix ("やくぶん できるよ").
 

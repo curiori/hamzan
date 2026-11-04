@@ -1,10 +1,10 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { isJukuLevel, levelSpec } from "@/course/levels";
-import { jukuOf, levelStatus, lpAny } from "@/course/progress";
+import { displayText, isCourseLevel, levelLabel, levelName, levelSpec } from "@/course/levels";
+import { levelStatus, lpAny } from "@/course/progression";
 import { SPEC, type Mode } from "@/domain/spec";
-import { KID_LEVEL_NAME, MODE_LABEL } from "@/i18n/ja";
+import { MODE_LABEL } from "@/i18n/ja";
 import type { Profile } from "@/state/types";
 import { Button } from "@/ui/button";
 import { Backdrop } from "@/ui/sheet";
@@ -32,9 +32,9 @@ export function LevelSheet({
   const shownId = useKept(levelId);
   const closing = !levelId;
   const sel = shownId ? levelSpec(shownId) : null;
-  const juku = jukuOf(profile);
+  const opts = { unlockAll, waiting: profile.course.checks };
   const lp = sel ? lpAny(profile.progress, sel.id) : null;
-  const status = sel ? levelStatus(profile.progress, juku, sel.id, unlockAll) : null;
+  const status = sel ? levelStatus(profile.progress, sel.id, opts) : null;
   const masteryDays = SPEC.rules.stars.mastery.star3OnDistinctLocalDates;
 
   return (
@@ -54,10 +54,10 @@ export function LevelSheet({
               <View style={styles.head}>
                 <View style={styles.headText}>
                   <AppText weight="bold" accessibilityRole="header" style={styles.title}>
-                    {KID_LEVEL_NAME[sel.id]}
+                    {levelName(sel.id)}
                   </AppText>
                   <AppText weight="bold" style={styles.sub}>
-                    レベル {sel.id}・{STATUS_LABEL[status]}
+                    レベル {levelLabel(sel.id)}・{STATUS_LABEL[status]}
                   </AppText>
                 </View>
                 <Pressable accessibilityRole="button" accessibilityLabel="とじる" onPress={onClose} hitSlop={8} style={styles.close}>
@@ -65,7 +65,7 @@ export function LevelSheet({
                 </Pressable>
               </View>
               <AppText weight="bold" style={styles.example}>
-                れい：{sel.example}
+                れい：{displayText(sel.example)}
               </AppText>
               <View style={styles.boxes}>
                 <View style={styles.box}>
@@ -85,12 +85,10 @@ export function LevelSheet({
                 <View style={styles.locked}>
                   <Ionicons name="lock-closed" size={16} color={colors.foreground} />
                   <AppText weight="bold" style={styles.lockedText}>
-                    {isJukuLevel(sel.id)
-                      ? "おうちの ひとが ひらくと れんしゅう できるよ"
-                      : `${sel.prerequisites
-                          .filter((id) => !["star2", "mastered"].includes(levelStatus(profile.progress, juku, id)))
-                          .map((id) => KID_LEVEL_NAME[id])
-                          .join("・")}で ★2を とると ひらくよ`}
+                    {`${sel.prerequisites
+                      .filter((id) => isCourseLevel(id) && !["star2", "mastered"].includes(levelStatus(profile.progress, id, opts)))
+                      .map(levelName)
+                      .join("・")}で ★2を とると ひらくよ`}
                   </AppText>
                 </View>
               ) : (

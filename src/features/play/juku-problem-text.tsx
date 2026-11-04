@@ -4,7 +4,7 @@ import { jSpeech, jText, jTokens, type JInstance, type JProblem, type JTok } fro
 import { AppText } from "@/ui/text";
 import { colors, MAX_FONT_SCALE } from "@/ui/theme";
 
-// Stage 6–9 problems: numbers and signs large, units and words smaller, kanji with their reading above them,
+// juku.json problems: numbers and signs large, units and words smaller, kanji with their reading above them,
 // fractions stacked. Word problems (道のり, おうぎ形, ありえない答え) are set as a sentence that wraps. A question
 // in words (no ＝) asks "なん分？" where an expression shows its box: the answer box below is the only box.
 

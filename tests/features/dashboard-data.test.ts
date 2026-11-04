@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test";
+import { COURSE } from "@/course/course";
 import { COURSE_ERROR_TYPES } from "@/course/levels";
 import type { ErrorTypeId } from "@/domain/errors";
 import type { Problem } from "@/domain/problem";
+import { freshProgress } from "@/domain/progression";
 import { ERROR_TYPES } from "@/domain/spec";
-import { calendarDays, errorCounts, retestDue, seedSummary, speedLevels, trendSeries, weakFactsTop } from "@/features/parent/dashboard-data";
+import { calendarDays, errorCounts, openStageId, retestDue, seedSummary, speedLevels, trendSeries, waitingChecks, weakFactsTop } from "@/features/parent/dashboard-data";
 import type { LedgerEntry } from "@/game/economy";
 import { newProfile } from "@/state/profile";
 import type { FactStat, Profile, SetAttempt } from "@/state/types";
@@ -92,6 +94,23 @@ describe("mistakes", () => {
     const p = { ...base(), facts: { a: f(1, 900), b: f(3, 100), c: f(1, 2000), d: f(0, 5000) } };
     expect(weakFactsTop(p, 2).map(([k]) => k)).toEqual(["b", "c"]);
     expect(weakFactsTop(p).map(([k]) => k)).toEqual(["b", "c", "a"]);
+    // facts of levels this version does not have stay in the records but are not shown
+    const gone = { ...p, facts: { ...p.facts, e: { ...f(9, 100), levelId: "future-1" } } };
+    expect(weakFactsTop(gone).map(([k]) => k)).toEqual(["b", "c", "a"]);
+  });
+});
+
+describe("progress in the one course", () => {
+  test("the stage shown open is the one holding the first level below ★2, in course order", () => {
+    const p = base();
+    expect(openStageId(p)).toBe(0);
+    const done = Object.fromEntries(COURSE.levels.filter((l) => l.order < COURSE.level["pi-shift"].order).map((l) => [l.id, { ...freshProgress(l), star2At: day(1) }]));
+    expect(openStageId({ ...p, progress: done })).toBe(8);
+  });
+
+  test("the levels waiting for their check are listed in course order", () => {
+    const p = { ...base(), course: { version: 2, seen: [], checks: ["pi-table", "future-1", "frac-mixed"] } };
+    expect(waitingChecks(p)).toEqual(["frac-mixed", "pi-table"]);
   });
 });
 

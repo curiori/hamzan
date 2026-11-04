@@ -1,19 +1,19 @@
-import { isJukuLevel, isJukuStage, levelSpec } from "@/course/levels";
+import { applyCheck } from "@/course/checks";
+import { isCourseLevel, isCourseStage, levelSpec } from "@/course/levels";
+import { addPlacementTime, applyMiniCheck, applyPlacementResult, applyStageCheck } from "@/course/placement";
 import { classifyMistake } from "@/course/problems";
-import { jukuEntries, jukuOf, lpAny } from "@/course/progress";
+import { lpAny } from "@/course/progression";
 import { levelTargetSec, mixedTargetSecAll } from "@/course/timing";
 import { diffDays, type LocalDate } from "@/domain/dates";
 import { judgeSet, starsOf } from "@/domain/judge";
-import { addPlacementTime, applyMiniCheck, applyPlacementResult, applyStageCheck } from "@/domain/placement";
 import { applySetResult, demote, hasStar2, isMastered } from "@/domain/progression";
 import { applyReview, scheduleOnMastery } from "@/domain/review";
 import { RULE_NUMBERS, SPEC } from "@/domain/spec";
 import { REWARDS, unlockedRewards } from "@/game/achievements";
 import { appendLedger, awardSeeds } from "@/game/economy";
 import { GOOD_KIND, placeNew, roomGoods } from "@/game/room";
-import { applyCheck } from "@/juku/track";
 import { sessionPartPlan } from "@/session/requests";
-import { ownedGoods, placementOutcome, rewardStats, timeOpts } from "./profile";
+import { ownedGoods, outsideCourse, placementOutcome, rewardStats, timeOpts } from "./profile";
 import type { Profile, ProblemResult, SetAttempt, SetRun, SetSummary } from "./types";
 
 const MAX_SETS = 600;
@@ -90,14 +90,14 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
     reviews: [],
     stageCheck: null,
     placement: null,
-    jukuCheck: null,
+    check: null,
     challengeBest: null,
     goalReached: false,
     newRewards: [],
     seeds: { lines: [], total: 0, capped: false },
   };
   let attemptResult: SetAttempt["result"] = "done";
-  /** a starting check of a 塾の単元 ends today's juku part only when the unit's check ends */
+  /** a check set ends today's check part only when the check of its stage ends */
   let partDone = true;
 
   if ((run.kind === "main" || run.kind === "extra") && run.levelId) {
@@ -147,13 +147,14 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
     st = addPlacementTime(st, date, run.activeSec);
     if (st.phase === "done") {
       const applied = applyPlacementResult(st, date);
-      // the diagnosis writes stages 0–5 only; whatever the child has in 塾の単元 stays
-      p.progress = { ...jukuEntries(p.progress), ...applied.progress };
-      p.reviews = [...applied.reviews, ...p.reviews.filter((r) => isJukuLevel(r.levelId))];
+      // the diagnosis writes the levels of the course; records of levels this version does not have stay
+      p.progress = { ...outsideCourse(p.progress), ...applied.progress };
+      p.reviews = [...applied.reviews, ...p.reviews.filter((r) => !isCourseLevel(r.levelId))];
       const outcome = placementOutcome(applied, date);
-      p.stageChecks = { ...Object.fromEntries(Object.entries(p.stageChecks).filter(([s]) => isJukuStage(Number(s)))), ...outcome.stageChecks };
+      p.stageChecks = { ...Object.fromEntries(Object.entries(p.stageChecks).filter(([s]) => !isCourseStage(Number(s)))), ...outcome.stageChecks };
       p.rewardBaseline = outcome.rewardBaseline;
       p.placementDone = true;
+      p.course = { ...p.course, checks: [] };
     }
     p.placement = st;
     summary.placement = st;
@@ -161,26 +162,26 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
   } else if (run.kind === "placement" && p.placement) {
     p.placement = addPlacementTime(p.placement, date, run.activeSec);
     summary.placement = p.placement;
-  } else if (run.kind === "juku_check" && run.levelId && run.unitId) {
+  } else if (run.kind === "check" && run.levelId) {
     if (run.interrupted) {
       partDone = false;
     } else {
-      const o = applyCheck(p.progress, jukuOf(p), { unitId: run.unitId, levelId: run.levelId, errors, perProblemSec, t2, date });
+      const o = applyCheck(p.progress, p.course.checks, { levelId: run.levelId, errors, perProblemSec, t2, date });
       p.progress = o.progress;
-      p.juku = o.juku;
+      p.course = { ...p.course, checks: o.checks };
       // ★2 from a check is a starting point, not an achievement (like the diagnosis)
       if (o.star2Given) {
         const base = p.rewardBaseline ?? { star2: 0, mastered: 0 };
         p.rewardBaseline = { ...base, star2: base.star2 + o.star2Given };
       }
-      summary.jukuCheck = {
+      summary.check = {
         levelId: run.levelId,
         passed: o.passed,
-        unitDone: o.unitDone,
+        stageDone: o.stageDone,
         startLevel: o.startLevel,
         startMode: o.startLevel ? lpAny(o.progress, o.startLevel).mode : null,
       };
-      partDone = o.unitDone;
+      partDone = o.stageDone;
       attemptResult = o.passed ? "pass" : "fail";
     }
   } else if (run.kind === "challenge") {

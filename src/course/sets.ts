@@ -1,8 +1,10 @@
-// Sets of any level. Stages 0–5 keep the exact sets of src/domain/setBuilder.ts (same seeds, same problems).
+// Sets of any level. Levels of curriculum.json keep the exact sets of src/domain/setBuilder.ts (same seeds, same problems).
 import type { ProblemInstance } from "@/domain/problem";
 import { mulberry32, seedOf } from "@/domain/rng";
 import { buildMixed, buildSet, buildWarmup } from "@/domain/setBuilder";
+import { LEVEL } from "@/domain/spec";
 import { jBuildSet, jDrawLevel } from "@/juku/sets";
+import { JLEVEL } from "@/juku/spec";
 import { isJukuLevel } from "./levels";
 import { isJukuInstance, type CourseInstance } from "./problems";
 
@@ -28,10 +30,22 @@ export function buildMixedSet(levelIds: string[], counts: number[], seed: number
   return r.shuffle<CourseInstance>([...coreSet, ...juku]);
 }
 
-/** Warm-up: yesterday's stage 6–9 mistakes first, then the warm-up of src/domain (its mistakes and facts). */
+/**
+ * Warm-up: yesterday's mistakes first, then facts of the given enumerable levels. Levels of curriculum.json alone give
+ * exactly the warm-up of src/domain.
+ */
 export function buildWarmupSet(levelIds: string[], missed: CourseInstance[], seed: number, n: number): CourseInstance[] {
   const coreMissed = missed.filter((m): m is ProblemInstance => !isJukuInstance(m));
   const jukuMissed = missed.filter(isJukuInstance);
+  if (levelIds.some(isJukuLevel)) {
+    const r = mulberry32(seedOf(seed, "course"));
+    const used = new Set<string>();
+    const first = r.shuffle(missed.filter((m) => !used.has(m.factKey) && !!used.add(m.factKey)));
+    const pools = levelIds.filter((id) => (isJukuLevel(id) ? JLEVEL[id]?.enumerable : LEVEL[id]?.enumerable));
+    const rest: CourseInstance[] = [];
+    for (let i = 0; rest.length < n - first.length && pools.length && i < n * 4; i++) rest.push(...buildLevelSet(r.pick(pools), 1, seedOf(seed, "course", i)));
+    return [...first, ...rest].slice(0, n);
+  }
   if (!jukuMissed.length) return buildWarmup(levelIds, coreMissed, seed, n);
   const r = mulberry32(seedOf(seed, "juku"));
   const seen = new Set<string>();

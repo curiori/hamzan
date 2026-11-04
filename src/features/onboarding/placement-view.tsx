@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { Hamster } from "@/art/hamster";
 import { RoomScene } from "@/art/room-scene";
-import { miniLevel, placementBudgetLeft } from "@/domain/placement";
-import { LEVEL, RULE_NUMBERS, SPEC } from "@/domain/spec";
+import { levelLabel, levelName, stageName, stageNo } from "@/course/levels";
+import { miniLevel, placementBudgetLeft } from "@/course/placement";
+import { RULE_NUMBERS, SPEC } from "@/domain/spec";
 import { autoLayout } from "@/game/room";
-import { KID_LEVEL_NAME, KID_STAGE_NAME, MODE_LABEL } from "@/i18n/ja";
+import { MODE_LABEL } from "@/i18n/ja";
 import { placementPlan, type PlayPlan } from "@/session/requests";
 import { ownedGoods, todayOf } from "@/state/profile";
 import { activeProfile, useAppStore } from "@/state/store";
@@ -58,7 +59,7 @@ export function PlacementView({ onStart, onFinished }: { onStart: (plan: PlayPla
         <>
           <AppText weight="bold" style={styles.body}>
             {st.result?.frontier
-              ? `「${KID_LEVEL_NAME[st.result.frontier]}」の ${MODE_LABEL[st.result.mode]}から はじめよう`
+              ? `「${levelName(st.result.frontier)}」の ${MODE_LABEL[st.result.mode]}から はじめよう`
               : "ぜんぶの レベルが ★2いじょう！ マスターを めざそう"}
           </AppText>
           <Button size="lg" label="ホームへ" icon={<Ionicons name="arrow-forward" size={20} color={colors.primaryForeground} />} onPress={onFinished} />
@@ -68,18 +69,18 @@ export function PlacementView({ onStart, onFinished }: { onStart: (plan: PlayPla
           <AppText weight="bold" style={styles.body}>
             きょうは ここまで。あしたも つづきを やろう
           </AppText>
-          <AppText style={styles.note}>（1日{SPEC.rules.placement.maxMinutesPerDay}分までに区切っています。2〜3日で終わります）</AppText>
+          <AppText style={styles.note}>（1日{SPEC.rules.placement.maxMinutesPerDay}分までに区切っています。数日で終わります）</AppText>
           <Button size="lg" variant="outline" label="おへやを みる" onPress={() => setRoomOpen(true)} />
         </>
       ) : (
         <>
           <AppText weight="bold" style={styles.body}>
             {st.phase === "stageCheck"
-              ? `ステージ${st.stage}「${KID_STAGE_NAME[st.stage]}」の チェック`
-              : `「${KID_LEVEL_NAME[miniLevel(st)]}」を ${RULE_NUMBERS.miniCheckProblems}もん`}
+              ? `ステージ${stageNo(st.stage)}「${stageName(st.stage)}」の チェック`
+              : `「${levelName(miniLevel(st))}」を ${RULE_NUMBERS.miniCheckProblems}もん`}
           </AppText>
           <AppText style={styles.note}>できる ところから はじめるための テストだよ。わからなくても だいじょうぶ。</AppText>
-          {st.phase === "mini" ? <AppText style={styles.small}>レベル {LEVEL[miniLevel(st)].id}</AppText> : null}
+          {st.phase === "mini" ? <AppText style={styles.small}>レベル {levelLabel(miniLevel(st))}</AppText> : null}
           <Button
             size="lg"
             label="はじめる"

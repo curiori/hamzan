@@ -4,7 +4,7 @@
 import type { ErrorTypeId } from "@/domain/errors";
 import { ERROR_TYPES } from "@/domain/spec";
 import { KID_LEVEL_NAME, KID_STAGE_NAME } from "@/i18n/ja";
-import { JERROR_TYPES, JSPEC, JSTAGES, isJukuLevelId, type JErrorTypeId } from "@/juku/spec";
+import { JERROR_TYPES, JSPEC, isJukuLevelId, type JErrorTypeId } from "@/juku/spec";
 import { COURSE, type Course, type CourseLevel, type CourseStage } from "./course";
 
 /** every level of the course, in course order */
@@ -55,7 +55,6 @@ export function displayText(text: string, course: Course = COURSE): string {
 
 /** levels whose problems come from src/juku (the other engine is src/domain) */
 export const isJukuLevel = isJukuLevelId;
-export const isJukuStage = (id: number) => JSTAGES.some((s) => s.id === id);
 
 export type CourseErrorTypeId = ErrorTypeId | JErrorTypeId;
 

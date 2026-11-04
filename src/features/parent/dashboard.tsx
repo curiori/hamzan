@@ -1,21 +1,20 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
 import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
-import { ALL_STAGES, COURSE_ERROR_TYPES, levelSpec, remedyAddendum } from "@/course/levels";
+import { ALL_STAGES, COURSE_ERROR_TYPES, displayText, isJukuLevel, levelLabel, levelSpec, remedyAddendum } from "@/course/levels";
 import { problemText } from "@/course/problems";
-import { jukuOf, levelStatus, lpAny } from "@/course/progress";
+import { levelStatus, lpAny } from "@/course/progression";
 import { levelTargetSec } from "@/course/timing";
 import { weekdayOf } from "@/domain/dates";
 import { SPEC } from "@/domain/spec";
 import { MODE_LABEL } from "@/i18n/ja";
-import { jukuActive } from "@/juku/track";
 import { timeOpts, todayOf } from "@/state/profile";
 import { useAppStore } from "@/state/store";
 import type { Profile } from "@/state/types";
 import { Chip } from "@/ui/chip";
 import { AppText } from "@/ui/text";
 import { colors, radius } from "@/ui/theme";
-import { calendarDays, errorCounts, openStageId, retestDue, seedSummary, speedLevels, trendSeries, weakFactsTop } from "./dashboard-data";
+import { calendarDays, errorCounts, openStageId, retestDue, seedSummary, speedLevels, trendSeries, waitingChecks, weakFactsTop } from "./dashboard-data";
 import { Section } from "./section";
 import { TrendChart } from "./trend-chart";
 
@@ -36,8 +35,10 @@ export function Dashboard({ p }: { p: Profile }) {
   const trend = lvId ? trendSeries(p, lvId) : [];
   const t2 = lvId ? levelTargetSec(lvId, 2, opts) : 0;
   const t3 = lvId ? levelTargetSec(lvId, 3, opts) : 0;
-  const juku = jukuOf(p);
-  const status = (id: string) => levelStatus(p.progress, juku, id);
+  const status = (id: string) => levelStatus(p.progress, id, { waiting: p.course.checks });
+  const waiting = waitingChecks(p);
+  // the decimal, pi, unit and estimation stages add to some remedies once the child has practised them
+  const newStagesPractised = Object.entries(p.progress).some(([id, lp]) => isJukuLevel(id) && lp.practiced);
   const days = calendarDays(p, date);
   const weak = weakFactsTop(p);
   const counts = errorCounts(p, date);
@@ -106,6 +107,11 @@ export function Dashboard({ p }: { p: Profile }) {
       </Section>
 
       <Section title="ステージ・レベルの進み具合">
+        {waiting.length ? (
+          <AppText weight="bold" style={styles.retest}>
+            アプリの更新で加わったレベルが {waiting.length}こ あります。きょうの れんしゅうで、1日1ステージずつ、各レベル5問でたしかめます。
+          </AppText>
+        ) : null}
         {ALL_STAGES.map((st) => {
           const open = openStage === st.id;
           const check = p.stageChecks[st.id];
@@ -116,7 +122,7 @@ export function Dashboard({ p }: { p: Profile }) {
                 <Ionicons name={open ? "chevron-down" : "chevron-forward"} size={16} color={colors.foreground} />
                 <View style={styles.stageHeadText}>
                   <AppText weight="bold">
-                    ステージ{st.id} {st.name}（★2以上 {n}/{st.levelIds.length}）
+                    ステージ{st.no} {st.name}（★2以上 {n}/{st.levelIds.length}）
                   </AppText>
                   {check ? <AppText style={styles.small}>ステージチェック：{check.byPlacement ? "診断で通過" : check.passed ? "合格" : "不合格"}</AppText> : null}
                 </View>
@@ -128,10 +134,10 @@ export function Dashboard({ p }: { p: Profile }) {
                       <View key={id} style={styles.levelRow}>
                         <View style={styles.levelLine}>
                           <AppText weight="bold" style={styles.levelName}>
-                            {id} {levelSpec(id).name}
+                            {levelLabel(id)} {levelSpec(id).name}
                           </AppText>
                           <AppText weight="bold" style={styles.levelStatus}>
-                            {STATUS_JA[status(id)]}
+                            {waiting.includes(id) ? "チェック待ち" : STATUS_JA[status(id)]}
                           </AppText>
                         </View>
                         <AppText style={styles.small}>
@@ -154,7 +160,7 @@ export function Dashboard({ p }: { p: Profile }) {
               <AppText weight="bold" style={styles.cellWide}>
                 {problemText(f.problem)}
               </AppText>
-              <AppText style={styles.cell}>{f.levelId}</AppText>
+              <AppText style={styles.cell}>{levelLabel(f.levelId)}</AppText>
               <AppText style={styles.cellNum}>
                 {f.errors} / {f.attempts}
               </AppText>
@@ -168,7 +174,7 @@ export function Dashboard({ p }: { p: Profile }) {
 
       <Section title="ミスの種類と直し方（直近30日）">
         {COURSE_ERROR_TYPES.map((t) => {
-          const more = jukuActive(juku) ? remedyAddendum(t.id) : null;
+          const more = newStagesPractised ? remedyAddendum(t.id) : null;
           return (
             <View key={t.id} style={[styles.errorType, counts[t.id] === 0 && styles.faded]}>
               <View style={styles.levelLine}>
@@ -178,8 +184,8 @@ export function Dashboard({ p }: { p: Profile }) {
                 </AppText>
               </View>
               <AppText style={styles.small}>
-                直し方：{t.remedy}
-                {more ? `。${more}` : ""}
+                直し方：{displayText(t.remedy)}
+                {more ? `。${displayText(more)}` : ""}
               </AppText>
             </View>
           );
@@ -191,11 +197,11 @@ export function Dashboard({ p }: { p: Profile }) {
           <>
             <View style={styles.chips}>
               {levels.map((l) => (
-                <Chip key={l.id} label={l.id} accessibilityLabel={`${l.id} ${l.name}`} selected={l.id === lvId} onPress={() => setTrendLevel(l.id)} />
+                <Chip key={l.id} label={levelLabel(l.id)} accessibilityLabel={`${levelLabel(l.id)} ${l.name}`} selected={l.id === lvId} onPress={() => setTrendLevel(l.id)} />
               ))}
             </View>
             <AppText style={styles.body}>
-              {lvId} {levelSpec(lvId).name}：直近{trend.length}セット。目安 ★2 {t2.toFixed(1)}秒・★3 {t3.toFixed(1)}秒（点線）
+              {levelLabel(lvId)} {levelSpec(lvId).name}：直近{trend.length}セット。目安 ★2 {t2.toFixed(1)}秒・★3 {t3.toFixed(1)}秒（点線）
             </AppText>
             <TrendChart data={trend} t2={t2} t3={t3} width={Math.min(width - 64, 560)} />
             {trend.slice(-6).map((r, i) => (

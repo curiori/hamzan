@@ -15,7 +15,7 @@ import { JukuVisual } from "./juku-visuals";
 import { Keypad } from "./keypad";
 import { useFields, type JukuSolverProps } from "./solver";
 
-// Solvers for stage 6–9 problems: the same three modes as the core solvers (answer only, hint, memo).
+// Solvers for juku.json problems: the same three modes as the core solvers (answer only, hint, memo).
 
 function JukuKeypad({ defs, active, onKey, disabled, compact }: { defs: FieldDef[]; active: number; onKey: Parameters<typeof Keypad>[0]["onKey"]; disabled: boolean; compact: boolean }) {
   const def = defs[active] ?? null;
