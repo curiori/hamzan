@@ -5,7 +5,7 @@ description: Rules for AI coding agents working on the hamzan Expo app
 
 ## Project
 
-ハムざん is a mental-arithmetic training app for children. It is built with Expo SDK 58 and Expo Router and runs on iPhone through Expo Go. The learning engine for stages 0–5 in `src/domain/` comes from a tested web prototype (git tag `web-prototype`). Stages 6–9 (塾の単元: decimals and fractions, units, pi, estimation) live in `src/juku/`, and `src/course/` joins both into one course of 89 levels for the screens and the records. Read `docs/superpowers/specs/` for the design and `docs/superpowers/plans/` for the implementation plans.
+ハムざん is a mental-arithmetic training app for children. It is built with Expo SDK 58 and Expo Router and runs on iPhone through Expo Go. The learning engine in `src/domain/` (`curriculum.json`, stage ids 0–5) comes from a tested web prototype (git tag `web-prototype`). The decimal, pi, unit and estimation stages (stage ids 6–9) have their own engine in `src/juku/` (`juku.json`). `src/course/` joins both into one course of 10 stages and 89 levels; `src/course/course.json` gives its order. Read `docs/superpowers/specs/` for the design and `docs/superpowers/plans/` for the implementation plans.
 
 ## Expo has changed: do not trust your training data
 
@@ -40,7 +40,21 @@ Run typecheck, lint, `bun test`, and the domain tests before declaring any task 
 * Routes live in `src/app/`; every file there is a screen and `_layout.tsx` files define navigators. Keep components, hooks, and logic outside `src/app/`.
 * Import navigation APIs from `expo-router` or `expo-router/react-navigation`, never from `@react-navigation/*`.
 * Do not edit `src/domain/` or `src/domain/curriculum.json`. The domain tests (`bun run test:domain`) must stay green.
-* Stage 6–9 rules live in `src/juku/juku.json` (the same shape as `curriculum.json`, plus `R`, `units` and two mistake types). Screens and records reach levels, problems, sets, targets and mistakes through `src/course/`, never through only one of the two engines. After changing a generator in `src/juku/generators.ts`, run `bun run scripts/calibrate-juku.ts` to recompute `D` in `juku.json`; `bun test` fails when it drifts.
-* Keep every module a test in `tests/` imports free of `react-native` and Expo imports. Today these are `src/domain`, `src/juku`, `src/course`, `src/game`, `src/i18n/ja.ts`, `src/session/requests.ts`, `src/platform/active-clock.ts`, `src/ui/font-scale.ts`, the pure helpers in `src/features` (`play/field-set.ts`, `play/hint-flow.ts`, `play/juku-fields.ts`, `play/juku-hint-flow.ts`, `play/play-queue.ts`, `onboarding/gate.ts`, `onboarding/input-test-flow.ts`, `onboarding/pin-entry.ts`, `parent/dashboard-data.ts`, `parent/juku-data.ts`, `result/result-text.ts`, `room/stage-rules.ts`), and every module in `src/state` except `store.ts`. `src/state/store.ts` is the one state module that reaches the device: it hands AsyncStorage (through `src/platform/storage.ts`) to the store built in `create-store.ts`, and tests build that store with their own storage.
+* The rules of the decimal, pi, unit and estimation stages live in `src/juku/juku.json` (the same shape as `curriculum.json`, plus `R` and two mistake types). Screens and records reach levels, problems, sets, targets, progress, plans and the diagnosis through `src/course/`, never through only one of the two engines. After changing a generator in `src/juku/generators.ts`, run `bun run scripts/calibrate-juku.ts` to recompute `D` in `juku.json`; `bun test` fails when it drifts.
+* Level and stage ids are keys, never numbers to show. The number on screen comes from `levelLabel(id)` and `stageNo(id)` (the position in the course), names from `levelName(id)` and `stageName(id)`, and texts that mention levels go through `displayText()`. Never split an id to get a number.
+* Keep every module a test in `tests/` imports free of `react-native` and Expo imports. Today these are `src/domain`, `src/juku`, `src/course`, `src/game`, `src/i18n/ja.ts`, `src/session/requests.ts`, `src/platform/active-clock.ts`, `src/ui/font-scale.ts`, the pure helpers in `src/features` (`play/field-set.ts`, `play/hint-flow.ts`, `play/juku-fields.ts`, `play/juku-hint-flow.ts`, `play/play-queue.ts`, `onboarding/gate.ts`, `onboarding/input-test-flow.ts`, `onboarding/pin-entry.ts`, `parent/dashboard-data.ts`, `result/result-text.ts`, `room/stage-rules.ts`), and every module in `src/state` except `store.ts`. `src/state/store.ts` is the one state module that reaches the device: it hands AsyncStorage (through `src/platform/storage.ts`) to the store built in `create-store.ts`, and tests build that store with their own storage.
 * Child-facing copy is hiragana-centred Japanese.
-* Records stay on the device (AsyncStorage key `hamzan-ios-v1`).
+* Records stay on the device (AsyncStorage key `hamzan-ios-v1`, persist version 3). Every load runs `reconcileProfile()` (`src/state/reconcile.ts`) on each profile; it never deletes a record, and screens and plans pass over ids the course does not have.
+
+## Changing content
+
+Content ships inside the app, so children who update keep their records. Keep it that way:
+
+* Add a level: put it in its spec and in a stage (`course.json` `stages[].levels`, or the spec stage's `levelIds`), add its id to `levelIdsEverUsed`, give it a child's name in `src/i18n/ja.ts`, and add its generator. A level that lands before where a child already is waits for a 5-problem check after the update.
+* Reorder: change `course.json` only. Prerequisites must stay earlier; `validateCourse()` checks it. Unpractised levels moved before a child are checked like new ones.
+* Rename a level: give it its new id, add `"old": "new"` to `renamedLevels`, and add the new id to `levelIdsEverUsed`. Records move on the next load.
+* Retire a level: remove it from its spec and add its id to `retiredLevels`. Records stay and rewards keep counting it.
+* Stages: use a new number for a new stage and add it to `stageIdsEverUsed`; retire a stage with `retiredStages`. Never reuse an id.
+* Bump `version` in `course.json` with every change to it.
+* Change what is saved: raise the persist `version` in `src/state/create-store.ts`, add a step from the previous version to `src/state/migrate.ts`, and test it with a saved record of the previous version.
+* `bun test` (`tests/course/content.test.ts`) fails when an id disappears without being renamed or retired, when a retired id comes back, or when a new id is not recorded.
