@@ -2,7 +2,7 @@ import { applyCheck } from "@/course/checks";
 import { isCourseLevel, isCourseStage, levelSpec } from "@/course/levels";
 import { addPlacementTime, applyMiniCheck, applyPlacementResult, applyStageCheck } from "@/course/placement";
 import { classifyMistake } from "@/course/problems";
-import { lpAny } from "@/course/progression";
+import { lpAny, practiceTarget } from "@/course/progression";
 import { levelTargetSec, mixedTargetSecAll } from "@/course/timing";
 import { diffDays, type LocalDate } from "@/domain/dates";
 import { judgeSet, starsOf } from "@/domain/judge";
@@ -180,6 +180,8 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
         stageDone: o.stageDone,
         startLevel: o.startLevel,
         startMode: o.startLevel ? lpAny(o.progress, o.startLevel).mode : null,
+        // after an earlier stumble, levels before this one come first
+        startNext: !!o.startLevel && practiceTarget(o.progress, { waiting: o.checks, unlockAll: ctx.unlockAll })?.level.id === o.startLevel,
       };
       partDone = o.stageDone;
       attemptResult = o.passed ? "pass" : "fail";

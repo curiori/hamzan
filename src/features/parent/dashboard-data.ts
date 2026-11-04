@@ -1,5 +1,6 @@
 import { waitingLevels } from "@/course/checks";
 import { ALL_LEVELS, COURSE_ERROR_TYPES, isCourseLevel } from "@/course/levels";
+import { tryInstanceOf } from "@/course/problems";
 import { lpAny } from "@/course/progression";
 import { addDays, diffDays, type LocalDate } from "@/domain/dates";
 import { hasStar2 } from "@/domain/progression";
@@ -33,12 +34,17 @@ export function trendSeries(p: Profile, levelId: string, limit = 20): { date: st
     .map((s) => ({ date: s.date.slice(5), sec: s.perProblemSec, errors: s.errors }));
 }
 
-/** Facts with misses (of levels the course has): most misses first, then the slowest last answer. */
+/** Facts with misses that this version can show (levels of the course, problems it can make again): most misses first, then the slowest last answer. */
 export function weakFactsTop(p: Profile, n = 10): [string, FactStat][] {
-  return Object.entries(p.facts)
+  const out: [string, FactStat][] = [];
+  const sorted = Object.entries(p.facts)
     .filter(([, f]) => f.errors > 0 && isCourseLevel(f.levelId))
-    .sort((a, b) => b[1].errors - a[1].errors || (b[1].lastLatencyMs ?? 0) - (a[1].lastLatencyMs ?? 0))
-    .slice(0, n);
+    .sort((a, b) => b[1].errors - a[1].errors || (b[1].lastLatencyMs ?? 0) - (a[1].lastLatencyMs ?? 0));
+  for (const e of sorted) {
+    if (out.length >= n) break;
+    if (tryInstanceOf(e[1].levelId, e[1].problem)) out.push(e);
+  }
+  return out;
 }
 
 /** Mistakes of the last `days` days by error type (the six of curriculum.json and the two of juku.json); every type is present. */

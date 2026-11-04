@@ -21,9 +21,17 @@ export function startPlacement(grade: number, course: Course = COURSE): Placemen
 
 const finishWith = (st: PlacementState, result: { frontier: string | null; mode: Mode }): PlacementState => ({ ...st, phase: "done", result });
 
-/** after a passed stage: the next stage (course order) the diagnosis has not passed, or the end */
+/**
+ * after a passed stage: the next stage (course order) the diagnosis has not passed, or the end. After a step back,
+ * the end is the pending frontier, once every stage an update put between there and here is checked too.
+ */
 function afterStagePassed(st: PlacementState, stage: number, course: Course): PlacementState {
-  if (st.pendingFrontier) return finishWith(st, { frontier: st.pendingFrontier.levelId, mode: st.pendingFrontier.mode });
+  if (st.pendingFrontier) {
+    const to = posOf(course, course.level[st.pendingFrontier.levelId]?.stage ?? -1);
+    const between = course.stages.slice(posOf(course, stage) + 1, Math.max(0, to)).find((s) => !st.checked.includes(s.id));
+    if (between) return { ...st, stage: between.id, phase: "stageCheck", miniIndex: 0 };
+    return finishWith(st, { frontier: st.pendingFrontier.levelId, mode: st.pendingFrontier.mode });
+  }
   const next = course.stages.slice(posOf(course, stage) + 1).find((s) => !st.passed.includes(s.id));
   if (!next) return finishWith(st, { frontier: null, mode: "S" });
   return { ...st, stage: next.id, phase: "stageCheck", miniIndex: 0 };

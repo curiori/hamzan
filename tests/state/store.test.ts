@@ -251,10 +251,12 @@ describe("app store", () => {
     expect(p?.reviews.map((r) => r.levelId)).toEqual(["pi-table"]);
     expect(p?.sets[0]).toMatchObject({ kind: "check", levelId: "pi-table" });
     expect(p?.sessions[today].plan).toEqual([{ kind: "warmup" }, { kind: "slot", slot: "frontier" }, { kind: "slot", slot: "pending" }]);
-    // the new stages before 受験の技 wait for their check, except the level the child already practised
-    expect(p?.course.checks).toContain("frac-mixed");
-    expect(p?.course.checks).not.toContain("pi-table");
-    expect(p?.course.checks.length).toBe(21);
+    // the new stages before 受験の技 wait for their check, except the level the child already practised and the levels
+    // that need it (they come after it, on the way)
+    expect(p?.course.checks).toEqual([
+      ...["frac-mixed", "frac-reduce", "frac-decimal", "frac-eighths", "frac-percent", "dec-multiply", "dec-divide", "frac-mix"],
+      ...["unit-length-weight", "unit-area", "unit-volume", "unit-time", "unit-speed", "unit-trip", "unit-mix"],
+    ]);
     store.getState().addProfile("いもうと", 3);
     await sleep(10);
     expect(JSON.parse(data.get(STORAGE_KEY) ?? "{}").version).toBe(3);

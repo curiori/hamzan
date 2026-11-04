@@ -101,13 +101,16 @@ describe("hint mode of stages 6–9", () => {
 describe("result words for the check of new levels", () => {
   const base = { kind: "check", levelId: "pi-table", mode: "S", result: null, stars: 0, n: 5, errors: 0, perProblemSec: 1, t2: 3, t3: 2, prevBest: null, events: [], nextMode: null, reviews: [], stageCheck: null, placement: null, challengeBest: null, goalReached: false, newRewards: [], seeds: { lines: [], total: 0, capped: false } } as const;
   test("a pass goes on, a stumble says where to start", () => {
-    const pass = { ...base, check: { levelId: "pi-table", passed: true, stageDone: false, startLevel: null, startMode: null } } as SetSummary;
+    const pass = { ...base, check: { levelId: "pi-table", passed: true, stageDone: false, startLevel: null, startMode: null, startNext: false } } as SetSummary;
     expect(headline(pass)).toEqual({ title: "ごうかく！", good: true });
     expect(resultNotes(pass)[0].text).toBe("つぎの レベルへ");
-    const last = { ...base, check: { levelId: "pi-mix", passed: true, stageDone: true, startLevel: null, startMode: null } } as SetSummary;
+    const last = { ...base, check: { levelId: "pi-mix", passed: true, stageDone: true, startLevel: null, startMode: null, startNext: false } } as SetSummary;
     expect(resultNotes(last)[0].text).toBe("チェック おわり！ つぎは ★3を めざそう");
-    const stumble = { ...base, errors: 1, check: { levelId: "pi-table", passed: false, stageDone: true, startLevel: "pi-table", startMode: "H" } } as SetSummary;
+    const stumble = { ...base, errors: 1, check: { levelId: "pi-table", passed: false, stageDone: true, startLevel: "pi-table", startMode: "H", startNext: true } } as SetSummary;
     expect(headline(stumble).title).toBe("チェック おわり");
     expect(resultNotes(stumble)[0].text).toBe("「3.14の だん」の ヒントから はじめよう");
+    // levels before it in the course come first
+    const later = { ...stumble, check: { ...stumble.check, startNext: false } } as SetSummary;
+    expect(resultNotes(later)[0].text).toBe("「3.14の だん」は あとで ヒントから れんしゅうしよう");
   });
 });

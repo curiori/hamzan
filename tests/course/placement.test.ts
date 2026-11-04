@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { COURSE } from "../../src/course/course";
+import { buildCourse, COURSE, MANIFEST, SOURCES } from "../../src/course/course";
 import { applyMiniCheck, applyPlacementResult, applyStageCheck, miniLevel, startPlacement } from "../../src/course/placement";
 import * as dom from "../../src/domain/placement";
 import { mulberry32 } from "../../src/domain/rng";
@@ -61,6 +61,22 @@ describe("the diagnosis over the one course", () => {
     expect(s.stage).toBe(8);
     s = applyStageCheck(applyStageCheck(s, 0, 1.8, T2, T3), 0, 1.8, T2, T3);
     expect(s.stage).toBe(9);
+  });
+
+  test("a stage an update put between the stage the diagnosis stepped back to and its pending frontier is checked too", () => {
+    let st = startPlacement(3);
+    expect(st.stage).toBe(2);
+    st = applyMiniCheck(applyStageCheck(st, 3, 1.8, T2, T3), 2, 1.8, T2);
+    expect(st).toMatchObject({ stage: 1, pendingFrontier: { levelId: "2-1" } });
+    const pending = st.pendingFrontier;
+    // the update puts the 見積もり stage between stages 1 and 2
+    const inserted = buildCourse({ ...MANIFEST, stages: [0, 1, 9, 2, 3, 4, 6, 8, 7, 5].map((id) => ({ id })) }, SOURCES);
+    const after1 = applyStageCheck(st, 0, 1.8, T2, T3, inserted);
+    expect(after1).toMatchObject({ stage: 9, phase: "stageCheck", pendingFrontier: pending });
+    expect(applyStageCheck(after1, 0, 1.8, T2, T3, inserted).result).toEqual({ frontier: "2-1", mode: pending?.mode });
+    // a miss on the new stage's first level ends the diagnosis there
+    const missed = applyMiniCheck(applyStageCheck(after1, 3, 1.8, T2, T3, inserted), 2, 1.8, T2, inserted);
+    expect(missed.result).toEqual({ frontier: "est-round", mode: inserted.level["est-round"].modes[0] });
   });
 
   test("the result gives ★2 to every level before the frontier in course order", () => {

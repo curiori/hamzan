@@ -50,11 +50,13 @@ Run typecheck, lint, `bun test`, and the domain tests before declaring any task 
 
 Content ships inside the app, so children who update keep their records. Keep it that way:
 
-* Add a level: put it in its spec and in a stage (`course.json` `stages[].levels`, or the spec stage's `levelIds`), add its id to `levelIdsEverUsed`, give it a child's name in `src/i18n/ja.ts`, and add its generator. A level that lands before where a child already is waits for a 5-problem check after the update.
+* Add a level: put it in its spec and in a stage (`course.json` `stages[].levels`, or the spec stage's `levelIds`), add its id to `levelIdsEverUsed` and to `tests/course/shipped-ids.json`, give it a child's name in `src/i18n/ja.ts`, and add its generator. A level that lands before where a child already is waits for a 5-problem check after the update.
 * Reorder: change `course.json` only. Prerequisites must stay earlier; `validateCourse()` checks it. Unpractised levels moved before a child are checked like new ones.
-* Rename a level: give it its new id, add `"old": "new"` to `renamedLevels`, and add the new id to `levelIdsEverUsed`. Records move on the next load.
-* Retire a level: remove it from its spec and add its id to `retiredLevels`. Records stay and rewards keep counting it.
-* Stages: use a new number for a new stage and add it to `stageIdsEverUsed`; retire a stage with `retiredStages`. Never reuse an id.
+* Rename a level of `juku.json`: change the id everywhere it is a key (the level, its stage's `levelIds` and `stageCheck.levels`, other levels' `prerequisites`, `{id}` in texts, `KID_LEVEL_NAME` in `src/i18n/ja.ts`, and the maps in `src/juku/generators.ts`), add `"old": "new"` to `renamedLevels`, and add the new id to `levelIdsEverUsed` and `tests/course/shipped-ids.json`. Records move on the next load, and an `{old}` left in a text still shows the right number.
+* Retire a level: take it out of its stage, of `stageCheck.levels`, of other levels' `prerequisites` and of texts that name it, and add its id to `retiredLevels` and `tests/course/shipped-ids.json`. Records stay and rewards keep counting it.
+* Levels of `curriculum.json` keep their ids, since the file does not change. Retire one only through `stages[].levels` in `course.json`, and only when nothing in `curriculum.json` (stage checks, prerequisites, texts) names it; the tests stop you otherwise.
+* Stages: use a new number for a new stage and add it to `stageIdsEverUsed` and `tests/course/shipped-ids.json`; retire a stage with `retiredStages`. Never reuse an id.
 * Bump `version` in `course.json` with every change to it.
+* Texts that name levels (level examples, mistake remedies) write `{id}` and are shown through `displayText()`. Add a new kind of such text to the list in the "every level a shown text names" test.
 * Change what is saved: raise the persist `version` in `src/state/create-store.ts`, add a step from the previous version to `src/state/migrate.ts`, and test it with a saved record of the previous version.
-* `bun test` (`tests/course/content.test.ts`) fails when an id disappears without being renamed or retired, when a retired id comes back, or when a new id is not recorded.
+* `bun test` (`tests/course/content.test.ts`) fails when an id disappears without being renamed or retired, when a retired id comes back, when a new id is not recorded, when `course.json` drops or changes anything `tests/course/shipped-ids.json` has, or when a shown text names a level the course does not show. Never remove anything from the id lists of `course.json` or from `tests/course/shipped-ids.json`.

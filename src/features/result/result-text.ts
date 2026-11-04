@@ -61,8 +61,11 @@ export function resultNotes(s: SetSummary): { icon: NoteIcon; text: string }[] {
   const notes: { icon: NoteIcon; text: string }[] = [];
   if (s.check) {
     const c = s.check;
-    if (c.startLevel) notes.push({ icon: "next", text: `「${levelName(c.startLevel)}」の ${MODE_LABEL[c.startMode ?? "H"]}から はじめよう` });
-    else if (c.stageDone) notes.push({ icon: "sparkles", text: "チェック おわり！ つぎは ★3を めざそう" });
+    if (c.startLevel) {
+      const name = levelName(c.startLevel);
+      const mode = MODE_LABEL[c.startMode ?? "H"];
+      notes.push({ icon: "next", text: c.startNext ? `「${name}」の ${mode}から はじめよう` : `「${name}」は あとで ${mode}から れんしゅうしよう` });
+    } else if (c.stageDone) notes.push({ icon: "sparkles", text: "チェック おわり！ つぎは ★3を めざそう" });
     else notes.push({ icon: "sparkles", text: "つぎの レベルへ" });
   }
   if (s.events.includes("star2")) notes.push({ icon: "sparkles", text: "つぎの レベルが ひらいたよ" });

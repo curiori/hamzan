@@ -89,9 +89,30 @@ export function buildCourse(m: CourseManifest, sources: CourseSources): Course {
 
 export const COURSE: Course = buildCourse(MANIFEST, SOURCES);
 
+/** the ids of course.json that children's records may hold: never trimmed, so no id is ever given to another level */
+export type ShippedIds = Pick<CourseManifest, "levelIdsEverUsed" | "stageIdsEverUsed" | "renamedLevels" | "retiredLevels" | "retiredStages">;
+
+/**
+ * course.json against a copy of the ids that went out (tests/course/shipped-ids.json): none may leave the lists of
+ * used ids, change where it was renamed to, or stop being retired. Trimming course.json alone then frees no id.
+ */
+export function shippedIdErrors(m: ShippedIds, shipped: ShippedIds): string[] {
+  const errs: string[] = [];
+  const ever = new Set(m.levelIdsEverUsed);
+  for (const id of shipped.levelIdsEverUsed) if (!ever.has(id)) errs.push(`配った ID ${id} が levelIdsEverUsed から消えています`);
+  const everStages = new Set(m.stageIdsEverUsed);
+  for (const id of shipped.stageIdsEverUsed) if (!everStages.has(id)) errs.push(`配ったステージ ${id} が stageIdsEverUsed から消えています`);
+  for (const [from, to] of Object.entries(shipped.renamedLevels))
+    if (!has(m.renamedLevels, from) || m.renamedLevels[from] !== to) errs.push(`配った付け替え ${from} → ${to} が変わっています`);
+  for (const id of shipped.retiredLevels) if (!m.retiredLevels.includes(id)) errs.push(`外したレベル ${id} が retiredLevels から消えています`);
+  for (const id of shipped.retiredStages) if (!m.retiredStages.includes(id)) errs.push(`外したステージ ${id} が retiredStages から消えています`);
+  return errs;
+}
+
 /**
  * What a content change must keep true (tests run it). Every message names the id it is about.
- * Ids are never reused: a renamed or retired id stays out of the course, and levelIdsEverUsed only grows.
+ * Ids are never reused: a renamed or retired id stays out of the course and stays recorded as used, and
+ * levelIdsEverUsed only grows (shippedIdErrors holds it to a copy of the ids that went out).
  */
 export function validateCourse(m: CourseManifest = MANIFEST, sources: CourseSources = SOURCES): string[] {
   const errs: string[] = [];
@@ -154,6 +175,8 @@ export function validateCourse(m: CourseManifest = MANIFEST, sources: CourseSour
 
   const ever = new Set(m.levelIdsEverUsed);
   for (const id of pos.keys()) if (!ever.has(id)) errs.push(`レベル ${id} が levelIdsEverUsed にありません`);
+  for (const id of Object.keys(m.renamedLevels)) if (!ever.has(id)) errs.push(`付け替える前の ID ${id} が levelIdsEverUsed にありません`);
+  for (const id of m.retiredLevels) if (!ever.has(id)) errs.push(`外したレベル ${id} が levelIdsEverUsed にありません`);
   for (const id of ever) {
     const end = has(m.renamedLevels, id) ? follow(m.renamedLevels, id) : id;
     if (end === null || !(pos.has(end) || m.retiredLevels.includes(end)))
@@ -161,6 +184,7 @@ export function validateCourse(m: CourseManifest = MANIFEST, sources: CourseSour
   }
   const everStages = new Set(m.stageIdsEverUsed);
   for (const id of inCourse) if (!everStages.has(id)) errs.push(`ステージ ${id} が stageIdsEverUsed にありません`);
+  for (const id of m.retiredStages) if (!everStages.has(id)) errs.push(`外したステージ ${id} が stageIdsEverUsed にありません`);
   for (const id of everStages) if (!inCourse.has(id) && !m.retiredStages.includes(id)) errs.push(`使ったことのあるステージ ${id} が、コースにも、外したステージにもありません`);
   return errs;
 }

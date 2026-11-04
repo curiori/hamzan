@@ -7,6 +7,7 @@ import { addDays } from "../../src/domain/dates";
 import { freshProgress } from "../../src/domain/progression";
 import { scheduleOnMastery } from "../../src/domain/review";
 import { LEVELS } from "../../src/domain/spec";
+import { resultNotes } from "../../src/features/result/result-text";
 import { levelPlan, nextSessionPlan, partLabel, sessionPartPlan } from "../../src/session/requests";
 import { newProfile, warmupLevels, yesterdaysMisses } from "../../src/state/profile";
 import { reconcileProfile, legacyCourseRecord } from "../../src/state/reconcile";
@@ -32,6 +33,13 @@ function updated(frontier: string): Profile {
   return reconcileProfile(p);
 }
 
+/** a child with every level of the course before `levelId` passed */
+function at(levelId: string): Profile {
+  const p = child();
+  p.progress = Object.fromEntries(COURSE.levels.filter((l) => l.order < COURSE.level[levelId].order).map((l) => [l.id, { ...freshProgress(l), ...star2 }]));
+  return p;
+}
+
 const answered = (levelId: string, n: number, opts: { wrongFirst?: boolean; latencyMs?: number } = {}): ProblemResult[] =>
   buildLevelSet(levelId, n, 5).map((inst, i) => {
     const wrong = !!opts.wrongFirst && i === 0;
@@ -51,7 +59,7 @@ const checkRun = (levelId: string, part: number, opts: Parameters<typeof answere
 
 describe("the check of new levels in today's practice", () => {
   test("a clean check set gives ★2 (not counted for rewards), and the check goes on with the next level of the stage", () => {
-    const p = child();
+    const p = at("pi-table");
     p.course = { ...p.course, checks: ["pi-table", "pi-shift", "unit-length-weight"] };
     p.sessions[DATE] = { plan: [{ kind: "warmup" }, { kind: "check" }, { kind: "slot", slot: "frontier" }], done: 1, goal: false };
     const plan = sessionPartPlan(p.sessions[DATE].plan[1], 1, p, DATE, false);
@@ -60,7 +68,7 @@ describe("the check of new levels in today's practice", () => {
     expect(plan?.req.problems.length).toBe(5);
     const { profile, summary } = recordSet(p, checkRun("pi-table", 1), ctx);
     expect(profile.progress["pi-table"]).toMatchObject({ star2At: DATE, mode: "S", practiced: true });
-    expect(summary.check).toEqual({ levelId: "pi-table", passed: true, stageDone: false, startLevel: null, startMode: null });
+    expect(summary.check).toEqual({ levelId: "pi-table", passed: true, stageDone: false, startLevel: null, startMode: null, startNext: false });
     expect(profile.course.checks).toEqual(["pi-shift", "unit-length-weight"]);
     expect(profile.sessions[DATE].done).toBe(1);
     expect(profile.rewardBaseline?.star2).toBe(1);
@@ -70,14 +78,32 @@ describe("the check of new levels in today's practice", () => {
   });
 
   test("a stumble starts that level at its hint mode and ends today's check; the next stage waits for another day", () => {
-    const p = child();
+    const p = at("pi-table");
     p.course = { ...p.course, checks: ["pi-table", "pi-shift", "unit-length-weight"] };
     p.sessions[DATE] = { plan: [{ kind: "warmup" }, { kind: "check" }, { kind: "slot", slot: "frontier" }], done: 1, goal: false };
     const { profile, summary } = recordSet(p, checkRun("pi-table", 1, { wrongFirst: true }), ctx);
-    expect(summary.check).toEqual({ levelId: "pi-table", passed: false, stageDone: true, startLevel: "pi-table", startMode: "H" });
+    expect(summary.check).toEqual({ levelId: "pi-table", passed: false, stageDone: true, startLevel: "pi-table", startMode: "H", startNext: true });
     expect(profile.course.checks).toEqual(["unit-length-weight"]);
     expect(profile.sessions[DATE].done).toBe(2);
     expect(profile.errors.map((e) => e.levelId)).toEqual(["pi-table"]);
+  });
+
+  test("after a stumble in 小数と分数, later checks skip levels that need it, and a later stumble says that level comes after", () => {
+    let p = updated("5-3");
+    p.sessions[DATE] = { plan: [{ kind: "warmup" }, { kind: "check" }, { kind: "slot", slot: "frontier" }], done: 1, goal: false };
+    expect(sessionPartPlan(p.sessions[DATE].plan[1], 1, p, DATE, false)?.ctx.levelId).toBe("frac-mixed");
+    let r = recordSet(p, checkRun("frac-mixed", 1, { wrongFirst: true }), ctx);
+    expect(r.summary.check).toMatchObject({ startLevel: "frac-mixed", startNext: true });
+    expect(resultNotes(r.summary)[0].text).toBe("「かぶんすうと たいぶんすう」の ヒントから はじめよう");
+    // 3.14 in figures needs 約分, and time needs fractions as decimals: they are met on the way, not checked
+    expect(r.profile.course.checks).toEqual(["pi-table", "pi-shift", "pi-two-digit", "pi-divide", "pi-factor", "unit-length-weight", "unit-area", "unit-volume"]);
+    p = r.profile;
+    const tomorrow = addDays(DATE, 1);
+    p.sessions[tomorrow] = { plan: [{ kind: "warmup" }, { kind: "check" }, { kind: "slot", slot: "frontier" }], done: 1, goal: false };
+    expect(sessionPartPlan(p.sessions[tomorrow].plan[1], 1, p, tomorrow, false)?.ctx.levelId).toBe("pi-table");
+    r = recordSet(p, { ...checkRun("pi-table", 1, { wrongFirst: true }), sessionDate: tomorrow }, { date: tomorrow, now: NOW + 86_400_000 });
+    expect(r.summary.check).toMatchObject({ startLevel: "pi-table", startNext: false });
+    expect(resultNotes(r.summary)[0].text).toBe("「3.14の だん」は あとで ヒントから れんしゅうしよう");
   });
 
   test("an interrupted check changes nothing, and the check goes on next time", () => {

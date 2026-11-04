@@ -73,7 +73,7 @@ bun run export:ios
 * 記録はレベルとステージの ID で残し、画面の番号（ステージ5、レベル5-2 など）は並びの位置から毎回つくります。並びを変えても記録はずれません
 * 記録を読み込むたびに、コースへ合わせ込みます（[src/state/reconcile.ts](src/state/reconcile.ts)）。付け替えた ID は新しい ID に移り、アプリの知らない ID の記録も消さずに残します
 * 子どもの位置より前に新しいレベルが入ると、そのレベルは「チェック待ち」になり、きょうの れんしゅうの最初のメインで、1 日 1 ステージずつ、各レベル 5 問で確かめて始める位置を決めます
-* レベルを足す・並べ替える・付け替える・外すときの手順は [AGENTS.md](AGENTS.md) の「Changing content」にあります。まちがった変更（ID を消す、使い回す、前提がうしろ）は `bun test` が止めます
+* レベルを足す・並べ替える・付け替える・外すときの手順は [AGENTS.md](AGENTS.md) の「Changing content」にあります。まちがった変更（ID を消す、使い回す、前提がうしろ、画面の文がコースにないレベルを書く）は `bun test` が止めます。配った ID は [tests/course/shipped-ids.json](tests/course/shipped-ids.json) にも写してあり、`course.json` だけを削っても止まります
 * 並び順の理由と記録の扱いは、[設計](docs/superpowers/specs/2026-11-04-hamzan-one-course-design.md)にあります
 * 出題のしくみ（`src/juku/generators.ts`）を変えたら、`bun run scripts/calibrate-juku.ts` で `src/juku/juku.json` の書く桁数（D）を計算し直します
 

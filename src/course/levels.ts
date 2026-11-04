@@ -38,19 +38,47 @@ export const stageName = (id: number) => (isCourseStage(id) && KID_STAGE_NAME[id
 
 const isDigit = (c: string | undefined) => c !== undefined && c >= "0" && c <= "9";
 
+const REF = /\{([a-z0-9-]+)\}|(\d+)-(\d+)/g;
+
+/** A level a text names: {id}, or a level id written as numbers (curriculum.json writes "5-1〜5-10の問題"). Dates and decimals are not. */
+function refAt(m: string, braced: string | undefined, at: number, s: string): { id: string; braced: boolean } | null {
+  if (braced !== undefined) return { id: braced, braced: true };
+  const before = s[at - 1];
+  const after = s[at + m.length];
+  if (isDigit(before) || before === "-" || before === "." || isDigit(after) || after === "-") return null;
+  return { id: m, braced: false };
+}
+
+/** the id an {id} names today: renames followed */
+const renamedTo = (id: string, course: Course) => (has(course.renamed, id) ? course.renamed[id] : id);
+
 /**
- * A text as it is shown: {id} becomes the level's number, and a level id written as numbers (curriculum.json writes
- * "5-1〜5-10の問題") becomes its number today. Dates and decimals are left alone.
+ * A text as it is shown: {id} becomes the level's number (after a rename too), and a level id written as numbers
+ * becomes its number today. Dates and decimals are left alone.
  */
 export function displayText(text: string, course: Course = COURSE): string {
   // one pass, so a number put in for {id} is never read again as an id
-  return text.replace(/\{([a-z0-9-]+)\}|(\d+)-(\d+)/g, (m: string, id: string | undefined, _a: string, _b: string, at: number, s: string) => {
-    if (id !== undefined) return isCourseLevel(id, course) ? course.level[id].label : m;
-    const before = s[at - 1];
-    const after = s[at + m.length];
-    if (isDigit(before) || before === "-" || before === "." || isDigit(after) || after === "-") return m;
-    return isCourseLevel(m, course) ? course.level[m].label : m;
+  return text.replace(REF, (m: string, braced: string | undefined, _a: string, _b: string, at: number, s: string) => {
+    const ref = refAt(m, braced, at, s);
+    if (!ref) return m;
+    const id = ref.braced ? renamedTo(ref.id, course) : ref.id;
+    return isCourseLevel(id, course) ? course.level[id].label : m;
   });
+}
+
+/**
+ * What displayText could not show right (tests run it over the shown texts): an {id} that names no level of the
+ * course, or a level written as numbers that the course retired (that number now belongs to another level).
+ */
+export function levelRefErrors(text: string, course: Course = COURSE): string[] {
+  const errs: string[] = [];
+  for (const m of text.matchAll(REF)) {
+    const ref = refAt(m[0], m[1], m.index ?? 0, text);
+    if (!ref) continue;
+    if (ref.braced && !isCourseLevel(renamedTo(ref.id, course), course)) errs.push(`「${text}」の {${ref.id}} はコースのレベルではありません`);
+    else if (!ref.braced && course.retiredLevels.includes(ref.id)) errs.push(`「${text}」の ${ref.id} は外したレベルです`);
+  }
+  return errs;
 }
 
 /** levels whose problems come from src/juku (the other engine is src/domain) */

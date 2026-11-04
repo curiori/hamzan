@@ -2,6 +2,7 @@
 // new version of the saved data. Pure, and the same however often it runs. It never deletes a record: ids this version
 // does not know (a level a newer version added, or one that was retired) stay, and the screens and plans pass over them,
 // so a newer version reading the records again finds everything. See docs/superpowers/specs/2026-11-04-hamzan-one-course-design.md.
+import { openableChecks } from "@/course/checks";
 import { COURSE, type Course } from "@/course/course";
 import { startPlacement, type PlacementState } from "@/course/placement";
 import { hasStar2, type LevelProgress, type ProgressMap } from "@/domain/progression";
@@ -115,7 +116,8 @@ export function reconcileProfile(p: Profile, course: Course = COURSE): Profile {
       if (l.order < boundary && !inQueue.has(l.id) && !star2(l.id) && !progress[l.id]?.practiced) added.push(l.id);
   }
   const queued = new Set([...waiting, ...added]);
-  const checks = [...course.levels.filter((l) => queued.has(l.id) && !star2(l.id)).map((l) => l.id), ...waiting.filter((id) => !known(id))];
+  // levels the check could not open (a prerequisite neither ★2 nor waiting, after a reorder) are met on the way
+  const checks = openableChecks(progress, [...course.levels.filter((l) => queued.has(l.id) && !star2(l.id)).map((l) => l.id), ...waiting.filter((id) => !known(id))], course);
 
   return {
     ...p,

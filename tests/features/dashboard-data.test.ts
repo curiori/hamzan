@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { COURSE } from "@/course/course";
 import { COURSE_ERROR_TYPES } from "@/course/levels";
+import { problemText } from "@/course/problems";
 import type { ErrorTypeId } from "@/domain/errors";
 import type { Problem } from "@/domain/problem";
 import { freshProgress } from "@/domain/progression";
@@ -97,6 +98,11 @@ describe("mistakes", () => {
     // facts of levels this version does not have stay in the records but are not shown
     const gone = { ...p, facts: { ...p.facts, e: { ...f(9, 100), levelId: "future-1" } } };
     expect(weakFactsTop(gone).map(([k]) => k)).toEqual(["b", "c", "a"]);
+    // nor are problems this version cannot make again (a content item an update took away)
+    const removedItem = { ...p, facts: { ...p.facts, x: { ...f(9, 100), levelId: "est-benchmark", problem: { shape: "juku", type: "benchmark", item: "gone-item" } as const } } };
+    const shown = weakFactsTop(removedItem);
+    expect(shown.map(([k]) => k)).toEqual(["b", "c", "a"]);
+    for (const [, fact] of shown) expect(() => problemText(fact.problem)).not.toThrow();
   });
 });
 

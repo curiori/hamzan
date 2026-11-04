@@ -18,6 +18,19 @@ export function nextCheck(map: ProgressMap, checks: readonly string[], course: C
   return first ? { stage: first.stage, levelId: first.id } : null;
 }
 
+/**
+ * The waiting levels the check can still open: a level keeps waiting while each of its prerequisites has ★2 or keeps
+ * waiting itself (prerequisites come earlier in the course, so the check reaches them first). The others leave the
+ * check and are met on the way, after their prerequisites. Ids the course does not have stay.
+ */
+export function openableChecks(map: ProgressMap, checks: readonly string[], course: Course = COURSE): string[] {
+  const ids = new Set(checks);
+  const keep = new Set<string>();
+  for (const l of course.levels)
+    if (ids.has(l.id) && l.prerequisites.every((pid) => !course.level[pid] || keep.has(pid) || hasStar2(lpAny(map, pid, course)))) keep.add(l.id);
+  return checks.filter((id) => !course.level[id] || keep.has(id));
+}
+
 export interface CheckOutcome {
   progress: ProgressMap;
   checks: string[];
@@ -32,8 +45,8 @@ export interface CheckOutcome {
 
 /**
  * One check set (5 problems, speed). No mistake and within T★2: ★2, and the check goes on in the stage. Otherwise
- * the child starts this level (its first mode after mistakes, speed when only slow) and the rest of its stage leaves
- * the check, to be met on the way.
+ * the child starts this level (its first mode after mistakes, speed when only slow), and the rest of its stage and
+ * the waiting levels that need what left leave the check, to be met on the way.
  */
 export function applyCheck(
   map: ProgressMap,
@@ -53,6 +66,10 @@ export function applyCheck(
     return { progress, checks: rest, passed, stageDone: !stageLeft, startLevel: null, star2Given: hasStar2(before) ? 0 : 1 };
   }
   if (!before.practiced) progress[levelId] = { ...before, mode: errors > 0 ? lv.modes[0] : "S" };
-  const rest = checks.filter((id) => id !== levelId && course.level[id]?.stage !== lv.stage);
+  const rest = openableChecks(
+    progress,
+    checks.filter((id) => id !== levelId && course.level[id]?.stage !== lv.stage),
+    course,
+  );
   return { progress, checks: rest, passed, stageDone: true, startLevel: levelId, star2Given: 0 };
 }

@@ -162,8 +162,8 @@ export interface SetSummary {
   reviews: { levelId: string; passed: boolean; demoted: boolean }[];
   stageCheck: { stage: number; passed: boolean } | null;
   placement: PlacementState | null;
-  /** check: the level checked, and where (and in which mode) the child starts when it stumbled */
-  check: { levelId: string; passed: boolean; stageDone: boolean; startLevel: string | null; startMode: Mode | null } | null;
+  /** check: the level checked, where (and in which mode) the child starts when it stumbled, and whether that level comes next in the course */
+  check: { levelId: string; passed: boolean; stageDone: boolean; startLevel: string | null; startMode: Mode | null; startNext: boolean } | null;
   challengeBest: { sec: number | null; isNew: boolean } | null;
   goalReached: boolean;
   newRewards: string[];
