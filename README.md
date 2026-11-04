@@ -1,6 +1,6 @@
 ---
 title: ハムざん
-description: 中学受験向けの暗算トレーニングアプリ（Expo 版。iPhone の Expo Go で動かす）
+description: 中学受験向けの暗算トレーニングアプリ（Expo 版。iPhone と iPad の Expo Go で動かし、家族の端末向けの本番版を EAS で作る）
 ---
 
 ## ハムざんについて
@@ -11,7 +11,7 @@ description: 中学受験向けの暗算トレーニングアプリ（Expo 版�
 
 練習すると、ひまわりの たねが たまります。たねは「ショップ」で、おへやの グッズ、きせかえ、かべがみ・ゆか、おやつと交換できます。「おへや」では、ハムスターが歩き回り、グッズで遊び、夜はベッドやおうちで眠ります。★2 やマスターなどの節目には、ごほうびの グッズも届きます。
 
-保護者の画面（PIN で守られています）では、練習の記録、設定、プロフィール、データの消去を扱います。VoiceOver と大きな文字にも対応しています。
+保護者の画面（PIN で守られています）では、練習の記録、設定、プロフィール、データの消去と、記録の書き出し・読み込みを扱います。VoiceOver と大きな文字にも対応しています。
 
 Web 版のプロトタイプ（タグ `web-prototype`）を、iPhone の Expo Go で動く Expo アプリへ作り替えたものです。設計は [docs/superpowers/specs](docs/superpowers/specs/)、実装計画は [docs/superpowers/plans](docs/superpowers/plans/) にあります。
 
@@ -46,7 +46,7 @@ node node_modules/eslint/bin/eslint.js src tests
 bun run export:ios
 ```
 
-* `bun test` は、記録、たね、ショップ、おへや、ハムスターの動き、効果音、アイコンなどのテストです。小数と分数・円周率・単位・見積もりの 28 レベルの出題、ヒント、判定、ミスの種類と、コースの並び、記録の合わせ込み、新しいレベルのチェックもここで確かめます
+* `bun test` は、記録、たね、ショップ、おへや、ハムスターの動き、効果音、アイコンなどのテストです。小数と分数・円周率・単位・見積もりの 28 レベルの出題、ヒント、判定、ミスの種類と、コースの並び、記録の合わせ込み、新しいレベルのチェック、記録のファイル、ビルドの種類（`app.config.ts` と `eas.json`）もここで確かめます
 * `bun run test:domain` は学習エンジン（ステージ0〜5）のテストです。見本 1,757 問との一致、61 レベルの問題づくり、ヒントの途中式、★の判定などの規則を確かめます。Python 3 があると、添付の Python 参照実装とも突き合わせます
 * `bun run typecheck` は TypeScript の型を、ESLint の行はコードの書き方を確かめます（`bun run lint` でも同じ ESLint が動きます）
 * `bun run export:ios` は、iPhone 用のバンドルが作れることを確かめます
@@ -99,7 +99,7 @@ bun run scripts/make-sounds.ts
 
 ## テスト用の機能
 
-保護者の画面の「テスト用」で、次のことができます。この欄は `app.json` の `expo.extra.enableTestTools` が `true` のときだけ出ます。配布するときは `false` にしてください。
+保護者の画面の「テスト用」で、次のことができます。この欄は Expo Go、web 表示、開発ビルドで出ます。本番ビルド（`eas.json` の `production`、`APP_VARIANT=production`）では出ません。どちらにするかは [app.config.ts](app.config.ts) が決めます。
 
 * アプリの日付を進める（復習、マスター、週 1 回のチャレンジを試せます）
 * すべてのレベルを開放する、診断を短くする、診断をとばして選んだレベルから始める
@@ -108,7 +108,53 @@ bun run scripts/make-sounds.ts
 
 ## 記録
 
-記録は端末の中だけに保存し（AsyncStorage のキー `hamzan-ios-v1`、保存の形は version 3）、外部へは送信しません。Expo Go で練習した記録は Expo Go の中にあるため、あとで App Store で配るアプリを作っても、そちらへは移りません。保存の形を変えるときは、[src/state/migrate.ts](src/state/migrate.ts) に 1 つ前の版からの移行を足します。
+記録は端末の中だけに保存し（AsyncStorage のキー `hamzan-ios-v1`、保存の形は version 3）、外部へは送信しません。保存の形を変えるときは、[src/state/migrate.ts](src/state/migrate.ts) に 1 つ前の版からの移行を足します。
+
+保護者の画面の「データ」で、記録を 1 つのファイルに書き出し、別の端末で読み込めます。ファイルには PIN、すべてのお子さまの記録、選んでいる子が入り、テスト用の設定は入りません。読み込むと、その端末の記録はファイルの記録に置き換わります（確かめの窓が出ます）。ハムざんのものでないファイル、こわれたファイル、新しい版のアプリが書き出したファイルは読み込みません。古い版のファイルは、今の形に移してから読み込みます。
+
+## 本番版を家族の端末に入れる
+
+PC のサーバーなしで遊べる本番版を EAS（Expo のクラウドのビルド）で作り、お子さんの iPhone と iPad に直接入れます（内部配布）。お子さんの Apple アカウントは 13 歳未満の子ども用なので、TestFlight は使いません。
+
+準備（一度だけ）
+
+1. Apple Developer Program に個人で登録します（年 12,800 円。iPhone の Apple Developer アプリから登録できます）。内部配布にはこの登録が要ります
+2. PC で EAS にログインします。Expo Go と同じ Expo のアカウントを使います
+
+   ```bash
+   bunx eas-cli@latest login
+   ```
+
+3. プロジェクトを EAS につなぎます。`app.json` の `expo.extra.eas.projectId` に ID が書かれます。書けなかったと出たときは、表示された ID をそこに書きます。書かれた `app.json` はコミットします
+
+   ```bash
+   bunx eas-cli@latest init
+   ```
+
+4. お子さんの iPhone と iPad を登録します。表示されるリンク（または QR コード）を各端末の Safari で開き、案内に従って設定用のプロファイルを入れます
+
+   ```bash
+   bunx eas-cli@latest device:create
+   ```
+
+ビルドして入れる
+
+1. 本番版を作ります。初めてのときは Apple のアカウントでサインインし、証明書と配布用のプロファイルを EAS に作ってもらいます。ビルドの番号は EAS が上げます
+
+   ```bash
+   bunx eas-cli@latest build --platform ios --profile production
+   ```
+
+2. ビルドが終わると出るリンク（または QR コード）を各端末で開き、アプリを入れます
+3. 初めて開く前に、端末の「設定」→「プライバシーとセキュリティ」→「デベロッパモード」をオンにします（再起動とパスコードが要ります）
+
+記録を移す
+
+1. Expo Go のハムざんで、保護者の画面の「データ」→「記録を書き出す」を押し、AirDrop かファイル App で保存します。iPad と iPhone の記録は別々なので、続けたいほうを書き出します（ファイル名の終わりが `ipad` か `iphone` です）
+2. 本番版の最初の画面で「書き出した記録を読み込む」を押し、そのファイルを選びます。同じファイルを iPhone と iPad の両方で読み込めば、どちらも同じところから始まります
+
+> [!NOTE]
+> 端末を足したときは、`device:create` で登録してから、もう一度ビルドします（配布用のプロファイルに端末が入るため）。アプリ ID は `com.mahori.hamzan` で、最初のビルドのあとは変えません。開発ビルド（`--profile development`、アプリ ID は `com.mahori.hamzan.dev`）は、iCloud 同期の作業で expo-dev-client を入れてから使います。
 
 ## フォルダの中身
 
@@ -123,10 +169,12 @@ bun run scripts/make-sounds.ts
 | src/game/         | たね、ショップ、ごほうび、おへやの置き場所、ハムスターの動きの決め方   |
 | src/session/      | 練習の組み立てと、セットからセットへの進め方                           |
 | src/state/        | 記録と設定（zustand）。端末への保存をつなぐのは store.ts だけ          |
-| src/platform/     | 効果音と振動、読み上げ、保存、時計など、端末とのやりとり              |
+| src/platform/     | 効果音と振動、読み上げ、保存、時計、記録のファイルの受け渡しなど、端末とのやりとり |
 | src/ui/           | ボタンやシートなどの共通部品、色、文字                                 |
 | src/i18n/ja.ts    | 子ども向けのレベル名など                                               |
 | tests/            | `bun test` のテスト。tests/domain は学習エンジンのテストと参照ファイル |
 | scripts/          | 効果音を作るスクリプト、juku.json の D を計算し直すスクリプト           |
 | assets/           | アイコンの元の絵（icon）、画像（images）、効果音（sounds）            |
 | docs/superpowers/ | 設計と実装計画                                                         |
+| app.json          | アプリの設定。ビルドの種類（本番と開発）は app.config.ts が決める      |
+| eas.json          | EAS Build の設定（本番と開発のビルド、内部配布）                       |

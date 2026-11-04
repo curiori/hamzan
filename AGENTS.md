@@ -5,7 +5,7 @@ description: Rules for AI coding agents working on the hamzan Expo app
 
 ## Project
 
-ハムざん is a mental-arithmetic training app for children. It is built with Expo SDK 58 and Expo Router and runs on iPhone through Expo Go. The learning engine in `src/domain/` (`curriculum.json`, stage ids 0–5) comes from a tested web prototype (git tag `web-prototype`). The decimal, pi, unit and estimation stages (stage ids 6–9) have their own engine in `src/juku/` (`juku.json`). `src/course/` joins both into one course of 10 stages and 89 levels; `src/course/course.json` gives its order. Read `docs/superpowers/specs/` for the design and `docs/superpowers/plans/` for the implementation plans.
+ハムざん is a mental-arithmetic training app for children. It is built with Expo SDK 58 and Expo Router. The family plays it on iPhone and iPad through Expo Go; `eas.json` and `app.config.ts` also build an internal (ad hoc) production version for the family's devices once the owner has an Apple Developer account (README, 「本番版を家族の端末に入れる」). The learning engine in `src/domain/` (`curriculum.json`, stage ids 0–5) comes from a tested web prototype (git tag `web-prototype`). The decimal, pi, unit and estimation stages (stage ids 6–9) have their own engine in `src/juku/` (`juku.json`). `src/course/` joins both into one course of 10 stages and 89 levels; `src/course/course.json` gives its order. Read `docs/superpowers/specs/` for the design and `docs/superpowers/plans/` for the implementation plans.
 
 ## Expo has changed: do not trust your training data
 
@@ -31,9 +31,10 @@ bun run lint
 bun test
 bun run test:domain
 bun run export:ios
+APP_VARIANT=production bunx expo config --type public
 ```
 
-Run typecheck, lint, `bun test`, and the domain tests before declaring any task done.
+Run typecheck, lint, `bun test`, and the domain tests before declaring any task done. The last command prints the app config a production build gets (in PowerShell, set `$env:APP_VARIANT = "production"` first).
 
 ## Rules
 
@@ -42,9 +43,12 @@ Run typecheck, lint, `bun test`, and the domain tests before declaring any task 
 * Do not edit `src/domain/` or `src/domain/curriculum.json`. The domain tests (`bun run test:domain`) must stay green.
 * The rules of the decimal, pi, unit and estimation stages live in `src/juku/juku.json` (the same shape as `curriculum.json`, plus `R` and two mistake types). Screens and records reach levels, problems, sets, targets, progress, plans and the diagnosis through `src/course/`, never through only one of the two engines. After changing a generator in `src/juku/generators.ts`, run `bun run scripts/calibrate-juku.ts` to recompute `D` in `juku.json`; `bun test` fails when it drifts.
 * Level and stage ids are keys, never numbers to show. The number on screen comes from `levelLabel(id)` and `stageNo(id)` (the position in the course), names from `levelName(id)` and `stageName(id)`, and texts that mention levels go through `displayText()`. Never split an id to get a number.
-* Keep every module a test in `tests/` imports free of `react-native` and Expo imports. Today these are `src/domain`, `src/juku`, `src/course`, `src/game`, `src/i18n/ja.ts`, `src/session/requests.ts`, `src/platform/active-clock.ts`, `src/ui/font-scale.ts`, the pure helpers in `src/features` (`play/field-set.ts`, `play/hint-flow.ts`, `play/juku-fields.ts`, `play/juku-hint-flow.ts`, `play/play-queue.ts`, `onboarding/gate.ts`, `onboarding/input-test-flow.ts`, `onboarding/pin-entry.ts`, `parent/dashboard-data.ts`, `result/result-text.ts`, `room/stage-rules.ts`), and every module in `src/state` except `store.ts`. `src/state/store.ts` is the one state module that reaches the device: it hands AsyncStorage (through `src/platform/storage.ts`) to the store built in `create-store.ts`, and tests build that store with their own storage.
+* Keep every module a test in `tests/` imports free of `react-native` and Expo imports. Today these are `src/domain`, `src/juku`, `src/course`, `src/game`, `src/i18n/ja.ts`, `src/session/requests.ts`, `src/platform/active-clock.ts`, `src/ui/font-scale.ts`, the pure helpers in `src/features` (`play/field-set.ts`, `play/hint-flow.ts`, `play/juku-fields.ts`, `play/juku-hint-flow.ts`, `play/play-queue.ts`, `onboarding/gate.ts`, `onboarding/input-test-flow.ts`, `onboarding/pin-entry.ts`, `parent/dashboard-data.ts`, `parent/records-text.ts`, `result/result-text.ts`, `room/stage-rules.ts`), and every module in `src/state` except `store.ts`. `src/state/store.ts` is the one state module that reaches the device: it hands AsyncStorage (through `src/platform/storage.ts`) to the store built in `create-store.ts`, and tests build that store with their own storage.
 * Child-facing copy is hiragana-centred Japanese.
-* Records stay on the device (AsyncStorage key `hamzan-ios-v1`, persist version 3). Every load runs `reconcileProfile()` (`src/state/reconcile.ts`) on each profile; it never deletes a record, and screens and plans pass over ids the course does not have.
+* Records stay on the device (AsyncStorage key `hamzan-ios-v1`, persist version `SAVE_VERSION` = 3 in `src/state/migrate.ts`). Every load runs `reconcileProfile()` (`src/state/reconcile.ts`) on each profile; it never deletes a record, and screens and plans pass over ids the course does not have.
+* The parent moves records between devices with a file (`src/state/backup.ts`: `backupText`, `readBackup`). The file holds the PIN, every profile and the active child, never the test settings. Reading refuses other files, damaged files and newer save versions, migrates older ones and reconciles every profile. A file replaces the records only through `replaceRecords` after the parent confirms. Only `src/platform/records-file.ts` touches expo-file-system, expo-sharing and expo-document-picker.
+* Build variants come from `APP_VARIANT` in `app.config.ts`, which the `eas.json` profiles set: `production` has no test tools, `development` sits beside it as `com.mahori.hamzan.dev`, and without a variant (Expo Go, the web preview, `expo export`) the app is set up as `app.json` says, with the test tools. Never put `enableTestTools` in `app.json`, and never change `ios.bundleIdentifier` (`com.mahori.hamzan`) once the first EAS build exists.
+* Do not install `expo-dev-client` before the release design's stage ② (iCloud sync) needs a development build; the family's devices run the app through Expo Go until then.
 
 ## Changing content
 
