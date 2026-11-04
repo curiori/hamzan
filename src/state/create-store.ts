@@ -8,7 +8,7 @@ import { writeChildFrom } from "@/domain/timing";
 import { appendLedger } from "@/game/economy";
 import { placeIn, placeNew, roomGoods, type SlotId } from "@/game/room";
 import { buy, shopItem, type BuyResult } from "@/game/shop";
-import { migrate } from "./migrate";
+import { migrate, SAVE_VERSION } from "./migrate";
 import { hashPin, makeSalt } from "./pin";
 import { reconcileProfile } from "./reconcile";
 import { newProfile, outsideCourse, ownedGoods, placementOutcome, todayOf } from "./profile";
@@ -234,7 +234,7 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
       },
       {
         name: STORAGE_KEY,
-        version: 3,
+        version: SAVE_VERSION,
         storage: createJSONStorage(() => guarded),
         partialize: (s) => ({ pin: s.pin, profiles: s.profiles, activeId: s.activeId, dev: s.dev }),
         // versions 1 and 2 move to 3; data from any other version is left untouched (the read counts as failed)

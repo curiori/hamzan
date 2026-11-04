@@ -9,6 +9,9 @@ import type { Profile } from "./types";
 // counts as failed and nothing overwrites it. After moving, every profile is reconciled with the course
 // (src/state/reconcile.ts), which also runs on every load.
 
+/** the version of the saved data this app writes (the persist version, and the records file's version) */
+export const SAVE_VERSION = 3;
+
 type ProfileV2 = Omit<Profile, "course">;
 type ProfileV1 = Omit<ProfileV2, "wallet" | "inventory" | "room" | "ledger" | "settings"> & { settings: Omit<Profile["settings"], "shop"> };
 
