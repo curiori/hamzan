@@ -1,4 +1,5 @@
-import { hasStar2, lpOf } from "@/domain/progression";
+import { lpAny } from "@/course/progress";
+import { hasStar2 } from "@/domain/progression";
 import { ResultScreen } from "@/features/result/result-screen";
 import { levelPlan } from "@/session/requests";
 import { useSessionRunner } from "@/session/use-session-runner";
@@ -26,7 +27,7 @@ export default function ResultRoute() {
     ? () => {
         const p = activeProfile(useAppStore.getState());
         if (!p) return;
-        const lp = lpOf(p.progress, levelId);
+        const lp = lpAny(p.progress, levelId);
         runner.startPlan(levelPlan(p, levelId, hasStar2(lp) ? "S" : lp.mode, todayOf(dayOffset), "extra"), true);
       }
     : null;

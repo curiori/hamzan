@@ -1,5 +1,5 @@
 import type { SeedLine, SeedLineKind } from "@/game/economy";
-import { MODE_LABEL } from "@/i18n/ja";
+import { KID_LEVEL_NAME, MODE_LABEL } from "@/i18n/ja";
 import type { SetSummary } from "@/state/types";
 
 // Words on the result screen (same rules as the web prototype's result.tsx).
@@ -40,6 +40,8 @@ export function headline(s: SetSummary): { title: string; good: boolean } {
       return { title: s.stageCheck?.passed ? "ステージチェック ごうかく！" : "ステージチェック おわり", good: !!s.stageCheck?.passed };
     case "placement":
       return { title: s.placement?.phase === "done" ? "しんだん おわり！" : "しんだん すすんだよ", good: true };
+    case "juku_check":
+      return { title: s.jukuCheck?.passed ? "ごうかく！" : "チェック おわり", good: true };
     default:
       if (s.events.includes("mastered")) return { title: "マスター！", good: true };
       if (s.result === "retry") return { title: "もう すこし！", good: false };
@@ -56,6 +58,12 @@ export const celebrates = (s: SetSummary) =>
 
 export function resultNotes(s: SetSummary): { icon: NoteIcon; text: string }[] {
   const notes: { icon: NoteIcon; text: string }[] = [];
+  if (s.jukuCheck) {
+    const c = s.jukuCheck;
+    if (c.startLevel) notes.push({ icon: "next", text: `「${KID_LEVEL_NAME[c.startLevel]}」の ${MODE_LABEL[c.startMode ?? "H"]}から はじめよう` });
+    else if (c.unitDone) notes.push({ icon: "sparkles", text: "チェック おわり！ つぎは ★3を めざそう" });
+    else notes.push({ icon: "sparkles", text: "つぎの レベルへ" });
+  }
   if (s.events.includes("star2")) notes.push({ icon: "sparkles", text: "つぎの レベルが ひらいたよ" });
   if (s.events.includes("mastered")) notes.push({ icon: "crown", text: "この レベルを マスター！ ときどき ふくしゅうが でるよ" });
   if (s.nextMode && s.events.includes("modeUp")) notes.push({ icon: "next", text: `つぎは「${MODE_LABEL[s.nextMode]}」で やってみよう` });

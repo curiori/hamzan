@@ -1,7 +1,8 @@
+import { ALL_LEVELS } from "@/course/levels";
+import { instanceOf, type CourseInstance } from "@/course/problems";
+import { lpAny } from "@/course/progress";
 import { addDays, diffDays, toLocalDate, type LocalDate } from "@/domain/dates";
-import { makeInstance } from "@/domain/generators";
-import type { ProblemInstance } from "@/domain/problem";
-import { hasStar2, isMastered, isUnlocked, lpOf, pendingStar3, practiceTarget, type ProgressMap } from "@/domain/progression";
+import { hasStar2, isMastered, isUnlocked, pendingStar3, practiceTarget, type ProgressMap } from "@/domain/progression";
 import { seedOf } from "@/domain/rng";
 import type { StageCheckRecord } from "@/domain/session";
 import { LEVELS, SPEC, STAGES, type Mode } from "@/domain/spec";
@@ -46,10 +47,11 @@ export function newProfile(nickname: string, grade: number, opts: { id?: string;
 }
 
 export function rewardStats(p: Profile): RewardStats {
-  const lps = LEVELS.map((l) => lpOf(p.progress, l.id));
+  // every level of stages 0–9 counts
+  const lps = ALL_LEVELS.map((l) => lpAny(p.progress, l.id));
   const base = p.rewardBaseline ?? { star2: 0, mastered: 0 };
   return {
-    cleanSets: p.sets.filter((s) => s.kind !== "warmup" && s.kind !== "placement" && s.n > 0 && s.errors === 0).length,
+    cleanSets: p.sets.filter((s) => s.kind !== "warmup" && s.kind !== "placement" && s.kind !== "juku_check" && s.n > 0 && s.errors === 0).length,
     star2Levels: Math.max(0, lps.filter(hasStar2).length - base.star2),
     mastered: Math.max(0, lps.filter(isMastered).length - base.mastered),
     goalDays: Object.values(p.sessions).filter((d) => d.goal).length,
@@ -72,7 +74,7 @@ export function ownedWear(p: Profile): string[] {
 
 /** What the diagnosis hands out: earlier levels as ★2, cleared stages, and the reward baseline. */
 export function placementOutcome(applied: { progress: ProgressMap; clearedStages: number[] }, date: LocalDate) {
-  const lps = LEVELS.map((l) => lpOf(applied.progress, l.id));
+  const lps = ALL_LEVELS.map((l) => lpAny(applied.progress, l.id));
   return {
     stageChecks: Object.fromEntries(applied.clearedStages.map((id) => [id, { date, passed: true, byPlacement: true }])) as Record<number, StageCheckRecord>,
     rewardBaseline: { star2: lps.filter(hasStar2).length, mastered: lps.filter(isMastered).length },
@@ -96,17 +98,17 @@ export function setIndexToday(p: Profile, levelId: string, date: LocalDate): num
 
 /** Seed for a level's set: fixed during the first N days of S mode, otherwise hash(profile, level, date, index). */
 export function setSeed(p: Profile, levelId: string, mode: Mode, date: LocalDate): { seed: number; fixed: boolean } {
-  const lp = lpOf(p.progress, levelId);
+  const lp = lpAny(p.progress, levelId);
   const days = SPEC.rules.setGeneration.fixedSetDaysForNewLevelSpeed;
   if (mode === "S" && !hasStar2(lp) && (lp.fixedSetDates.length < days || lp.fixedSetDates.includes(date)))
     return { seed: seedOf(p.id, levelId, "fixed"), fixed: true };
   return { seed: seedOf(p.id, levelId, date, setIndexToday(p, levelId, date)), fixed: false };
 }
 
-/** Problems missed yesterday (warm-up source). */
-export function yesterdaysMisses(p: Profile, date: LocalDate): ProblemInstance[] {
+/** Problems missed yesterday (warm-up source), stage 0–9 alike. */
+export function yesterdaysMisses(p: Profile, date: LocalDate): CourseInstance[] {
   const y = addDays(date, -1);
-  return p.errors.filter((e) => e.date === y).map((e) => makeInstance(e.levelId, e.problem));
+  return p.errors.filter((e) => e.date === y).map((e) => instanceOf(e.levelId, e.problem));
 }
 
 /** Current stage = the stage of today's practice target. */

@@ -1,11 +1,15 @@
 import { useRef, useState, type ReactElement, type ReactNode } from "react";
-import type { Answer, ProblemInstance } from "@/domain/problem";
+import type { CourseAnswer, CourseInstance } from "@/course/problems";
+import type { ProblemInstance } from "@/domain/problem";
+import type { JInstance } from "@/juku/problem";
 import { emptyFields, pressKey, type FieldDef, type FieldSet, type Key } from "./field-set";
 
 export interface SolverResult {
   correct: boolean;
-  given: Answer | null;
+  given: CourseAnswer | null;
   reveal: string;
+  /** a second line under the right answer: what to fix (やくぶん できるよ, 1m²＝10000cm², 1じかんは 60ぷん) */
+  note?: string | null;
 }
 
 /** What a solver shows: the play screen puts the body in the problem card and the keypad below it. */
@@ -17,7 +21,7 @@ export interface SolverParts {
 }
 
 export interface SolverProps {
-  inst: ProblemInstance;
+  inst: CourseInstance;
   autoSubmit: boolean;
   /** a short screen (iPhone SE): smaller hint lines and keys, so the play screen fits without scrolling */
   compact: boolean;
@@ -27,6 +31,11 @@ export interface SolverProps {
   sfx: (k: "ok" | "miss") => void;
   render: (parts: SolverParts) => ReactElement;
 }
+
+/** a solver for stage 0–5 problems (src/domain) */
+export type CoreSolverProps = Omit<SolverProps, "inst"> & { inst: ProblemInstance };
+/** a solver for stage 6–9 problems (src/juku) */
+export type JukuSolverProps = Omit<SolverProps, "inst"> & { inst: JInstance };
 
 /** Fields for one question. A new resetKey starts empty fields; a filled set is sent to onComplete once. */
 export function useFields(defs: FieldDef[], resetKey: string, autoSubmit: boolean, onComplete: (vals: string[]) => void) {

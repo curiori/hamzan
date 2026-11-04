@@ -4,10 +4,13 @@ import { StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import { Hamster } from "@/art/hamster";
 import { Paw } from "@/art/icons";
+import { planDay, type DayPart } from "@/course/day";
+import { jukuOf } from "@/course/progress";
 import { addDays, weekdayOf, type LocalDate } from "@/domain/dates";
-import { planDailySession, resolveSlot, type SessionPart } from "@/domain/session";
+import { resolveSlot } from "@/domain/session";
 import { SPEC } from "@/domain/spec";
 import { KID_LEVEL_NAME, MODE_LABEL } from "@/i18n/ja";
+import { jukuPartLabel } from "@/session/requests";
 import type { Profile } from "@/state/types";
 import { Button } from "@/ui/button";
 import { AppText } from "@/ui/text";
@@ -15,10 +18,13 @@ import { colors, radius } from "@/ui/theme";
 
 const WEEKDAYS = "日月火水木金土";
 
-function partLabel(part: SessionPart, p: Profile, unlockAll: boolean): string {
+function partLabel(part: DayPart, p: Profile, unlockAll: boolean): string {
+  const juku = jukuPartLabel(part, p, unlockAll);
+  if (juku) return juku;
   if (part.kind === "warmup") return "ウォームアップ";
   if (part.kind === "stageCheck") return `ステージチェック（ステージ${part.stage}）`;
   if (part.kind === "review") return `ふくしゅう（${part.levelIds.map((id) => KID_LEVEL_NAME[id]).join("・")}）`;
+  if (part.kind !== "slot") return "メイン";
   const r = resolveSlot(part.slot, p.progress, unlockAll);
   return r ? `${KID_LEVEL_NAME[r.levelId]}（${MODE_LABEL[r.mode]}）` : "メイン";
 }
@@ -41,7 +47,8 @@ function BobbingHamster({ wear, happy }: { wear: string | null; happy: boolean }
 export function TodayCard({ profile, date, unlockAll, onStart }: { profile: Profile; date: LocalDate; unlockAll: boolean; onStart: () => void }) {
   const day = profile.sessions[date];
   const { progress, reviews, stageChecks } = profile;
-  const planned = useMemo(() => planDailySession({ progress, reviews, stageChecks, date, unlockAll }), [progress, reviews, stageChecks, date, unlockAll]);
+  const juku = jukuOf(profile);
+  const planned = useMemo(() => planDay({ progress, reviews, stageChecks, date, unlockAll, juku }), [progress, reviews, stageChecks, date, unlockAll, juku]);
   const plan = day?.plan ?? planned;
   const done = day?.done ?? 0;
   const goal = day?.goal ?? false;

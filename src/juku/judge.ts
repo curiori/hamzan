@@ -46,7 +46,6 @@ export function jJudge(expected: JAnswer, given: JAnswer): { correct: boolean; n
 // ---------------- mistakes ----------------
 /** the answer a child gets by counting an hour as 100 minutes (and a minute as 100 seconds) */
 function hundredAnswer(p: JProblem): JAnswer | null {
-  const hundred = (x: Dec) => x;
   if (p.type === "time") {
     const a = dec(p.a);
     if (p.kind === "hToM" || p.kind === "mToS") return { kind: "dec", v: decText(mulDec(a, decInt(100))) };
@@ -59,7 +58,7 @@ function hundredAnswer(p: JProblem): JAnswer | null {
     const per = (u: "kmh" | "mmin" | "msec") => (u === "kmh" ? 1 : u === "mmin" ? 100 : 10000);
     const mph = mulDec(dec(p.v), decInt(SPEED[p.from].metres * per(p.from)));
     const v = divDec(mph, decInt(SPEED[p.to].metres * per(p.to)));
-    return v ? { kind: "dec", v: decText(hundred(v)) } : null;
+    return v ? { kind: "dec", v: decText(v) } : null;
   }
   if (p.type === "trip" && p.su === "kmh") {
     const hours = shiftDec(decInt(p.mins), -2);
@@ -142,3 +141,17 @@ const jAnswerValue = (p: JProblem) => {
   const a = jAnswer(p);
   return a.kind === "dec" ? a.v : "0";
 };
+
+/** A short line shown under the right answer: the form a fraction needs, the unit fact, or 60 minutes in an hour. */
+export function jRevealNote(inst: JInstance, given: JAnswer | null): string | null {
+  if (!given) return null;
+  const j = jJudge(inst.answer, given);
+  if (j.note) return JUDGE_NOTE_TEXT[j.note];
+  const mistake = jClassifyError(inst, given, 0);
+  if (mistake === "time60") {
+    const p = inst.problem;
+    return p.type === "time" && (p.kind === "mToS" || p.kind === "sToMS") ? "1ぷんは 60びょう" : "1じかんは 60ぷん";
+  }
+  if (mistake === "placeValue") return unitFactFor(inst.problem);
+  return null;
+}

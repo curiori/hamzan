@@ -8,10 +8,10 @@ import { AnswerSolver } from "./answer-solver";
 import { FieldRow } from "./field-box";
 import { defsForAnswer, toAnswer, type FieldDef } from "./field-set";
 import { Keypad } from "./keypad";
-import { useFields, type SolverProps } from "./solver";
+import { useFields, type CoreSolverProps } from "./solver";
 
 /** Memo mode: write the memo numbers, then the answer. Right only when the memo and the answer are both right. */
-export function MemoSolver(props: SolverProps) {
+export function MemoSolver(props: CoreSolverProps) {
   const { inst, autoSubmit, locked, onDone, render } = props;
   const memo = useMemo(() => scaffoldOf(inst.levelId, inst.problem).memo, [inst]);
   const defs = useMemo<FieldDef[]>(

@@ -2,8 +2,45 @@ import { digitsOf, type Answer, type StepValue } from "@/domain/problem";
 
 // Answer fields filled from the on-screen keypad (rules of the web prototype's useFieldSet).
 
-export type FieldDef = { kind: "num" | "bool"; digits: number; label: string; role: "plain" | "q" | "r" };
-export type Key = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "del" | "rem" | "ok" | "o" | "x";
+/**
+ * One answer box. Stage 6–9 answers add: "dec" (a number that may have a decimal point), "choice" (one of the
+ * options, tapped), boxes that are typed to the end by hand (fractions: an unreduced answer can be longer than
+ * the right one), and a unit shown after a box.
+ */
+export type FieldDef = {
+  kind: "num" | "bool" | "dec" | "choice";
+  digits: number;
+  label: string;
+  role: "plain" | "q" | "r" | "whole" | "num" | "den" | "a" | "b";
+  suffix?: string;
+  /** reading of a suffix written in kanji (分 ふん / 分 ぶ) */
+  suffixRuby?: string;
+  manual?: boolean;
+  /** choice: the options; bool: the captions under ○ and × */
+  options?: string[];
+};
+export type Key =
+  | "0"
+  | "1"
+  | "2"
+  | "3"
+  | "4"
+  | "5"
+  | "6"
+  | "7"
+  | "8"
+  | "9"
+  | "del"
+  | "rem"
+  | "ok"
+  | "o"
+  | "x"
+  | "dot"
+  | "next"
+  | "c0"
+  | "c1"
+  | "c2"
+  | "c3";
 export interface FieldSet {
   vals: string[];
   active: number;
@@ -34,7 +71,7 @@ export const emptyFields = (defs: FieldDef[]): FieldSet => ({ vals: defs.map(() 
 /** After typing into field idx: move on when it is full, or send when the last field is full. */
 function apply(defs: FieldDef[], vals: string[], idx: number, autoSubmit: boolean): FieldSet {
   const d = defs[idx];
-  const full = d.kind === "bool" ? !!vals[idx] : autoSubmit && vals[idx].length >= d.digits;
+  const full = d.kind === "bool" || d.kind === "choice" ? !!vals[idx] : !d.manual && autoSubmit && vals[idx].length >= d.digits;
   if (full && idx < defs.length - 1) return { vals, active: idx + 1, done: false };
   return { vals, active: idx, done: full };
 }
@@ -52,7 +89,7 @@ export function pressKey(fs: FieldSet, defs: FieldDef[], key: Key, autoSubmit: b
     }
     return idx > 0 ? { ...fs, active: idx - 1 } : fs;
   }
-  if (key === "rem") return vals[idx] && idx < defs.length - 1 ? { ...fs, active: idx + 1 } : fs;
+  if (key === "rem" || key === "next") return vals[idx] && idx < defs.length - 1 ? { ...fs, active: idx + 1 } : fs;
   if (key === "ok") {
     if (vals.every(Boolean)) return { ...fs, done: true };
     return vals[idx] && idx < defs.length - 1 ? { ...fs, active: idx + 1 } : fs;
@@ -61,7 +98,18 @@ export function pressKey(fs: FieldSet, defs: FieldDef[], key: Key, autoSubmit: b
     vals[idx] = key === "o" ? "○" : "×";
     return apply(defs, vals, idx, autoSubmit);
   }
-  if (/^\d$/.test(key) && d.kind === "num") {
+  if (/^c\d$/.test(key) && d.kind === "choice") {
+    if (Number(key[1]) >= (d.options?.length ?? 0)) return fs;
+    vals[idx] = key[1];
+    return apply(defs, vals, idx, autoSubmit);
+  }
+  // a point is typed once, after a 0 when it comes first; it never sends the field by itself
+  if (key === "dot" && d.kind === "dec") {
+    if (vals[idx].includes(".") || vals[idx].length >= MAX_LEN - 1) return fs;
+    vals[idx] = `${vals[idx] || "0"}.`;
+    return { vals, active: idx, done: false };
+  }
+  if (/^\d$/.test(key) && (d.kind === "num" || d.kind === "dec")) {
     vals[idx] = (vals[idx] + key).slice(0, MAX_LEN);
     return apply(defs, vals, idx, autoSubmit);
   }

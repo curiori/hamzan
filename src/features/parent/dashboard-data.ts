@@ -1,13 +1,14 @@
+import { ALL_LEVELS, COURSE_ERROR_TYPES } from "@/course/levels";
 import { addDays, diffDays, type LocalDate } from "@/domain/dates";
 import { statusOf } from "@/domain/progression";
-import { ERROR_TYPES, LEVEL, LEVELS, SPEC, type LevelSpec } from "@/domain/spec";
+import { LEVEL, LEVELS, SPEC, type LevelSpec } from "@/domain/spec";
 import { SHOP } from "@/game/shop";
 import type { FactStat, Profile } from "@/state/types";
 
 // Numbers behind the parent dashboard (same rules as the web prototype's Dashboard).
 
-/** a finished speed set outside the diagnosis: what the speed trend is drawn from */
-const isTrendRecord = (s: Profile["sets"][number]) => s.mode === "S" && s.kind !== "placement" && s.result !== "interrupted";
+/** a finished speed set outside the diagnosis and the starting checks: what the speed trend is drawn from */
+const isTrendRecord = (s: Profile["sets"][number]) => s.mode === "S" && s.kind !== "placement" && s.kind !== "juku_check" && s.result !== "interrupted";
 
 /** The last `weeks` weeks ending on `date`, oldest first. */
 export function calendarDays(p: Profile, date: LocalDate, weeks = 5): { date: LocalDate; goal: boolean; practiced: boolean }[] {
@@ -19,8 +20,8 @@ export function calendarDays(p: Profile, date: LocalDate, weeks = 5): { date: Lo
   });
 }
 
-/** Levels with a speed trend to show, in curriculum order. */
-export const speedLevels = (p: Profile): LevelSpec[] => LEVELS.filter((l) => p.sets.some((s) => s.levelId === l.id && isTrendRecord(s)));
+/** Levels with a speed trend to show, in curriculum order (stages 0–9). */
+export const speedLevels = (p: Profile): LevelSpec[] => ALL_LEVELS.filter((l) => p.sets.some((s) => s.levelId === l.id && isTrendRecord(s)));
 
 /** Seconds per problem of the last speed sets of a level (interrupted and diagnosis sets left out). */
 export function trendSeries(p: Profile, levelId: string, limit = 20): { date: string; sec: number; errors: number }[] {
@@ -38,9 +39,9 @@ export function weakFactsTop(p: Profile, n = 10): [string, FactStat][] {
     .slice(0, n);
 }
 
-/** Mistakes of the last `days` days by error type; every type is present. */
+/** Mistakes of the last `days` days by error type (the six of stages 0–5 and the two of stages 6–9); every type is present. */
 export function errorCounts(p: Profile, date: LocalDate, days = 30): Record<string, number> {
-  const counts: Record<string, number> = Object.fromEntries(ERROR_TYPES.map((t) => [t.id, 0]));
+  const counts: Record<string, number> = Object.fromEntries(COURSE_ERROR_TYPES.map((t) => [t.id, 0]));
   for (const e of p.errors) if (diffDays(date, e.date) < days && e.type in counts) counts[e.type] += 1;
   return counts;
 }

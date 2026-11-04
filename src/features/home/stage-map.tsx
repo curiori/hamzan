@@ -3,9 +3,11 @@ import { memo } from "react";
 import { Pressable, StyleSheet, View, type ViewStyle } from "react-native";
 import { Hamster } from "@/art/hamster";
 import { Crown } from "@/art/icons";
-import { frontier, lpOf, pendingStar3, statusOf, type LevelStatus } from "@/domain/progression";
-import { LEVELS, STAGES } from "@/domain/spec";
+import { ALL_LEVELS, ALL_STAGES, isJukuStage } from "@/course/levels";
+import { jukuOf, levelStatus, lpAny } from "@/course/progress";
+import { frontier, pendingStar3, type LevelStatus } from "@/domain/progression";
 import { KID_LEVEL_NAME, KID_STAGE_NAME, MODE_LABEL } from "@/i18n/ja";
+import { jukuFrontier, openLevels } from "@/juku/track";
 import type { Profile } from "@/state/types";
 import { Stars } from "@/ui/stars";
 import { AppText } from "@/ui/text";
@@ -35,6 +37,7 @@ const LevelTile = memo(function LevelTile({
   stars,
   mode,
   front,
+  hamster,
   pending,
   wear,
   onOpen,
@@ -43,7 +46,10 @@ const LevelTile = memo(function LevelTile({
   status: LevelStatus;
   stars: number;
   mode: string;
+  /** a level the child is moving on with (stages 0–5, or an opened 塾の単元) */
   front: boolean;
+  /** the hamster sits on the stage 0–5 frontier only */
+  hamster: boolean;
   pending: boolean;
   wear: string | null;
   onOpen: (id: string) => void;
@@ -82,7 +88,7 @@ const LevelTile = memo(function LevelTile({
           </View>
         </View>
       </Pressable>
-      {front ? (
+      {hamster ? (
         <View style={styles.frontHamster} pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
           <Hamster wear={wear} size={36} />
         </View>
@@ -91,11 +97,15 @@ const LevelTile = memo(function LevelTile({
   );
 });
 
-/** Every stage with its levels; tapping a level opens its sheet. */
+/** Every stage with its levels; tapping a level opens its sheet. Stages 6–9 open with the parent's 塾の単元. */
 export function StageMap({ profile, unlockAll, onOpen }: { profile: Profile; unlockAll: boolean; onOpen: (levelId: string) => void }) {
+  const juku = jukuOf(profile);
   const fr = frontier(profile.progress, unlockAll);
+  const jfr = jukuFrontier(profile.progress, juku);
   const pend = pendingStar3(profile.progress);
-  const mastered = LEVELS.filter((l) => statusOf(profile.progress, l.id) === "mastered").length;
+  const status = (id: string) => levelStatus(profile.progress, juku, id, unlockAll);
+  const mastered = ALL_LEVELS.filter((l) => status(l.id) === "mastered").length;
+  const opened = new Set(openLevels(juku).map((l) => l.id));
 
   return (
     <View style={styles.root}>
@@ -104,13 +114,14 @@ export function StageMap({ profile, unlockAll, onOpen }: { profile: Profile; unl
           ステージの ちず
         </AppText>
         <AppText weight="bold" style={styles.count}>
-          マスター {mastered} / {LEVELS.length}
+          マスター {mastered} / {ALL_LEVELS.length}
         </AppText>
       </View>
-      {STAGES.map((st) => {
-        const levels = LEVELS.filter((l) => l.stage === st.id);
-        const passed = levels.filter((l) => passedStatus(statusOf(profile.progress, l.id))).length;
+      {ALL_STAGES.map((st) => {
+        const levels = ALL_LEVELS.filter((l) => l.stage === st.id);
+        const passed = levels.filter((l) => passedStatus(status(l.id))).length;
         const check = profile.stageChecks[st.id];
+        const waiting = isJukuStage(st.id) && !unlockAll && !levels.some((l) => opened.has(l.id) || status(l.id) !== "locked");
         return (
           <View key={st.id} style={styles.stage}>
             <View style={styles.stageHead}>
@@ -127,18 +138,24 @@ export function StageMap({ profile, unlockAll, onOpen }: { profile: Profile; unl
                   ★2いじょう {passed}/{levels.length}
                 </AppText>
               </View>
+              {waiting ? (
+                <AppText weight="bold" style={styles.waiting}>
+                  おうちの ひとが ひらくと はじまるよ
+                </AppText>
+              ) : null}
             </View>
             <View style={styles.grid}>
               {levels.map((l) => {
-                const lp = lpOf(profile.progress, l.id);
+                const lp = lpAny(profile.progress, l.id);
                 return (
                   <LevelTile
                     key={l.id}
                     id={l.id}
-                    status={statusOf(profile.progress, l.id, unlockAll)}
+                    status={status(l.id)}
                     stars={lp.bestStars}
                     mode={MODE_LABEL[lp.mode]}
-                    front={fr?.id === l.id}
+                    front={fr?.id === l.id || jfr?.id === l.id}
+                    hamster={fr?.id === l.id}
                     pending={pend?.id === l.id}
                     wear={profile.wearing}
                     onOpen={onOpen}
@@ -164,6 +181,7 @@ const styles = StyleSheet.create({
   stageMeta: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 },
   passed: { fontSize: 12, color: colors.green900, backgroundColor: colors.green100, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: "hidden" },
   small: { fontSize: 12, fontVariant: ["tabular-nums"] },
+  waiting: { fontSize: 12, color: colors.mutedForeground },
   grid: { marginTop: 10, flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 8 },
   ring: { width: "49%", borderRadius: radius.lg + 4, borderWidth: 3, borderColor: "transparent" },
   ringFront: { borderColor: "rgba(141,89,1,0.4)" },

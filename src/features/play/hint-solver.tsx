@@ -9,7 +9,7 @@ import { FieldRow } from "./field-box";
 import { defsForAnswer, toStep } from "./field-set";
 import { activeStep, expectedStep, initHint, submitHintStep } from "./hint-flow";
 import { Keypad } from "./keypad";
-import { useFields, type SolverProps } from "./solver";
+import { useFields, type CoreSolverProps } from "./solver";
 import { Visual } from "./visuals";
 
 const RULE_CARD = ["2・5は いちのくらい", "4は したの 2けた", "8は したの 3けた", "3・9は かくくらいの かずを たす", "6は 2と 3の りょうほう"];
@@ -18,7 +18,7 @@ const LINE_SIZE = 22;
 const LINE_SIZE_COMPACT = 20;
 
 /** Hint mode: fill the hint blanks one by one. Levels without hint steps show a picture and allow a second try. */
-export function HintSolver(props: SolverProps) {
+export function HintSolver(props: CoreSolverProps) {
   const { inst, autoSubmit, compact, locked, onDone, sfx, render } = props;
   const sc = useMemo(() => scaffoldOf(inst.levelId, inst.problem), [inst]);
   const lines = useMemo(() => hintLines(inst.levelId, inst.problem), [inst]);

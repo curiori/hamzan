@@ -1,8 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { lpOf, statusOf } from "@/domain/progression";
-import { LEVEL, SPEC, type Mode } from "@/domain/spec";
+import { isJukuLevel, levelSpec } from "@/course/levels";
+import { jukuOf, levelStatus, lpAny } from "@/course/progress";
+import { SPEC, type Mode } from "@/domain/spec";
 import { KID_LEVEL_NAME, MODE_LABEL } from "@/i18n/ja";
 import type { Profile } from "@/state/types";
 import { Button } from "@/ui/button";
@@ -30,9 +31,10 @@ export function LevelSheet({
   // a closing sheet slides down with the level it showed; it takes no presses and VoiceOver skips it
   const shownId = useKept(levelId);
   const closing = !levelId;
-  const sel = shownId ? LEVEL[shownId] : null;
-  const lp = sel ? lpOf(profile.progress, sel.id) : null;
-  const status = sel ? statusOf(profile.progress, sel.id, unlockAll) : null;
+  const sel = shownId ? levelSpec(shownId) : null;
+  const juku = jukuOf(profile);
+  const lp = sel ? lpAny(profile.progress, sel.id) : null;
+  const status = sel ? levelStatus(profile.progress, juku, sel.id, unlockAll) : null;
   const masteryDays = SPEC.rules.stars.mastery.star3OnDistinctLocalDates;
 
   return (
@@ -83,11 +85,12 @@ export function LevelSheet({
                 <View style={styles.locked}>
                   <Ionicons name="lock-closed" size={16} color={colors.foreground} />
                   <AppText weight="bold" style={styles.lockedText}>
-                    {sel.prerequisites
-                      .filter((id) => !["star2", "mastered"].includes(statusOf(profile.progress, id)))
-                      .map((id) => KID_LEVEL_NAME[id])
-                      .join("・")}
-                    で ★2を とると ひらくよ
+                    {isJukuLevel(sel.id)
+                      ? "おうちの ひとが ひらくと れんしゅう できるよ"
+                      : `${sel.prerequisites
+                          .filter((id) => !["star2", "mastered"].includes(levelStatus(profile.progress, juku, id)))
+                          .map((id) => KID_LEVEL_NAME[id])
+                          .join("・")}で ★2を とると ひらくよ`}
                   </AppText>
                 </View>
               ) : (

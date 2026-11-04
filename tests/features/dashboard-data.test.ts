@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { COURSE_ERROR_TYPES } from "@/course/levels";
 import type { ErrorTypeId } from "@/domain/errors";
 import type { Problem } from "@/domain/problem";
 import { ERROR_TYPES } from "@/domain/spec";
@@ -71,7 +72,10 @@ describe("mistakes", () => {
     expect(c.carry).toBe(2);
     expect(c.fact).toBe(0);
     expect(c.remainder).toBe(1);
-    expect(Object.keys(c).sort()).toEqual(ERROR_TYPES.map((t) => t.id).sort());
+    // the six types of stages 0–5 and the two of stages 6–9, every one present
+    expect(Object.keys(c).sort()).toEqual(COURSE_ERROR_TYPES.map((t) => t.id).sort());
+    expect(Object.keys(c)).toEqual(expect.arrayContaining([...ERROR_TYPES.map((t) => t.id), "reduce", "time60"]));
+    expect([c.reduce, c.time60]).toEqual([0, 0]);
   });
   test("weakFactsTop sorts facts with misses by misses, then by the last time", () => {
     const f = (errors: number, lastLatencyMs: number | null): FactStat => ({

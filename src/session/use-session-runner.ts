@@ -62,6 +62,7 @@ export function useSessionRunner() {
         sessionDate: ctx.sessionDate,
         stage: ctx.stage,
         placementPhase: ctx.placementPhase,
+        unitId: ctx.unitId,
         activeSec: o.activeSec,
       });
       usePlayStore.getState().showResult(summary, ctx);

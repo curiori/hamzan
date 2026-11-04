@@ -1,11 +1,11 @@
-import type { Answer, ProblemInstance } from "@/domain/problem";
+import type { CourseAnswer, CourseInstance } from "@/course/problems";
 import type { ProblemResult } from "@/state/types";
 
 // The order of problems in one set: a wrong first answer is asked again at the end (not in warm-ups);
 // only first answers are recorded (rules.stars.retry).
 
 export interface QueueItem {
-  inst: ProblemInstance;
+  inst: CourseInstance;
   requeue: boolean;
 }
 
@@ -15,11 +15,11 @@ export interface PlayQueue {
   results: ProblemResult[];
 }
 
-export const initQueue = (problems: ProblemInstance[]): PlayQueue => ({ items: problems.map((inst) => ({ inst, requeue: false })), pos: 0, results: [] });
+export const initQueue = (problems: CourseInstance[]): PlayQueue => ({ items: problems.map((inst) => ({ inst, requeue: false })), pos: 0, results: [] });
 
 export const currentItem = (q: PlayQueue): QueueItem | null => q.items[q.pos] ?? null;
 
-export function answerCurrent(q: PlayQueue, r: { correct: boolean; given: Answer | null; latencyMs: number }, warm: boolean): PlayQueue {
+export function answerCurrent(q: PlayQueue, r: { correct: boolean; given: CourseAnswer | null; latencyMs: number }, warm: boolean): PlayQueue {
   const item = currentItem(q);
   if (!item || item.requeue) return q;
   const results = [...q.results, { inst: item.inst, correct: r.correct, given: r.given, latencyMs: r.latencyMs }];

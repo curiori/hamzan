@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "re
 import Animated, { FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Hamster, type Mood } from "@/art/hamster";
+import { isJukuInstance } from "@/course/problems";
 import { RULE_NUMBERS, type Mode } from "@/domain/spec";
 import { commitItem, createClock, isInterrupted, liveMs, pauseFor, resumeFor, startItem, warmupLeftMs, type ClockState } from "@/platform/active-clock";
 import { cue, preloadCues } from "@/platform/feedback";
@@ -19,6 +20,8 @@ import { AppText } from "@/ui/text";
 import { colors, MAX_FONT_SCALE, radius } from "@/ui/theme";
 import { AnswerSolver } from "./answer-solver";
 import { HintSolver } from "./hint-solver";
+import { JukuProblemText, jukuFontSize } from "./juku-problem-text";
+import { JukuAnswerSolver, JukuHintSolver, JukuMemoSolver } from "./juku-solvers";
 import { MemoSolver } from "./memo-solver";
 import { advance, answerCurrent, currentItem, initQueue, isFinished, type PlayQueue } from "./play-queue";
 import { problemFontSize, ProblemText } from "./problem-text";
@@ -89,6 +92,7 @@ export function PlayScreen({
   const [queue, setQueue] = useState<PlayQueue>(() => initQueue(req.problems));
   const [phase, setPhase] = useState<Phase>("ask");
   const [reveal, setReveal] = useState("");
+  const [revealNote, setRevealNote] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
   const [now, setNow] = useState(clockNow);
   // one clock per screen (an argument to useRef would be built again on every render)
@@ -155,10 +159,11 @@ export function PlayScreen({
         setQueue(next);
         setPhase("ask");
       },
-      phase === "right" ? 450 : Math.max(1, RULE_NUMBERS.revealSec) * 1000 + 300,
+      // a rule under the answer (やくぶん できるよ, 1m²＝10000cm²) gets one more second to be read
+      phase === "right" ? 450 : (Math.max(1, RULE_NUMBERS.revealSec) + (revealNote ? 1 : 0)) * 1000 + 300,
     );
     return () => clearTimeout(id);
-  }, [phase, paused, queue, finish]);
+  }, [phase, paused, queue, finish, revealNote]);
 
   const hx = useSharedValue(0);
   const hy = useSharedValue(0);
@@ -181,6 +186,7 @@ export function PlayScreen({
     } else {
       sfx("miss");
       setReveal(r.reveal);
+      setRevealNote(r.note ?? null);
       setPhase("wrong");
     }
   };
@@ -224,7 +230,10 @@ export function PlayScreen({
   const mode: Mode = item.requeue ? "S" : req.mode;
   // short usable height (iPhone SE 647pt, mini 728pt): every hint level must fit without scrolling
   const compact = height - insets.top - insets.bottom < 740;
-  const textSize = problemFontSize(item.inst.problem) - (mode === "H" && compact ? 8 : 0);
+  const shown = item.inst;
+  const juku = isJukuInstance(shown);
+  const baseSize = isJukuInstance(shown) ? jukuFontSize(shown.problem) : problemFontSize(shown.problem);
+  const textSize = baseSize - (mode === "H" && compact ? (juku ? 4 : 8) : 0);
 
   const layout = ({ body, keypad, note }: SolverParts): ReactElement => (
     <View style={[styles.root, { paddingTop: insets.top + 6, paddingBottom: Math.max(insets.bottom, 10) }]}>
@@ -269,8 +278,8 @@ export function PlayScreen({
               さっきの もんだいを もういちど
             </AppText>
           ) : null}
-          <Animated.View entering={reduce ? undefined : FadeIn.duration(150)}>
-            <ProblemText inst={item.inst} hint={mode === "H"} size={textSize} />
+          <Animated.View entering={reduce ? undefined : FadeIn.duration(150)} style={juku ? styles.jukuProblem : null}>
+            {isJukuInstance(item.inst) ? <JukuProblemText inst={item.inst} size={textSize} /> : <ProblemText inst={item.inst} hint={mode === "H"} size={textSize} />}
           </Animated.View>
           <View style={[styles.body, compact && styles.bodyCompact]}>{body}</View>
           <View style={[styles.feedback, compact && styles.feedbackCompact]}>
@@ -289,10 +298,17 @@ export function PlayScreen({
             ) : null}
             {phase === "wrong" ? (
               <View style={styles.wrongBox} accessibilityLiveRegion="polite">
-                <Ionicons name="close" size={22} color={colors.red800} />
-                <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.wrongText}>
-                  こたえは {reveal}
-                </AppText>
+                <View style={styles.wrongLine}>
+                  <Ionicons name="close" size={22} color={colors.red800} />
+                  <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.wrongText}>
+                    こたえは {reveal}
+                  </AppText>
+                </View>
+                {revealNote ? (
+                  <AppText weight="bold" maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.wrongNote}>
+                    {revealNote}
+                  </AppText>
+                ) : null}
               </View>
             ) : null}
           </View>
@@ -327,11 +343,17 @@ export function PlayScreen({
     </View>
   );
 
-  const solverProps = { inst: item.inst, autoSubmit: settings.autoSubmit, compact, locked: phase !== "ask" || paused, onDone, sfx, render: layout };
+  const solverProps = { autoSubmit: settings.autoSubmit, compact, locked: phase !== "ask" || paused, onDone, sfx, render: layout };
   // a new solver per position; pausing keeps it mounted, so a revealed hint stays revealed
-  if (mode === "H") return <HintSolver key={`solver-${queue.pos}`} {...solverProps} />;
-  if (mode === "M") return <MemoSolver key={`solver-${queue.pos}`} {...solverProps} />;
-  return <AnswerSolver key={`solver-${queue.pos}`} {...solverProps} />;
+  const key = `solver-${queue.pos}`;
+  if (isJukuInstance(item.inst)) {
+    if (mode === "H") return <JukuHintSolver key={key} inst={item.inst} {...solverProps} />;
+    if (mode === "M") return <JukuMemoSolver key={key} inst={item.inst} {...solverProps} />;
+    return <JukuAnswerSolver key={key} inst={item.inst} {...solverProps} />;
+  }
+  if (mode === "H") return <HintSolver key={key} inst={item.inst} {...solverProps} />;
+  if (mode === "M") return <MemoSolver key={key} inst={item.inst} {...solverProps} />;
+  return <AnswerSolver key={key} inst={item.inst} {...solverProps} />;
 }
 
 const styles = StyleSheet.create({
@@ -361,8 +383,11 @@ const styles = StyleSheet.create({
   note: { fontSize: 17, textAlign: "center", color: colors.orange800 },
   rightRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   rightText: { fontSize: 22, color: colors.green700 },
-  wrongBox: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: colors.red50, borderRadius: radius.lg, paddingHorizontal: 14, paddingVertical: 6 },
+  wrongBox: { alignItems: "center", justifyContent: "center", gap: 2, backgroundColor: colors.red50, borderRadius: radius.lg, paddingHorizontal: 14, paddingVertical: 6 },
+  wrongLine: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 6 },
   wrongText: { fontSize: 19, color: colors.red800, flexShrink: 1 },
+  wrongNote: { fontSize: 15, color: colors.red800, textAlign: "center" },
+  jukuProblem: { alignSelf: "stretch" },
   hamster: { position: "absolute", top: -34, right: 14 },
   pauseCover: { ...StyleSheet.absoluteFill, borderRadius: radius.xl, backgroundColor: colors.card, alignItems: "center", justifyContent: "center", gap: 14 },
   pauseText: { fontSize: 22 },

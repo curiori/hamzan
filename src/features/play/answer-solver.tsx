@@ -3,10 +3,10 @@ import { answerText, sameAnswer } from "@/domain/problem";
 import { FieldRow } from "./field-box";
 import { defsForAnswer, toAnswer } from "./field-set";
 import { Keypad } from "./keypad";
-import { useFields, type SolverProps } from "./solver";
+import { useFields, type CoreSolverProps } from "./solver";
 
 /** Speed mode, warm-ups and checks: the answer only. tries 2 gives a second go (hint mode without hint steps). */
-export function AnswerSolver({ inst, autoSubmit, compact, locked, onDone, sfx, render, tries = 1, before }: SolverProps & { tries?: number; before?: ReactNode }) {
+export function AnswerSolver({ inst, autoSubmit, compact, locked, onDone, sfx, render, tries = 1, before }: CoreSolverProps & { tries?: number; before?: ReactNode }) {
   const defs = useMemo(() => defsForAnswer(inst.answer), [inst]);
   const [attempt, setAttempt] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);

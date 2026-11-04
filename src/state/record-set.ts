@@ -1,14 +1,17 @@
+import { isJukuLevel, isJukuStage, levelSpec } from "@/course/levels";
+import { classifyMistake } from "@/course/problems";
+import { jukuEntries, jukuOf, lpAny } from "@/course/progress";
+import { levelTargetSec, mixedTargetSecAll } from "@/course/timing";
 import { diffDays, type LocalDate } from "@/domain/dates";
-import { classifyError } from "@/domain/errors";
 import { judgeSet, starsOf } from "@/domain/judge";
 import { addPlacementTime, applyMiniCheck, applyPlacementResult, applyStageCheck } from "@/domain/placement";
-import { applySetResult, demote, hasStar2, isMastered, lpOf } from "@/domain/progression";
+import { applySetResult, demote, hasStar2, isMastered } from "@/domain/progression";
 import { applyReview, scheduleOnMastery } from "@/domain/review";
-import { LEVEL, RULE_NUMBERS, SPEC } from "@/domain/spec";
-import { mixedTargetSec, targetSec } from "@/domain/timing";
+import { RULE_NUMBERS, SPEC } from "@/domain/spec";
 import { REWARDS, unlockedRewards } from "@/game/achievements";
 import { appendLedger, awardSeeds } from "@/game/economy";
 import { GOOD_KIND, placeNew, roomGoods } from "@/game/room";
+import { applyCheck } from "@/juku/track";
 import { sessionPartPlan } from "@/session/requests";
 import { ownedGoods, placementOutcome, rewardStats, timeOpts } from "./profile";
 import type { Profile, ProblemResult, SetAttempt, SetRun, SetSummary } from "./types";
@@ -38,8 +41,8 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
   const errors = run.results.filter((r) => !r.correct).length;
   const perProblemSec = n ? round2(run.results.reduce((a, r) => a + r.latencyMs, 0) / n / 1000) : 0;
   const ids = run.results.map((r) => r.inst.levelId);
-  const t2 = run.levelId ? targetSec(LEVEL[run.levelId], 2, opts) : mixedTargetSec(ids, 2, opts);
-  const t3 = run.levelId ? targetSec(LEVEL[run.levelId], 3, opts) : mixedTargetSec(ids, 3, opts);
+  const t2 = run.levelId ? levelTargetSec(run.levelId, 2, opts) : mixedTargetSecAll(ids, 2, opts);
+  const t3 = run.levelId ? levelTargetSec(run.levelId, 3, opts) : mixedTargetSecAll(ids, 3, opts);
 
   // facts and mistakes
   const win = SPEC.rules.setGeneration.weakFactWindowDays;
@@ -48,7 +51,7 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
     const prev = p.facts[k];
     const errorDates = (prev?.errorDates ?? []).filter((d) => diffDays(date, d) < win);
     if (!r.correct) errorDates.push(date);
-    const slow = run.mode === "S" && run.kind !== "warmup" && r.latencyMs / 1000 > targetSec(LEVEL[r.inst.levelId], 2, opts);
+    const slow = run.mode === "S" && run.kind !== "warmup" && r.latencyMs / 1000 > levelTargetSec(r.inst.levelId, 2, opts);
     p.facts[k] = {
       levelId: r.inst.levelId,
       problem: r.inst.problem,
@@ -61,7 +64,7 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
       lastSeen: date,
     };
     if (!r.correct && r.given)
-      p.errors.push({ date, levelId: r.inst.levelId, factKey: k, type: classifyError(r.inst, r.given, errorDates.length), problem: r.inst.problem });
+      p.errors.push({ date, levelId: r.inst.levelId, factKey: k, type: classifyMistake(r.inst, r.given, errorDates.length), problem: r.inst.problem });
   }
   const factKeys = Object.keys(p.facts);
   if (factKeys.length > MAX_FACTS)
@@ -81,23 +84,26 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
     perProblemSec,
     t2,
     t3,
-    prevBest: run.levelId ? lpOf(p0.progress, run.levelId).personalBestSec : null,
+    prevBest: run.levelId ? lpAny(p0.progress, run.levelId).personalBestSec : null,
     events: [],
     nextMode: null,
     reviews: [],
     stageCheck: null,
     placement: null,
+    jukuCheck: null,
     challengeBest: null,
     goalReached: false,
     newRewards: [],
     seeds: { lines: [], total: 0, capped: false },
   };
   let attemptResult: SetAttempt["result"] = "done";
+  /** a starting check of a 塾の単元 ends today's juku part only when the unit's check ends */
+  let partDone = true;
 
   if ((run.kind === "main" || run.kind === "extra") && run.levelId) {
-    const lv = LEVEL[run.levelId];
+    const lv = levelSpec(run.levelId);
     const result = judgeSet({ firstCorrect: run.results.map((r) => r.correct), perProblemSec, t2, t3, timed: run.mode === "S", interrupted: run.interrupted });
-    const before = lpOf(p.progress, run.levelId);
+    const before = lpAny(p.progress, run.levelId);
     const out = applySetResult(before, lv, { result, mode: run.mode, errors, perProblemSec, t2, date, fixedSet: run.fixedSet });
     p.progress[run.levelId] = out.progress;
     if (out.events.includes("mastered")) {
@@ -115,10 +121,10 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
       const item = p.reviews.find((r) => r.levelId === levelId);
       if (!item || run.interrupted) continue;
       const sec = rs.reduce((a, r) => a + r.latencyMs, 0) / rs.length / 1000;
-      const passed = rs.every((r) => r.correct) && sec <= targetSec(LEVEL[levelId], 2, opts);
+      const passed = rs.every((r) => r.correct) && sec <= levelTargetSec(levelId, 2, opts);
       const out = applyReview(item, passed, date);
       p.reviews = p.reviews.filter((r) => r.levelId !== levelId).concat(out.item ? [out.item] : []);
-      if (out.demoted) p.progress[levelId] = demote(lpOf(p.progress, levelId));
+      if (out.demoted) p.progress[levelId] = demote(lpAny(p.progress, levelId));
       summary.reviews.push({ levelId, passed, demoted: out.demoted });
     }
     attemptResult = run.interrupted ? "interrupted" : summary.reviews.every((r) => r.passed) ? "pass" : "fail";
@@ -130,8 +136,8 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
       run.results.filter((r) => !r.correct).forEach((r) => misses.set(r.inst.levelId, (misses.get(r.inst.levelId) ?? 0) + 1));
       const max = Math.max(0, ...misses.values());
       for (const [levelId, m] of misses)
-        if (m === max && hasStar2(lpOf(p.progress, levelId)) && !isMastered(lpOf(p.progress, levelId)))
-          p.progress[levelId] = { ...lpOf(p.progress, levelId), priority: true };
+        if (m === max && hasStar2(lpAny(p.progress, levelId)) && !isMastered(lpAny(p.progress, levelId)))
+          p.progress[levelId] = { ...lpAny(p.progress, levelId), priority: true };
     }
     summary.stageCheck = { stage: run.stage, passed };
     attemptResult = passed ? "pass" : "fail";
@@ -141,10 +147,11 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
     st = addPlacementTime(st, date, run.activeSec);
     if (st.phase === "done") {
       const applied = applyPlacementResult(st, date);
-      p.progress = applied.progress;
-      p.reviews = applied.reviews;
+      // the diagnosis writes stages 0–5 only; whatever the child has in 塾の単元 stays
+      p.progress = { ...jukuEntries(p.progress), ...applied.progress };
+      p.reviews = [...applied.reviews, ...p.reviews.filter((r) => isJukuLevel(r.levelId))];
       const outcome = placementOutcome(applied, date);
-      p.stageChecks = outcome.stageChecks;
+      p.stageChecks = { ...Object.fromEntries(Object.entries(p.stageChecks).filter(([s]) => isJukuStage(Number(s)))), ...outcome.stageChecks };
       p.rewardBaseline = outcome.rewardBaseline;
       p.placementDone = true;
     }
@@ -154,6 +161,28 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
   } else if (run.kind === "placement" && p.placement) {
     p.placement = addPlacementTime(p.placement, date, run.activeSec);
     summary.placement = p.placement;
+  } else if (run.kind === "juku_check" && run.levelId && run.unitId) {
+    if (run.interrupted) {
+      partDone = false;
+    } else {
+      const o = applyCheck(p.progress, jukuOf(p), { unitId: run.unitId, levelId: run.levelId, errors, perProblemSec, t2, date });
+      p.progress = o.progress;
+      p.juku = o.juku;
+      // ★2 from a check is a starting point, not an achievement (like the diagnosis)
+      if (o.star2Given) {
+        const base = p.rewardBaseline ?? { star2: 0, mastered: 0 };
+        p.rewardBaseline = { ...base, star2: base.star2 + o.star2Given };
+      }
+      summary.jukuCheck = {
+        levelId: run.levelId,
+        passed: o.passed,
+        unitDone: o.unitDone,
+        startLevel: o.startLevel,
+        startMode: o.startLevel ? lpAny(o.progress, o.startLevel).mode : null,
+      };
+      partDone = o.unitDone;
+      attemptResult = o.passed ? "pass" : "fail";
+    }
   } else if (run.kind === "challenge") {
     const isNew = !run.interrupted && errors === 0 && (p.challenge.bestSec === null || perProblemSec < p.challenge.bestSec);
     p.challenge = { lastDate: date, bestSec: isNew ? perProblemSec : p.challenge.bestSec };
@@ -161,7 +190,7 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
   }
   if (run.interrupted) attemptResult = "interrupted";
 
-  if (run.sessionPart !== undefined) {
+  if (run.sessionPart !== undefined && partDone) {
     const day = run.sessionDate ?? date;
     const d = p.sessions[day];
     if (d) {
@@ -213,7 +242,7 @@ export function recordSet(p0: Profile, run: SetRun, ctx: { date: LocalDate; now:
       interrupted: run.interrupted,
       firstCorrect: n - errors,
       levelId: run.levelId,
-      levelMasteredBefore: run.levelId ? isMastered(lpOf(p0.progress, run.levelId)) : false,
+      levelMasteredBefore: run.levelId ? isMastered(lpAny(p0.progress, run.levelId)) : false,
       events: summary.events,
       reviewsPassed: summary.reviews.filter((r) => r.passed).length,
       stageCheckPassed: !!summary.stageCheck?.passed,

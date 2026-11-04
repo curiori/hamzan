@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
-import { challengeAvailable } from "@/domain/session";
+import { challengeOpen } from "@/course/progress";
 import { LevelSheet } from "@/features/home/level-sheet";
 import { StageMap } from "@/features/home/stage-map";
 import { ChallengeCard, TodayCard } from "@/features/home/today-card";
@@ -23,7 +23,7 @@ export default function MapScreen() {
     <>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
         <TodayCard profile={profile} date={date} unlockAll={unlockAll} onStart={() => runner.startNextPart()} />
-        {challengeAvailable(profile.progress, profile.challenge.lastDate, date) ? (
+        {challengeOpen(profile.progress, profile.challenge.lastDate, date) ? (
           <ChallengeCard bestSec={profile.challenge.bestSec} onStart={() => runner.startPlan(challengePlan(profile, date))} />
         ) : null}
         <StageMap profile={profile} unlockAll={unlockAll} onOpen={setOpenLevel} />

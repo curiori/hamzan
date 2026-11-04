@@ -1,18 +1,21 @@
+import type { CourseErrorTypeId } from "@/course/levels";
+import type { DayPart } from "@/course/day";
+import type { CourseAnswer, CourseInstance, CourseProblem } from "@/course/problems";
 import type { LocalDate } from "@/domain/dates";
-import type { ErrorTypeId } from "@/domain/errors";
 import type { SetResult } from "@/domain/judge";
 import type { PlacementState } from "@/domain/placement";
-import type { Answer, Problem, ProblemInstance } from "@/domain/problem";
 import type { ProgressEvent, ProgressMap } from "@/domain/progression";
 import type { ReviewItem } from "@/domain/review";
-import type { SessionPart, StageCheckRecord } from "@/domain/session";
+import type { StageCheckRecord } from "@/domain/session";
 import type { Coeffs, Mode } from "@/domain/spec";
 import type { LedgerEntry, SeedLine, Wallet } from "@/game/economy";
 import type { RoomLayout } from "@/game/room";
+import type { JukuState } from "@/juku/track";
 
 // Everything is stored on this device only (C-1). One record per child profile.
 
-export type SetKind = "main" | "extra" | "review" | "warmup" | "placement" | "stage_check" | "challenge";
+/** juku_check: the 5-problem starting check of a 塾の単元 level */
+export type SetKind = "main" | "extra" | "review" | "warmup" | "placement" | "stage_check" | "challenge" | "juku_check";
 
 export interface Settings {
   timer: boolean;
@@ -54,7 +57,7 @@ export interface SetAttempt {
 
 export interface FactStat {
   levelId: string;
-  problem: Problem;
+  problem: CourseProblem;
   attempts: number;
   errors: number;
   errorDates: LocalDate[];
@@ -68,12 +71,12 @@ export interface ErrorRecord {
   date: LocalDate;
   levelId: string;
   factKey: string;
-  type: ErrorTypeId;
-  problem: Problem;
+  type: CourseErrorTypeId;
+  problem: CourseProblem;
 }
 
 export interface SessionDay {
-  plan: SessionPart[];
+  plan: DayPart[];
   done: number;
   goal: boolean;
 }
@@ -106,13 +109,15 @@ export interface Profile {
   room: RoomSetup;
   /** seed movements, newest last, at most MAX_LEDGER */
   ledger: LedgerEntry[];
+  /** 塾の単元 the parent opened and their starting checks (missing in older saves: none opened) */
+  juku?: JukuState;
 }
 
 export interface ProblemResult {
-  inst: ProblemInstance;
+  inst: CourseInstance;
   /** first answer correct (H: no blank had to be revealed; M: memo and answer right) */
   correct: boolean;
-  given: Answer | null;
+  given: CourseAnswer | null;
   latencyMs: number;
 }
 
@@ -128,6 +133,8 @@ export interface SetRun {
   sessionDate?: LocalDate;
   stage?: number;
   placementPhase?: "stageCheck" | "mini";
+  /** juku_check: the unit whose starting check this set belongs to */
+  unitId?: string;
   activeSec: number;
 }
 
@@ -148,6 +155,8 @@ export interface SetSummary {
   reviews: { levelId: string; passed: boolean; demoted: boolean }[];
   stageCheck: { stage: number; passed: boolean } | null;
   placement: PlacementState | null;
+  /** juku_check: the level checked, and where (and in which mode) the child starts when it stumbled */
+  jukuCheck: { levelId: string; passed: boolean; unitDone: boolean; startLevel: string | null; startMode: Mode | null } | null;
   challengeBest: { sec: number | null; isNew: boolean } | null;
   goalReached: boolean;
   newRewards: string[];

@@ -1,12 +1,14 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
 import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import { ALL_STAGES, COURSE_ERROR_TYPES, levelSpec, remedyAddendum } from "@/course/levels";
+import { problemText } from "@/course/problems";
+import { jukuOf, levelStatus, lpAny } from "@/course/progress";
+import { levelTargetSec } from "@/course/timing";
 import { weekdayOf } from "@/domain/dates";
-import { display } from "@/domain/problem";
-import { lpOf, statusOf } from "@/domain/progression";
-import { ERROR_TYPES, LEVEL, SPEC, STAGES } from "@/domain/spec";
-import { targetSec } from "@/domain/timing";
+import { SPEC } from "@/domain/spec";
 import { MODE_LABEL } from "@/i18n/ja";
+import { jukuActive } from "@/juku/track";
 import { timeOpts, todayOf } from "@/state/profile";
 import { useAppStore } from "@/state/store";
 import type { Profile } from "@/state/types";
@@ -32,8 +34,10 @@ export function Dashboard({ p }: { p: Profile }) {
   const [openStage, setOpenStage] = useState<number | null>(() => openStageId(p));
   const lvId = levels.some((l) => l.id === trendLevel) ? (trendLevel as string) : (levels[levels.length - 1]?.id ?? "");
   const trend = lvId ? trendSeries(p, lvId) : [];
-  const t2 = lvId ? targetSec(LEVEL[lvId], 2, opts) : 0;
-  const t3 = lvId ? targetSec(LEVEL[lvId], 3, opts) : 0;
+  const t2 = lvId ? levelTargetSec(lvId, 2, opts) : 0;
+  const t3 = lvId ? levelTargetSec(lvId, 3, opts) : 0;
+  const juku = jukuOf(p);
+  const status = (id: string) => levelStatus(p.progress, juku, id);
   const days = calendarDays(p, date);
   const weak = weakFactsTop(p);
   const counts = errorCounts(p, date);
@@ -102,10 +106,10 @@ export function Dashboard({ p }: { p: Profile }) {
       </Section>
 
       <Section title="ステージ・レベルの進み具合">
-        {STAGES.map((st) => {
+        {ALL_STAGES.map((st) => {
           const open = openStage === st.id;
           const check = p.stageChecks[st.id];
-          const n = st.levelIds.filter((id) => passed(statusOf(p.progress, id))).length;
+          const n = st.levelIds.filter((id) => passed(status(id))).length;
           return (
             <View key={st.id} style={styles.stage}>
               <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpenStage(open ? null : st.id)} style={styles.stageHead}>
@@ -119,20 +123,20 @@ export function Dashboard({ p }: { p: Profile }) {
               </Pressable>
               {open
                 ? st.levelIds.map((id) => {
-                    const lp = lpOf(p.progress, id);
+                    const lp = lpAny(p.progress, id);
                     return (
                       <View key={id} style={styles.levelRow}>
                         <View style={styles.levelLine}>
                           <AppText weight="bold" style={styles.levelName}>
-                            {id} {LEVEL[id].name}
+                            {id} {levelSpec(id).name}
                           </AppText>
                           <AppText weight="bold" style={styles.levelStatus}>
-                            {STATUS_JA[statusOf(p.progress, id)]}
+                            {STATUS_JA[status(id)]}
                           </AppText>
                         </View>
                         <AppText style={styles.small}>
-                          {MODE_LABEL[lp.mode]}・自己ベスト {lp.personalBestSec !== null ? `${lp.personalBestSec.toFixed(1)}秒` : "—"}・目安 ★2 {targetSec(LEVEL[id], 2, opts).toFixed(1)} / ★3{" "}
-                          {targetSec(LEVEL[id], 3, opts).toFixed(1)}秒
+                          {MODE_LABEL[lp.mode]}・自己ベスト {lp.personalBestSec !== null ? `${lp.personalBestSec.toFixed(1)}秒` : "—"}・目安 ★2 {levelTargetSec(id, 2, opts).toFixed(1)} / ★3{" "}
+                          {levelTargetSec(id, 3, opts).toFixed(1)}秒
                         </AppText>
                       </View>
                     );
@@ -148,7 +152,7 @@ export function Dashboard({ p }: { p: Profile }) {
           weak.map(([k, f]) => (
             <View key={k} style={styles.tableRow}>
               <AppText weight="bold" style={styles.cellWide}>
-                {display(f.problem)}
+                {problemText(f.problem)}
               </AppText>
               <AppText style={styles.cell}>{f.levelId}</AppText>
               <AppText style={styles.cellNum}>
@@ -163,17 +167,23 @@ export function Dashboard({ p }: { p: Profile }) {
       </Section>
 
       <Section title="ミスの種類と直し方（直近30日）">
-        {ERROR_TYPES.map((t) => (
-          <View key={t.id} style={[styles.errorType, counts[t.id] === 0 && styles.faded]}>
-            <View style={styles.levelLine}>
-              <AppText weight="bold">{t.name}</AppText>
-              <AppText weight="bold" style={styles.num}>
-                {counts[t.id]}件
+        {COURSE_ERROR_TYPES.map((t) => {
+          const more = jukuActive(juku) ? remedyAddendum(t.id) : null;
+          return (
+            <View key={t.id} style={[styles.errorType, counts[t.id] === 0 && styles.faded]}>
+              <View style={styles.levelLine}>
+                <AppText weight="bold">{t.name}</AppText>
+                <AppText weight="bold" style={styles.num}>
+                  {counts[t.id]}件
+                </AppText>
+              </View>
+              <AppText style={styles.small}>
+                直し方：{t.remedy}
+                {more ? `。${more}` : ""}
               </AppText>
             </View>
-            <AppText style={styles.small}>直し方：{t.remedy}</AppText>
-          </View>
-        ))}
+          );
+        })}
       </Section>
 
       <Section title="1問あたりの秒の推移（スピードモード）">
@@ -185,7 +195,7 @@ export function Dashboard({ p }: { p: Profile }) {
               ))}
             </View>
             <AppText style={styles.body}>
-              {lvId} {LEVEL[lvId].name}：直近{trend.length}セット。目安 ★2 {t2.toFixed(1)}秒・★3 {t3.toFixed(1)}秒（点線）
+              {lvId} {levelSpec(lvId).name}：直近{trend.length}セット。目安 ★2 {t2.toFixed(1)}秒・★3 {t3.toFixed(1)}秒（点線）
             </AppText>
             <TrendChart data={trend} t2={t2} t3={t3} width={Math.min(width - 64, 560)} />
             {trend.slice(-6).map((r, i) => (
