@@ -1,12 +1,14 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { StyleSheet, View } from "react-native";
 import { Hamster } from "@/art/hamster";
+import { useRecordsTransfer } from "@/features/parent/records-transfer";
 import { Button } from "@/ui/button";
 import { AppText } from "@/ui/text";
 import { colors } from "@/ui/theme";
 
-/** First screen for the parent: what the practice is and where the records stay. */
+/** First screen for the parent: what the practice is and where the records stay, or records written out elsewhere to read in. */
 export function Intro({ onNext }: { onNext: () => void }) {
+  const transfer = useRecordsTransfer();
   return (
     <View style={styles.root}>
       <View style={styles.head}>
@@ -27,6 +29,19 @@ export function Intro({ onNext }: { onNext: () => void }) {
         <AppText style={styles.pointText}>設定・記録の削除・保護者向けの画面は、4桁のPINの奥にあります。</AppText>
       </View>
       <Button size="lg" label="PINを決める" icon={<Ionicons name="arrow-forward" size={20} color={colors.primaryForeground} />} onPress={onNext} />
+      {/* records written out in Expo Go or on another device: the screens move on by themselves once they are in */}
+      <Button
+        variant="outline"
+        label="書き出した記録を読み込む"
+        icon={<Ionicons name="download-outline" size={18} color={colors.foreground} />}
+        disabled={transfer.busy}
+        onPress={() => void transfer.importFile()}
+      />
+      {transfer.message ? (
+        <AppText weight="bold" accessibilityLiveRegion="polite" style={styles.message}>
+          {transfer.message}
+        </AppText>
+      ) : null}
     </View>
   );
 }
@@ -38,4 +53,5 @@ const styles = StyleSheet.create({
   body: { fontSize: 15, lineHeight: 24 },
   point: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
   pointText: { flex: 1, fontSize: 14, lineHeight: 21 },
+  message: { fontSize: 14, lineHeight: 21, color: colors.red700 },
 });

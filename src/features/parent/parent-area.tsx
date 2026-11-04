@@ -40,7 +40,7 @@ function Info() {
         {SPEC.title}（仕様 v{SPEC.specVersion}）と、{JSPEC.title}（仕様 v{JSPEC.specVersion}）を1本のコースにしています。あわせて{ALL_LEVELS.length}レベル・{ALL_STAGES.length}ステージ（コースの版 {COURSE.version}）
       </AppText>
       <AppText weight="bold">データの保存</AppText>
-      <AppText style={styles.body}>この端末の中だけに保存します。外部への送信、広告、分析ツールはありません。</AppText>
+      <AppText style={styles.body}>この端末の中に保存します。保護者の画面の「データ」から、ファイルに書き出して別の端末へ移せます。外部への送信、広告、分析ツールはありません。</AppText>
       <AppText weight="bold">課金</AppText>
       <AppText style={styles.body}>課金の仕組みはありません。すべてのステージと機能を使えます。</AppText>
       <AppText weight="bold">バージョン</AppText>
@@ -145,7 +145,7 @@ export function ParentArea({ onExit }: { onExit: () => void }) {
             />
           ) : null}
           {pane === "profiles" ? <ProfilesPane /> : null}
-          {pane === "data" ? <DataPane /> : null}
+          {pane === "data" ? <DataPane onImported={onExit} /> : null}
           {pane === "test" && TEST_TOOLS ? <TestPane onExit={onExit} /> : null}
           {pane === "info" ? <Info /> : null}
         </View>

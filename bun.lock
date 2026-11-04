@@ -11,11 +11,14 @@
         "expo-asset": "~58.0.18",
         "expo-audio": "~58.0.10",
         "expo-constants": "~58.0.13",
+        "expo-document-picker": "~58.0.4",
+        "expo-file-system": "~58.0.11",
         "expo-font": "~58.0.10",
         "expo-haptics": "~58.0.7",
         "expo-keep-awake": "~58.0.3",
         "expo-linking": "~58.0.14",
         "expo-router": "~58.0.26",
+        "expo-sharing": "~58.0.20",
         "expo-splash-screen": "~58.0.11",
         "expo-status-bar": "~58.0.4",
         "expo-system-ui": "~58.0.6",
@@ -766,6 +769,8 @@
 
     "expo-constants": ["expo-constants@58.0.13", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/expo-constants/-/expo-constants-58.0.13.tgz", { "dependencies": { "@expo/env": "~2.5.3", "@expo/require-utils": "^58.0.4" }, "peerDependencies": { "expo": "*", "react-native": "*" } }, "sha512-zUj1rcnYg0O2wKF9L32ToEtFujc5OkslZJ4lWeg+fEwoPMLVwldn6kdEkX8zx31KgSwF94Ey1mIFdFX8Brp73Q=="],
 
+    "expo-document-picker": ["expo-document-picker@58.0.4", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/expo-document-picker/-/expo-document-picker-58.0.4.tgz", { "peerDependencies": { "expo": "*" } }, "sha512-rxs+9RrpI55/BEGNB/3sXjoBG6yZDLyn6Z7KzjbbBLdX8bE2cZT4IozQ3Q5wufaEEeaHQn48EgPiuMoTsAidpg=="],
+
     "expo-file-system": ["expo-file-system@58.0.11", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/expo-file-system/-/expo-file-system-58.0.11.tgz", { "peerDependencies": { "expo": "*", "react-native": "*" } }, "sha512-accVZyXeA8RYUNk52ydkcHPnQaYMVJWlWvdF8pU0xLvt7ZPbaOgGzbgbeyTswjlsKSTmrAsKos4prx0PVM4ERA=="],
 
     "expo-font": ["expo-font@58.0.10", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/expo-font/-/expo-font-58.0.10.tgz", { "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "sha512-13orvRCiXg3EuirjMznWTKwFzhKHvtHRkUdgbvolbkyA1+EAbYDpp7LJMnvDnbTFU/m8Kb5awvOiaGzPYQ/ojg=="],
@@ -791,6 +796,8 @@
     "expo-router": ["expo-router@58.0.26", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/expo-router/-/expo-router-58.0.26.tgz", { "dependencies": { "@expo/log-box": "^58.0.13", "@expo/metro-runtime": "^58.0.15", "@expo/schema-utils": "^58.0.2", "@radix-ui/react-slot": "^1.2.0", "@radix-ui/react-tabs": "^1.1.12", "@react-native-masked-view/masked-view": "^0.3.2", "@react-native/normalize-colors": "0.88.0", "client-only": "^0.0.1", "expo-glass-effect": "^58.0.5", "expo-server": "^58.0.6", "expo-status-bar": "^58.0.4", "nanoid": "^3.3.18", "react-fast-compare": "^3.2.2", "react-is": "^19.1.0", "react-native-drawer-layout": "^4.2.12", "react-native-screens": "^4.30.0 || ^5.0.0-alpha.3", "server-only": "^0.0.1", "sf-symbols-typescript": "^2.1.0", "standard-navigation": "^0.0.5" }, "peerDependencies": { "@expo/ui": "^58.0.23", "@testing-library/react-native": ">= 14.0.0", "expo": "*", "expo-constants": "^58.0.13", "expo-linking": "^58.0.14", "expo-symbols": "^58.0.4", "react": "*", "react-dom": "*", "react-native": "*", "react-native-gesture-handler": "*", "react-native-reanimated": "*", "react-native-safe-area-context": ">= 5.4.0", "react-native-web": "*", "react-native-worklets": "*", "react-server-dom-webpack": "~19.0.4 || ~19.1.5 || ~19.2.4 || ~19.3.0" }, "optionalPeers": ["@expo/ui", "@testing-library/react-native", "expo-symbols", "react-dom", "react-native-gesture-handler", "react-native-reanimated", "react-native-web", "react-native-worklets", "react-server-dom-webpack"] }, "sha512-NaiGYRmAiwsRLeGLU4yEMeEDHzF1W8rOu1LKjpNgfVEWkPNlpqVjyXzgkPErg7xosQUBs33Dik3uKtz5PpDSUw=="],
 
     "expo-server": ["expo-server@58.0.6", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/expo-server/-/expo-server-58.0.6.tgz", {}, "sha512-6DBlSZwxk3J0y1j2s4XebAWNiwGaMp32NcWX7b2kJC2+EFf1g+pCcVmx8ylawt2tyLmbDHswm4MHOfrd4bqfvA=="],
+
+    "expo-sharing": ["expo-sharing@58.0.20", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/expo-sharing/-/expo-sharing-58.0.20.tgz", { "dependencies": { "@expo/config-plugins": "^58.0.10", "@expo/config-types": "^58.0.3", "@expo/plist": "^0.10.1" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "sha512-FxfBGaiWYNmV12bDbT81TAi08MGN1OdQtz9WLscN3He0We3w9RfIQNAhCSOJLKpcFvbNAXZ4nkOjpO8q3I8LRw=="],
 
     "expo-splash-screen": ["expo-splash-screen@58.0.11", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/expo-splash-screen/-/expo-splash-screen-58.0.11.tgz", { "dependencies": { "@expo/config-plugins": "~58.0.10", "@expo/image-utils": "^0.12.5", "xml2js": "0.6.0" }, "peerDependencies": { "expo": "*" } }, "sha512-Xg0VnPcFMzfjyFKgqb8nZWdZEX6AqNmr88wcIKgtS1iNtBxwh/Rg6IO+JYcgx8lRxgav6dzoHffSslOgUqpsFA=="],
 
@@ -1506,7 +1513,7 @@
 
     "xml2js": ["xml2js@0.6.0", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/xml2js/-/xml2js-0.6.0.tgz", { "dependencies": { "sax": ">=0.6.0", "xmlbuilder": "~11.0.0" } }, "sha1-B6/ER6l9K9ZQeh927q3dsJ96goI="],
 
-    "xmlbuilder": ["xmlbuilder@11.0.1", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/xmlbuilder/-/xmlbuilder-11.0.1.tgz", {}, "sha1-vpuuHIoEbnazESdyY0fQrXACvrM="],
+    "xmlbuilder": ["xmlbuilder@15.1.1", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/xmlbuilder/-/xmlbuilder-15.1.1.tgz", {}, "sha1-nc3OSe6mbY0QtCyulKecPI0MLsU="],
 
     "y18n": ["y18n@5.0.8", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/y18n/-/y18n-5.0.8.tgz", {}, "sha1-f0k00PfKjFb5UxSTndzS3ZHOHVU="],
 
@@ -1547,8 +1554,6 @@
     "@expo/fingerprint/minimatch": ["minimatch@10.2.6", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/minimatch/-/minimatch-10.2.6.tgz", { "dependencies": { "brace-expansion": "^5.0.8" } }, "sha1-/ZVrvgt3JB6fFaxdzLHGOAYJaO8="],
 
     "@expo/metro-config/hermes-parser": ["hermes-parser@0.36.1", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/hermes-parser/-/hermes-parser-0.36.1.tgz", { "dependencies": { "hermes-estree": "0.36.1" } }, "sha1-9hm5+ZvzToD7b3AkscYpRNK+sUo="],
-
-    "@expo/plist/xmlbuilder": ["xmlbuilder@15.1.1", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/xmlbuilder/-/xmlbuilder-15.1.1.tgz", {}, "sha1-nc3OSe6mbY0QtCyulKecPI0MLsU="],
 
     "@expo/ws-tunnel/ws": ["ws@8.22.0", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ws/-/ws-8.22.0.tgz", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg=="],
 
@@ -1630,8 +1635,6 @@
 
     "plist/@xmldom/xmldom": ["@xmldom/xmldom@0.9.12", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@xmldom/xmldom/-/xmldom-0.9.12.tgz", {}, "sha1-H4TAfLlczyggIpn3e1/X/CVxUeg="],
 
-    "plist/xmlbuilder": ["xmlbuilder@15.1.1", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/xmlbuilder/-/xmlbuilder-15.1.1.tgz", {}, "sha1-nc3OSe6mbY0QtCyulKecPI0MLsU="],
-
     "pretty-format/ansi-styles": ["ansi-styles@5.2.0", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ansi-styles/-/ansi-styles-5.2.0.tgz", {}, "sha1-B0SWkK1Fd30ZJKwquy/IiV26g2s="],
 
     "pretty-format/react-is": ["react-is@18.3.1", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/react-is/-/react-is-18.3.1.tgz", {}, "sha1-6DVX3BLq5jqZ4AOkY4ix3LtE234="],
@@ -1657,6 +1660,8 @@
     "tsconfig-paths/json5": ["json5@1.0.2", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/json5/-/json5-1.0.2.tgz", { "dependencies": { "minimist": "^1.2.0" }, "bin": { "json5": "lib/cli.js" } }, "sha1-Y9mNYPIbMTt3xNbaGL+mnYDh1ZM="],
 
     "wrap-ansi/strip-ansi": ["strip-ansi@6.0.1", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/strip-ansi/-/strip-ansi-6.0.1.tgz", { "dependencies": { "ansi-regex": "^5.0.1" } }, "sha1-nibGPTD1NEPpSJSVshBdN7Z6hdk="],
+
+    "xml2js/xmlbuilder": ["xmlbuilder@11.0.1", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/xmlbuilder/-/xmlbuilder-11.0.1.tgz", {}, "sha1-vpuuHIoEbnazESdyY0fQrXACvrM="],
 
     "@expo/fingerprint/minimatch/brace-expansion": ["brace-expansion@5.0.12", "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/brace-expansion/-/brace-expansion-5.0.12.tgz", { "dependencies": { "balanced-match": "^4.0.2" } }, "sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ=="],
 
