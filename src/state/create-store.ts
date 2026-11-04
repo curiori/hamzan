@@ -8,6 +8,7 @@ import { writeChildFrom } from "@/domain/timing";
 import { appendLedger } from "@/game/economy";
 import { placeIn, placeNew, roomGoods, type SlotId } from "@/game/room";
 import { buy, shopItem, type BuyResult } from "@/game/shop";
+import type { Records } from "./backup";
 import { migrate, SAVE_VERSION } from "./migrate";
 import { hashPin, makeSalt } from "./pin";
 import { reconcileProfile } from "./reconcile";
@@ -56,6 +57,8 @@ export interface AppState {
   /** gives the hamster one of the active child's snacks; false when there is none */
   feedSnack: (id: string) => boolean;
   setDev: (patch: Partial<DevSettings>) => void;
+  /** a records file read by the parent (src/state/backup.ts) replaces everything on the device; the test settings go back to the defaults */
+  replaceRecords: (r: Records) => void;
 }
 
 export const activeProfile = (s: Pick<AppState, "profiles" | "activeId">): Profile | null => s.profiles.find((p) => p.id === s.activeId) ?? null;
@@ -230,6 +233,14 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
           },
 
           setDev: (patch) => set((s) => ({ dev: { ...s.dev, ...patch } })),
+
+          replaceRecords: (r) => {
+            // the parent chose to replace what is on the device, so the file's records are saved even when the
+            // stored data could not be read
+            writable = true;
+            const activeId = r.profiles.some((p) => p.id === r.activeId) ? r.activeId : (r.profiles[0]?.id ?? null);
+            set({ pin: r.pin, profiles: r.profiles, activeId, dev: { ...DEFAULT_DEV }, loadError: false });
+          },
         };
       },
       {

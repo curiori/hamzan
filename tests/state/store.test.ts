@@ -5,7 +5,9 @@ import type { SessionPart } from "../../src/domain/session";
 import { buildSet } from "../../src/domain/setBuilder";
 import { LEVEL, LEVELS } from "../../src/domain/spec";
 import { emptyWallet } from "../../src/game/economy";
-import { STORAGE_KEY, activeProfile, createAppStore } from "../../src/state/create-store";
+import { onboardingStep } from "../../src/features/onboarding/gate";
+import { backupText, readBackup } from "../../src/state/backup";
+import { DEFAULT_DEV, STORAGE_KEY, activeProfile, createAppStore } from "../../src/state/create-store";
 import { RESET_WARNING } from "../../src/i18n/ja";
 import { newProfile, todayOf } from "../../src/state/profile";
 import type { SetRun } from "../../src/state/types";
@@ -260,6 +262,51 @@ describe("app store", () => {
     store.getState().addProfile("いもうと", 3);
     await sleep(10);
     expect(JSON.parse(data.get(STORAGE_KEY) ?? "{}").version).toBe(3);
+  });
+
+  test("replaceRecords puts a file's records in place, saves them and turns the test settings off", () => {
+    const { data, storage } = memoryStorage();
+    const store = createAppStore(storage, { now: () => NOW });
+    store.getState().addProfile("あに", 5);
+    store.getState().setDev({ unlockAll: true });
+    const file = { pin: { hash: "h", salt: "s" }, profiles: [newProfile("さくら", 4, { id: "pS", now: NOW }), newProfile("たろう", 2, { id: "pT", now: NOW })], activeId: "pT" };
+    store.getState().replaceRecords(file);
+    const s = store.getState();
+    expect([s.pin, s.profiles.map((p) => p.id), s.activeId, s.dev]).toEqual([file.pin, ["pS", "pT"], "pT", DEFAULT_DEV]);
+    const saved = JSON.parse(data.get(STORAGE_KEY) ?? "{}");
+    expect(saved.version).toBe(3);
+    expect(saved.state.profiles.map((p: { id: string }) => p.id)).toEqual(["pS", "pT"]);
+    expect(saved.state.dev).toEqual(DEFAULT_DEV);
+  });
+
+  test("after a load that failed, replacing the records saves them and saving works again", async () => {
+    const { data, storage } = memoryStorage({ delayMs: 1 });
+    data.set(STORAGE_KEY, "{not json");
+    const store = createAppStore(storage, { now: () => NOW });
+    await sleep(30);
+    expect(store.getState().loadError).toBe(true);
+    store.getState().replaceRecords({ pin: null, profiles: [newProfile("さくら", 4, { id: "pS", now: NOW })], activeId: "pS" });
+    await sleep(10);
+    expect(store.getState().loadError).toBe(false);
+    expect(JSON.parse(data.get(STORAGE_KEY) ?? "{}").state.profiles.map((p: { id: string }) => p.id)).toEqual(["pS"]);
+    store.getState().addProfile("いもうと", 3);
+    await sleep(10);
+    expect(JSON.parse(data.get(STORAGE_KEY) ?? "{}").state.profiles.length).toBe(2);
+  });
+
+  test("a new app that reads a file goes straight to the child's map with the file's PIN", () => {
+    // the file comes from an app where the PIN is 1234 and the child finished the diagnosis
+    const from = createAppStore(memoryStorage().storage, { now: () => NOW });
+    from.getState().setPin("1234");
+    from.getState().addProfile("さくら", 4);
+    from.getState().skipPlacementTo("2-1");
+    const read = readBackup(backupText(from.getState(), NOW));
+    if (!read.ok) throw new Error(read.reason);
+    const fresh = createAppStore(memoryStorage().storage, { now: () => NOW });
+    expect(onboardingStep(fresh.getState().pin, activeProfile(fresh.getState()))).toBe("setup");
+    fresh.getState().replaceRecords(read.records);
+    expect(onboardingStep(fresh.getState().pin, activeProfile(fresh.getState()))).toBeNull();
+    expect(fresh.getState().checkPin("1234")).toBe(true);
   });
 
   test("giftSeeds adds seeds to the active child and logs a gift", () => {
