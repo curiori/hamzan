@@ -290,3 +290,12 @@ describe("worked examples from the proposal", () => {
     for (const m of MMIN_KMH) expect(places(decText(dec(String((m * 60) / 1000))))).toBeLessThanOrEqual(1);
   });
 });
+
+describe("reading aloud", () => {
+  test("a box before its unit reads なん, a bare unknown reads なに", () => {
+    const trip = { shape: "juku", type: "trip", ask: "time", speed: "4.2", su: "kmh", dist: "0.42", du: "km", mins: 6 } as JProblem;
+    expect(jSpeech(trip)).toContain("すすむと なん ふん");
+    expect(jSpeech({ shape: "juku", type: "convert", v: "1.2", from: "km", to: "m" } as JProblem)).toContain("は なん");
+    expect(jSpeech({ shape: "juku", type: "missing", known: "3.14", product: "28.26", pos: "left" } as JProblem)).toMatch(/^なに かける/);
+  });
+});

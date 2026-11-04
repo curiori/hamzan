@@ -1,11 +1,15 @@
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { jSpeech, jText, jTokens, type JInstance, type JProblem, type JTok } from "@/juku/problem";
 import { AppText } from "@/ui/text";
 import { colors, MAX_FONT_SCALE } from "@/ui/theme";
 
 // Stage 6–9 problems: numbers and signs large, units and words smaller, kanji with their reading above them,
-// fractions stacked. Word problems (道のり, おうぎ形, ありえない答え) are set as a sentence that wraps.
+// fractions stacked. Word problems (道のり, おうぎ形, ありえない答え) are set as a sentence that wraps. A question
+// in words (no ＝) asks "なん分？" where an expression shows its box: the answer box below is the only box.
+
+/** the reading of a unit after なん (なんぷん) */
+const AFTER_NAN: Record<string, string> = { ふん: "ぷん" };
 
 const wordLength = (p: JProblem) =>
   jTokens(p)
@@ -63,36 +67,58 @@ export function JukuProblemText({ inst, size }: { inst: JInstance; size?: number
   const fontSize = size ?? jukuFontSize(p);
   const unitSize = sentence ? Math.round(fontSize * 0.9) : Math.round(fontSize * 0.62);
   const wordSize = sentence ? fontSize : Math.max(16, Math.round(fontSize * 0.45));
+  const draw = (t: JTok, i: number): ReactNode => {
+    switch (t.t) {
+      case "num":
+        return <Text_ key={i} v={t.v} size={fontSize} />;
+      case "op":
+        return <Text_ key={i} v={t.v} size={fontSize} />;
+      case "frac":
+        return <Frac key={i} t={t} size={fontSize} />;
+      case "unit":
+        return t.r ? <Ruby key={i} base={t.v} reading={t.r} size={unitSize} /> : <Text_ key={i} v={t.v} size={unitSize} />;
+      case "box":
+        return <View key={i} style={[styles.blank, { width: fontSize * 0.8, height: fontSize * 0.8, borderWidth: Math.max(2, fontSize * 0.07) }]} />;
+      case "word":
+        if (t.r) return <Ruby key={i} base={t.v} reading={t.r} size={wordSize} />;
+        // plain words break between the spaced phrases
+        return (
+          <Fragment key={i}>
+            {t.v
+              .split(" ")
+              .map((chunk, j, all) => (j < all.length - 1 ? `${chunk} ` : chunk))
+              .filter(Boolean)
+              .map((chunk, j) => (
+                <Text_ key={j} v={chunk} size={wordSize} />
+              ))}
+          </Fragment>
+        );
+    }
+  };
+  const toks = jTokens(p);
+  const inWords = !toks.some((t) => t.t === "op" && t.v === "＝");
+  const out: ReactNode[] = [];
+  for (let i = 0; i < toks.length; i++) {
+    const t = toks[i];
+    const next = toks[i + 1];
+    if (inWords && t.t === "box") {
+      // なん, its unit and ？ stay on one line
+      const unit = next?.t === "unit" ? next : null;
+      out.push(
+        <View key={i} style={styles.row}>
+          <Text_ v="なん" size={wordSize} />
+          {unit ? draw(unit.r ? { ...unit, r: AFTER_NAN[unit.r] ?? unit.r } : unit, i + 1) : null}
+          <Text_ v="？" size={wordSize} />
+        </View>,
+      );
+      if (unit) i += 1;
+      continue;
+    }
+    out.push(draw(t, i));
+  }
   return (
     <View accessible accessibilityRole="text" accessibilityLabel={jSpeech(p)} testID="problem" style={[styles.row, sentence && styles.sentence]}>
-      {jTokens(p).map((t, i) => {
-        switch (t.t) {
-          case "num":
-            return <Text_ key={i} v={t.v} size={fontSize} />;
-          case "op":
-            return <Text_ key={i} v={t.v} size={fontSize} />;
-          case "frac":
-            return <Frac key={i} t={t} size={fontSize} />;
-          case "unit":
-            return t.r ? <Ruby key={i} base={t.v} reading={t.r} size={unitSize} /> : <Text_ key={i} v={t.v} size={unitSize} />;
-          case "box":
-            return <View key={i} style={[styles.blank, { width: fontSize * 0.8, height: fontSize * 0.8, borderWidth: Math.max(2, fontSize * 0.07) }]} />;
-          case "word":
-            if (t.r) return <Ruby key={i} base={t.v} reading={t.r} size={wordSize} />;
-            // plain words break between the spaced phrases
-            return (
-              <Fragment key={i}>
-                {t.v
-                  .split(" ")
-                  .map((chunk, j, all) => (j < all.length - 1 ? `${chunk} ` : chunk))
-                  .filter(Boolean)
-                  .map((chunk, j) => (
-                    <Text_ key={j} v={chunk} size={wordSize} />
-                  ))}
-              </Fragment>
-            );
-        }
-      })}
+      {out}
     </View>
   );
 }

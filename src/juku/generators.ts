@@ -466,8 +466,9 @@ const estimate = (a: string, o: JOp, b: string, options: string[]): JProblem => 
 const g9_2: Gen = (r) => {
   for (;;) {
     if (r.next() < 0.6) {
-      const ta = r.int(1, 9) * 10 ** r.int(1, 3);
-      const tb = r.int(1, 9) * 10 ** r.int(1, 2);
+      // 2–3 digits × 2 digits (sometimes 3), like 398×51
+      const ta = r.int(1, 9) * 10 ** r.int(1, 2);
+      const tb = r.int(1, 9) * 10 ** (r.next() < 0.7 ? 1 : 2);
       const a = nearTo(r, ta);
       const b = nearTo(r, tb);
       const right = norm(decInt(ta * tb));

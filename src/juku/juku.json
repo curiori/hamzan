@@ -276,11 +276,11 @@
       "id": "9-2", "order": 84, "stage": 9, "operation": "見積もり", "name": "かけ算・わり算の大きさ",
       "skill": "上から1けたに丸めてから計算し、いちばん近い大きさを選ぶ（4択）",
       "example": "398×51は？ 2000／20000／200000／2000000 → 20000",
-      "generationRule": "2〜4けたどうしのかけ算とわり算。選択肢は10倍ずつの4つで、本当の答えは正解の0.6〜1.6倍。",
+      "generationRule": "2〜3けた×2けた（ときどき3けた）のかけ算と、2〜4けた÷2〜3けたのわり算を 6:4。選択肢は10倍ずつの4つで、本当の答えは正解の0.6〜1.6倍。",
       "problemShapes": ["estimate"], "modes": ["H", "S"], "scaffoldKind": "ESTIMATE_ROUND",
       "scaffoldText": "H：400×50＝□ → いちばん ちかいのは □",
       "setSize": 20, "K": 1.5, "D": 1, "R": 3, "prerequisites": ["9-1", "4-7", "4-11"],
-      "enumerable": false, "approxDistinctProblems": 36864, "referenceTag": "SCHOOL", "reference": "小学校4年 がい数、見積もり"
+      "enumerable": false, "approxDistinctProblems": 31023, "referenceTag": "SCHOOL", "reference": "小学校4年 がい数、見積もり"
     },
     {
       "id": "9-3", "order": 85, "stage": 9, "operation": "見積もり", "name": "小数の大きさ",
@@ -320,7 +320,7 @@
       "problemShapes": ["round", "estimate", "compare", "benchmark", "plausible"], "modes": ["S"], "scaffoldKind": "NONE",
       "scaffoldText": "なし（スピードのみ）",
       "setSize": 10, "K": 1.3, "D": 1.4, "R": 3, "prerequisites": ["9-1", "9-2", "9-3", "9-4", "9-5"],
-      "enumerable": false, "approxDistinctProblems": 18385, "referenceTag": "MIX", "reference": "交互練習（Taylor & Rohrer 2010）"
+      "enumerable": false, "approxDistinctProblems": 17932, "referenceTag": "MIX", "reference": "交互練習（Taylor & Rohrer 2010）"
     }
   ],
   "units": [

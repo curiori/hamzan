@@ -39,11 +39,13 @@ export function JukuAnswerSolver({ inst, autoSubmit, compact, locked, onDone, sf
     const r = revealOf(inst, given);
     onDone({ correct: j.correct, given: j.correct ? null : given, reveal: r.answer, note: r.note });
   });
+  const tap = inst.answer.kind === "choice" || inst.answer.kind === "tf";
   return render({
     body: (
       <>
         {before}
-        <FieldRow defs={defs} vals={fs.vals} active={locked ? -1 : fs.active} fontSize={36} />
+        {/* options and ○× are answered with one tap on the pad: no box to fill */}
+        {tap ? null : <FieldRow defs={defs} vals={fs.vals} active={locked ? -1 : fs.active} fontSize={36} />}
       </>
     ),
     keypad: <JukuKeypad defs={defs} active={fs.active} onKey={press} disabled={locked} compact={compact} />,

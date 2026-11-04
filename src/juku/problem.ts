@@ -395,7 +395,7 @@ const OP_YOMI: Record<string, string> = { "＋": "たす", "－": "ひく", "×"
 
 export function jSpeech(p: JProblem): string {
   return jTokens(p)
-    .map((t) => {
+    .map((t, i, all) => {
       switch (t.t) {
         case "num":
           return decYomi(t.v);
@@ -406,7 +406,8 @@ export function jSpeech(p: JProblem): string {
         case "unit":
           return unitSpeech(t.v, t.r);
         case "box":
-          return "なに";
+          // なんぷん, なんメートル; a bare unknown is なに like the core problems
+          return all[i + 1]?.t === "unit" ? "なん" : "なに";
         case "word":
           return t.r ?? t.v;
       }
@@ -417,6 +418,9 @@ export function jSpeech(p: JProblem): string {
 }
 
 // ---------------- answers as text ----------------
+/** 1600000 → 1,600,000 (options of a 4択 are easier to compare grouped); other text stays as it is */
+export const groupDigits = (s: string) => (/^\d{5,}$/.test(s) ? s.replace(/\B(?=(\d{3})+$)/g, ",") : s);
+
 export function jAnswerText(a: JAnswer): string {
   switch (a.kind) {
     case "dec":
@@ -426,7 +430,7 @@ export function jAnswerText(a: JAnswer): string {
     case "pair":
       return `${a.a}${a.units[0].v}${a.b}${a.units[1].v}`;
     case "choice":
-      return a.options[a.i] ?? "";
+      return groupDigits(a.options[a.i] ?? "");
     case "tf":
       return a.labels[a.v ? 0 : 1];
   }

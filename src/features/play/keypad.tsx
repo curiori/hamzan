@@ -1,5 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Pressable, StyleSheet, View } from "react-native";
+import { groupDigits } from "@/juku/problem";
 import { AppText } from "@/ui/text";
 import { colors, MAX_FONT_SCALE, radius } from "@/ui/theme";
 import type { FieldDef, Key } from "./field-set";
@@ -100,7 +101,7 @@ export function Keypad({
     return (
       <View style={[styles.choices, padHeight]} accessibilityLabel="えらぶ">
         {options.map((o, i) => (
-          <KeyButton key={o} k={CHOICE_KEYS[i]} label={o} onKey={onKey} disabled={disabled} slot="choice" />
+          <KeyButton key={o} k={CHOICE_KEYS[i]} label={groupDigits(o)} onKey={onKey} disabled={disabled} slot="choice" />
         ))}
       </View>
     );
