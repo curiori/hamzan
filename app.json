@@ -8,7 +8,16 @@
     "scheme": "hamzan",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mahori.hamzan",
+      "infoPlist": {
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -41,9 +50,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "enableTestTools": true
     }
   }
 }
