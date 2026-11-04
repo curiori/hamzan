@@ -127,7 +127,7 @@ estimated_reading_time: 15
 
 ### 作業
 
-* SDK 58 のブランチ（`upgrade/sdk-58`）を main に取り込む
+* SDK 58 のブランチ（`upgrade/sdk-58`）を main に取り込む（2026-11-04 に済み。1本のコースの作業もいっしょに入った）
 * EAS の設定を作る。`eas.json` に、開発ビルド用（development）と本番用（production）の 2 つの設定を置く。ビルド番号は EAS が自動で上げる
 * アプリの ID（bundle identifier）を決める（私の案は `com.mahori.hamzan`。iCloud の入れ物の ID もこれをもとにする。どちらも①で最初のビルドを作る前に確定し、そのあとは変えない）
 * 開発ビルドは、別のアプリ ID（私の案は `com.mahori.hamzan.dev`）にして、本番版と同じ端末に並べて入れられるようにする
