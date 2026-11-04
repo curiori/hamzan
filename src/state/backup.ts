@@ -46,36 +46,50 @@ export function backupFileName(now: number, device: string): string {
 }
 
 const isObject = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null && !Array.isArray(x);
+const isListOf = (x: unknown, item: (v: unknown) => boolean) => Array.isArray(x) && x.every(item);
+const isMapOf = (x: unknown, item: (v: unknown) => boolean) => isObject(x) && Object.values(x).every(item);
+const isText = (x: unknown) => typeof x === "string";
 
-const PROFILE_OBJECTS = ["settings", "progress", "facts", "stageChecks", "sessions", "challenge", "wallet", "inventory", "room", "course"];
-const PROFILE_LISTS = ["reviews", "sets", "errors", "ledger"];
-
-/** a child's records in the shape of this save version (what the screens and plans rely on) */
+/**
+ * A child's records in the shape of this save version, down to what the screens and plans read without checking
+ * (each level's progress, each day's plan, the seeds, the room), so a file edited by hand cannot stop the app later.
+ */
 function isProfile(p: unknown): p is Profile {
   if (!isObject(p)) return false;
-  const course = p.course;
+  const { course, wallet, room } = p;
   return (
     typeof p.id === "string" &&
     typeof p.nickname === "string" &&
     typeof p.grade === "number" &&
     typeof p.createdAt === "number" &&
     typeof p.placementDone === "boolean" &&
-    PROFILE_OBJECTS.every((k) => isObject(p[k])) &&
-    PROFILE_LISTS.every((k) => Array.isArray(p[k])) &&
+    [p.settings, p.challenge, p.inventory, p.stageChecks].every(isObject) &&
+    isMapOf(p.progress, isObject) &&
+    isMapOf(p.facts, isObject) &&
+    isMapOf(p.sessions, (d) => isObject(d) && Array.isArray(d.plan)) &&
+    [p.reviews, p.sets, p.errors, p.ledger].every((list) => isListOf(list, isObject)) &&
+    isObject(wallet) &&
+    typeof wallet.seeds === "number" &&
+    typeof wallet.lifetime === "number" &&
+    isObject(room) &&
+    isObject(room.layout) &&
+    Array.isArray(room.seen) &&
     isObject(course) &&
     typeof course.version === "number" &&
-    Array.isArray(course.seen) &&
-    Array.isArray(course.checks)
+    isListOf(course.seen, isText) &&
+    isListOf(course.checks, isText)
   );
 }
 
-const isPin = (x: unknown): x is PinRecord | null => x === null || (isObject(x) && typeof x.hash === "string" && typeof x.salt === "string");
+const isPin = (x: unknown): x is PinRecord => isObject(x) && typeof x.hash === "string" && typeof x.salt === "string";
 
 function recordsOf(state: unknown): Records | BackupError {
-  if (!isObject(state) || !Array.isArray(state.profiles) || !isPin(state.pin)) return "broken";
+  if (!isObject(state) || !Array.isArray(state.profiles)) return "broken";
   const profiles: unknown[] = state.profiles;
   if (!profiles.every(isProfile) || new Set(profiles.map((p) => p.id)).size !== profiles.length) return "broken";
   if (!profiles.length) return "empty";
+  // the app never has children without a PIN: the parent area would open to anyone
+  if (!isPin(state.pin)) return "broken";
   const reconciled = profiles.map((p) => reconcileProfile(p));
   const activeId = reconciled.some((p) => p.id === state.activeId) ? (state.activeId as string) : reconciled[0].id;
   return { pin: state.pin, profiles: reconciled, activeId };

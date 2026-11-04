@@ -45,7 +45,8 @@ export function useRecordsTransfer() {
         setMessage(READ_ERROR_TEXT[read.reason]);
         return false;
       }
-      const t = importConfirmText(read.records, read.exportedAt, useAppStore.getState());
+      const now = useAppStore.getState();
+      const t = importConfirmText(read.records, read.exportedAt, now, { unreadable: now.loadError });
       if (!(await confirm({ title: t.title, description: t.description, confirmLabel: "読み込む", destructive: t.destructive }))) return false;
       replaceRecords(read.records);
       return true;

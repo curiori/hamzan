@@ -57,8 +57,21 @@ describe("the records file", () => {
       fileWith((f) => (f.state.profiles[0].course = { version: 2 })),
       fileWith((f) => (f.state.pin = { salt: "s" })),
       fileWith((f) => (f.state.profiles[1].id = "pA")),
+      // edits that keep the containers but break what the screens read
+      fileWith((f) => (f.state.profiles[0].progress = { "0-1": null })),
+      fileWith((f) => (f.state.profiles[0].wallet = {})),
+      fileWith((f) => (f.state.profiles[0].room = {})),
+      fileWith((f) => (f.state.profiles[0].sessions = { "2026-11-04": null })),
+      fileWith((f) => (f.state.profiles[0].sets = [null])),
+      // children without a PIN would open the parent area to anyone
+      fileWith((f) => (f.state.pin = null)),
     ];
     for (const text of broken) expect(readBackup(text)).toEqual({ ok: false, reason: "broken" });
+  });
+
+  test("test settings written into a file by hand are dropped", () => {
+    const read = readBackup(fileWith((f) => (f.state.dev = { ...DEFAULT_DEV, unlockAll: true })));
+    expect(read.ok && "dev" in read.records).toBe(false);
   });
 
   test("a file without children is refused as empty", () => {

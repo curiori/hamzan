@@ -29,11 +29,17 @@ export async function shareRecordsFile(name: string, text: string): Promise<void
   await Sharing.shareAsync(file.uri, { mimeType: "application/json", UTI: "public.json", dialogTitle: "記録を書き出す" });
 }
 
+/** how long the iOS file picker takes to close after it answers */
+const PICKER_CLOSE_MS = 500;
+
 /** The text of the file the parent picks, or null when they close the picker. Any file can be picked; reading checks it. */
 export async function pickRecordsFile(): Promise<string | null> {
   const picked = await DocumentPicker.getDocumentAsync({ type: "*/*", copyToCacheDirectory: true });
   if (picked.canceled || !picked.assets.length) return null;
   const asset = picked.assets[0];
   if (Platform.OS === "web") return asset.file ? asset.file.text() : (await fetch(asset.uri)).text();
-  return new File(asset.uri).text();
+  const text = await new File(asset.uri).text();
+  // a dialog opened while the picker is still closing is not shown
+  if (Platform.OS === "ios") await new Promise((resolve) => setTimeout(resolve, PICKER_CLOSE_MS));
+  return text;
 }

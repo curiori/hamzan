@@ -18,12 +18,21 @@ export function stampText(iso: string): string {
   return `${d.getFullYear()}/${two(d.getMonth() + 1)}/${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`;
 }
 
-/** The question before a file replaces the records: what the file holds, what goes, and that the PIN changes. */
-export function importConfirmText(file: Records, exportedAt: string, current: Records): { title: string; description: string; destructive: boolean } {
+/**
+ * The question before a file replaces the records: what the file holds, what goes, and that the PIN changes. When the
+ * records stored on the device could not be read (the app said they were kept), they are the ones that go.
+ */
+export function importConfirmText(
+  file: Records,
+  exportedAt: string,
+  current: Records,
+  opts: { unreadable?: boolean } = {},
+): { title: string; description: string; destructive: boolean } {
   const children = file.profiles.map((p) => `${p.nickname}：セット記録 ${p.sets.length}件`).join("、");
   const losing = current.profiles.length > 0;
   const parts = [`${stampText(exportedAt)} に書き出した記録です（${children}）。`];
-  if (losing) parts.push(`この端末の今の記録（${current.profiles.map((p) => p.nickname).join("、")}）は消えて、ファイルの記録に置き換わります。元に戻せません。`);
+  if (opts.unreadable) parts.push("この端末に保存されている記録（読み込めなかったもの）は消えて、ファイルの記録に置き換わります。元に戻せません。");
+  else if (losing) parts.push(`この端末の今の記録（${current.profiles.map((p) => p.nickname).join("、")}）は消えて、ファイルの記録に置き換わります。元に戻せません。`);
   parts.push("PIN もファイルのものになります。");
-  return { title: "この記録を読み込みますか？", description: parts.join(""), destructive: losing };
+  return { title: "この記録を読み込みますか？", description: parts.join(""), destructive: losing || !!opts.unreadable };
 }

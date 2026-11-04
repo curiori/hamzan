@@ -309,6 +309,14 @@ describe("app store", () => {
     expect(fresh.getState().checkPin("1234")).toBe(true);
   });
 
+  test("the records a file brought are read back after the app restarts", () => {
+    const { storage } = memoryStorage();
+    const file = { pin: { hash: "h", salt: "s" }, profiles: [newProfile("さくら", 4, { id: "pS", now: NOW })], activeId: "pS" };
+    createAppStore(storage, { now: () => NOW }).getState().replaceRecords(file);
+    const again = createAppStore(storage, { now: () => NOW }).getState();
+    expect([again.pin, again.profiles.map((p) => p.id), again.activeId, again.loadError]).toEqual([file.pin, ["pS"], "pS", false]);
+  });
+
   test("giftSeeds adds seeds to the active child and logs a gift", () => {
     const store = createAppStore(memoryStorage().storage, { now: () => NOW });
     store.getState().addProfile("あに", 5);

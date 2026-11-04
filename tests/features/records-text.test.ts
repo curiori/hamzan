@@ -42,6 +42,12 @@ describe("words for moving the records", () => {
     expect(t.destructive).toBe(false);
   });
 
+  test("after the stored records could not be read, the confirmation says they go as well", () => {
+    const t = importConfirmText(file, STAMP, nothing, { unreadable: true });
+    expect(t.description).toContain("この端末に保存されている記録（読み込めなかったもの）は消えて、ファイルの記録に置き換わります。元に戻せません。");
+    expect(t.destructive).toBe(true);
+  });
+
   test("every reason a file is refused has words", () => {
     for (const reason of ["notRecords", "tooNew", "broken", "empty"] as const) expect(READ_ERROR_TEXT[reason].length).toBeGreaterThan(5);
   });

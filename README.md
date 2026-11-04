@@ -150,11 +150,15 @@ PC のサーバーなしで遊べる本番版を EAS（Expo のクラウドの�
 
 記録を移す
 
-1. Expo Go のハムざんで、保護者の画面の「データ」→「記録を書き出す」を押し、AirDrop かファイル App で保存します。iPad と iPhone の記録は別々なので、続けたいほうを書き出します（ファイル名の終わりが `ipad` か `iphone` です）
+1. Expo Go のハムざんで、保護者の画面の「データ」→「記録を書き出す」を押し、AirDrop かファイル App で保存します。iPad と iPhone の記録は別々なので、続けたいほうを書き出します（ファイル名の終わりが `ipad` か `iphone` です）。書き出したあとに Expo Go で練習した分はファイルに入らないので、読み込む直前に書き出します
 2. 本番版の最初の画面で「書き出した記録を読み込む」を押し、そのファイルを選びます。同じファイルを iPhone と iPad の両方で読み込めば、どちらも同じところから始まります
+3. ファイルは消さずに取っておくと、記録の控えになります
+
+> [!IMPORTANT]
+> アプリ ID（`com.mahori.hamzan`、開発ビルドは `com.mahori.hamzan.dev`）は、最初のビルドのあとは変えられません。別の ID にしたいときは、最初のビルドの前に `app.json` の `expo.ios.bundleIdentifier` を変えます。
 
 > [!NOTE]
-> 端末を足したときは、`device:create` で登録してから、もう一度ビルドします（配布用のプロファイルに端末が入るため）。アプリ ID は `com.mahori.hamzan` で、最初のビルドのあとは変えません。開発ビルド（`--profile development`、アプリ ID は `com.mahori.hamzan.dev`）は、iCloud 同期の作業で expo-dev-client を入れてから使います。
+> 端末を足したときは、`device:create` で登録してから、もう一度ビルドします（配布用のプロファイルに端末が入るため）。開発ビルド（`--profile development`）は、iCloud 同期の作業で expo-dev-client を入れてから使います。
 
 ## フォルダの中身
 
