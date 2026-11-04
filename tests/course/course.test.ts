@@ -10,11 +10,13 @@ import { makeJInstance } from "../../src/juku/problem";
 import { JLEVELS } from "../../src/juku/spec";
 
 describe("one course of 89 levels", () => {
-  test("stages 0–9 hold the 61 core levels and the 28 juku levels in order", () => {
+  test("the 61 core levels and the 28 new levels share one order: the new stages come before 受験の技", () => {
     expect(ALL_LEVELS.length).toBe(89);
-    expect(ALL_STAGES.map((s) => s.id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(ALL_STAGES.map((s) => s.id)).toEqual([0, 1, 2, 3, 4, 6, 8, 7, 5, 9]);
     expect(ALL_LEVELS.map((l) => l.order)).toEqual(ALL_LEVELS.map((_, i) => i));
     expect(levelSpec("pi-table").name).toBe("3.14の段");
+    expect(levelSpec("4-12").order).toBeLessThan(levelSpec("frac-mixed").order);
+    expect(levelSpec("unit-mix").order).toBeLessThan(levelSpec("5-1").order);
   });
 
   test("stage 0–5 sets, warm-ups and targets are exactly those of src/domain", () => {
