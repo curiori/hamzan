@@ -54,7 +54,7 @@ describe("today's practice with 塾の単元", () => {
   });
 
   test("a juku stage whose levels all have ★2 gets its stage check in the juku set", () => {
-    const progress = withLevels(Object.fromEntries(["9-1", "9-2", "9-3", "9-4", "9-5", "9-6"].map((id) => [id, { star2At: D, mode: "S" }])));
+    const progress = withLevels(Object.fromEntries(["est-round", "est-magnitude", "est-decimal", "est-benchmark", "est-plausible", "est-mix"].map((id) => [id, { star2At: D, mode: "S" }])));
     const juku: JukuState = { open: { "review-g4": D, "toward-g5": D }, checks: [] };
     expect(planDay(args(progress, juku))[1]).toEqual({ kind: "stageCheck", stage: 9 });
   });
@@ -70,7 +70,7 @@ describe("today's practice with 塾の単元", () => {
   });
 
   test("units with nothing to practise leave the day as it was", () => {
-    const progress = withLevels(Object.fromEntries(["8-1", "8-2", "8-3", "8-4"].map((id) => [id, { star2At: D, masteredAt: D, mode: "S" }])));
+    const progress = withLevels(Object.fromEntries(["pi-table", "pi-shift", "pi-two-digit", "pi-divide"].map((id) => [id, { star2At: D, masteredAt: D, mode: "S" }])));
     const juku: JukuState = { open: { "pi-cylinder": D }, checks: [] };
     expect(planDay(args(progress, juku))).toEqual(planDailySession({ progress, reviews: [], stageChecks: {}, date: D, unlockAll: false }));
   });

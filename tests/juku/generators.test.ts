@@ -115,38 +115,47 @@ function check(p: JProblem, a: JAnswer): boolean {
 
 /** ranges of each level's generator (juku.json generationRule) */
 const RANGE: Record<string, (p: JProblem) => boolean> = {
-  "6-1": (p) => p.type === "fracForm" && p.d >= 2 && p.d <= 9 && (p.to === "improper" ? p.w >= 1 && p.w <= 5 && p.n < p.d && gcd(p.n, p.d) === 1 : p.w === 0 && p.n > p.d && p.n % p.d !== 0 && p.n < 6 * p.d),
-  "6-2": (p) => p.type === "reduce" && p.n < p.d && p.d <= 99 && gcd(p.n, p.d) > 1,
-  "6-3": (p) => (p.type === "fracToDec" && [2, 4, 5, 10, 20, 25].includes(p.d) && p.w <= 3) || (p.type === "decToFrac" && x01(p.v)),
-  "6-4": (p) => (p.type === "fracToDec" && p.d === 8 && [1, 3, 5, 7].includes(p.n) && p.w <= 2) || (p.type === "decToFrac" && ["0.125", "0.375", "0.625", "0.875"].includes(p.v)),
-  "6-5": (p) => p.type === "rate" || p.type === "change",
-  "6-6": (p) => p.type === "op" && p.op === "×" && places(p.a) + places(p.b) >= 1 && places(p.a) + places(p.b) <= 3,
-  "6-7": (p) => p.type === "op" && (["0.5", "0.25", "0.125"].includes(p.b) || ["0.5", "0.25", "0.125"].includes(p.a)),
-  "7-1": (p) => p.type === "convert" && ["length", "weight"].includes(UNITS[p.from].family) && intDigits(p.v) <= 5 && places(p.v) <= 3,
-  "7-2": (p) => p.type === "time",
-  "7-3": (p) => p.type === "speed" && p.from !== p.to,
-  "7-4": (p) => p.type === "trip",
-  "7-5": (p) => p.type === "convert" && UNITS[p.from].family === "area" && intDigits(p.v) <= 7 && places(p.v) <= 3,
-  "7-6": (p) => p.type === "convert" && UNITS[p.from].family === "volume" && intDigits(p.v) <= 7 && places(p.v) <= 3,
-  "8-1": (p) => p.type === "op" && p.op === "×" && (p.a === "3.14" || p.b === "3.14"),
-  "8-2": (p) => p.type === "op" && p.op === "×",
-  "8-3": (p) => p.type === "op" && [12, 15, 16, 18, 24, 25, 36].includes(Number(p.a === "3.14" ? p.b : p.a)),
-  "8-4": (p) => (p.type === "op" && p.op === "÷" && p.b === "3.14") || (p.type === "missing" && p.known === "3.14"),
-  "8-5": (p) => p.type === "piSum" && p.terms.every((t) => t.includes("3.14")),
-  "8-6": (p) => p.type === "figure",
-  "9-1": (p) => p.type === "round",
-  "9-2": (p) => p.type === "estimate" && !p.a.includes(".") && !p.b.includes("."),
-  "9-3": (p) => p.type === "estimate" || p.type === "compare",
-  "9-4": (p) => p.type === "benchmark",
-  "9-5": (p) => p.type === "plausible",
+  "frac-mixed": (p) => p.type === "fracForm" && p.d >= 2 && p.d <= 9 && (p.to === "improper" ? p.w >= 1 && p.w <= 5 && p.n < p.d && gcd(p.n, p.d) === 1 : p.w === 0 && p.n > p.d && p.n % p.d !== 0 && p.n < 6 * p.d),
+  "frac-reduce": (p) => p.type === "reduce" && p.n < p.d && p.d <= 99 && gcd(p.n, p.d) > 1,
+  "frac-decimal": (p) => (p.type === "fracToDec" && [2, 4, 5, 10, 20, 25].includes(p.d) && p.w <= 3) || (p.type === "decToFrac" && x01(p.v)),
+  "frac-eighths": (p) => (p.type === "fracToDec" && p.d === 8 && [1, 3, 5, 7].includes(p.n) && p.w <= 2) || (p.type === "decToFrac" && ["0.125", "0.375", "0.625", "0.875"].includes(p.v)),
+  "frac-percent": (p) => p.type === "rate" || p.type === "change",
+  "dec-multiply": (p) => p.type === "op" && p.op === "×" && places(p.a) + places(p.b) >= 1 && places(p.a) + places(p.b) <= 3,
+  "dec-divide": (p) => p.type === "op" && (["0.5", "0.25", "0.125"].includes(p.b) || ["0.5", "0.25", "0.125"].includes(p.a)),
+  "unit-length-weight": (p) => p.type === "convert" && ["length", "weight"].includes(UNITS[p.from].family) && intDigits(p.v) <= 5 && places(p.v) <= 3,
+  "unit-time": (p) => p.type === "time",
+  "unit-speed": (p) => p.type === "speed" && p.from !== p.to,
+  "unit-trip": (p) => p.type === "trip",
+  "unit-area": (p) => p.type === "convert" && UNITS[p.from].family === "area" && intDigits(p.v) <= 7 && places(p.v) <= 3,
+  "unit-volume": (p) => p.type === "convert" && UNITS[p.from].family === "volume" && intDigits(p.v) <= 7 && places(p.v) <= 3,
+  "pi-table": (p) => p.type === "op" && p.op === "×" && (p.a === "3.14" || p.b === "3.14"),
+  "pi-shift": (p) => p.type === "op" && p.op === "×",
+  "pi-two-digit": (p) => p.type === "op" && [12, 15, 16, 18, 24, 25, 36].includes(Number(p.a === "3.14" ? p.b : p.a)),
+  "pi-divide": (p) => (p.type === "op" && p.op === "÷" && p.b === "3.14") || (p.type === "missing" && p.known === "3.14"),
+  "pi-factor": (p) => p.type === "piSum" && p.terms.every((t) => t.includes("3.14")),
+  "pi-figure": (p) => p.type === "figure",
+  "est-round": (p) => p.type === "round",
+  "est-magnitude": (p) => p.type === "estimate" && !p.a.includes(".") && !p.b.includes("."),
+  "est-decimal": (p) => p.type === "estimate" || p.type === "compare",
+  "est-benchmark": (p) => p.type === "benchmark",
+  "est-plausible": (p) => p.type === "plausible",
 };
 function x01(v: string) {
   const n = Number(v);
   return n > 0 && n < 1;
 }
-const MIX: Record<string, string[]> = { "6-8": ["6-1", "6-2", "6-3", "6-4", "6-5", "6-6", "6-7"], "7-7": ["7-1", "7-2", "7-3", "7-4", "7-5", "7-6"], "8-7": ["8-1", "8-2", "8-3", "8-4", "8-5", "8-6"], "9-6": ["9-1", "9-2", "9-3", "9-4", "9-5"] };
+const MIX: Record<string, string[]> = { "frac-mix": ["frac-mixed", "frac-reduce", "frac-decimal", "frac-eighths", "frac-percent", "dec-multiply", "dec-divide"], "unit-mix": ["unit-length-weight", "unit-time", "unit-speed", "unit-trip", "unit-area", "unit-volume"], "pi-mix": ["pi-table", "pi-shift", "pi-two-digit", "pi-divide", "pi-factor", "pi-figure"], "est-mix": ["est-round", "est-magnitude", "est-decimal", "est-benchmark", "est-plausible"] };
 
 describe("juku spec", () => {
+  test("the new levels use stable ids, the unit stage order and the three new prerequisites", () => {
+    expect(JSTAGES.find((s) => s.id === 7)?.levelIds).toEqual(["unit-length-weight", "unit-area", "unit-volume", "unit-time", "unit-speed", "unit-trip", "unit-mix"]);
+    expect(JLEVEL["frac-reduce"]?.prerequisites).toEqual(["2-7", "3-12"]);
+    expect(JLEVEL["pi-table"]?.prerequisites).toEqual(["2-5", "4-8"]);
+    expect(JLEVEL["pi-two-digit"]?.prerequisites).toEqual(["pi-shift", "3-10"]);
+    // ids never look like the numbers on screen ("5-2"), which come from positions in the course
+    for (const l of JLEVELS) expect(l.id).not.toMatch(/^\d+-\d+$/);
+  });
+
   test("juku.json is valid and fills stages 6–9 with 28 levels in six units", () => {
     expect(validateJukuSpec()).toEqual([]);
     expect(JLEVELS.length).toBe(28);
@@ -157,8 +166,8 @@ describe("juku spec", () => {
 
   test("the units follow the juku year and open contiguous levels of each stage", () => {
     expect(JUNITS.map((u) => u.id)).toEqual(["pi-cylinder", "speed-units", "pi-cone", "review-g4", "unit-mix", "toward-g5"]);
-    expect(JUNITS[0].levelIds).toEqual(["8-1", "8-2", "8-3", "8-4"]);
-    expect(JUNITS[1].levelIds).toEqual(["7-1", "7-2", "7-3", "7-4"]);
+    expect(JUNITS[0].levelIds).toEqual(["pi-table", "pi-shift", "pi-two-digit", "pi-divide"]);
+    expect(JUNITS[1].levelIds).toEqual(["unit-length-weight", "unit-time", "unit-speed", "unit-trip"]);
   });
 });
 

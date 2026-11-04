@@ -37,7 +37,7 @@ const convert = (v: string, from: string, to: string): JProblem => ({ shape: "ju
 const D = (n: number, s = 0) => decText({ n, s });
 
 // ---------------- Stage 6 小数と分数 ----------------
-const g6_1: Gen = (r) => {
+const gFracMixed: Gen = (r) => {
   const d = r.int(2, 9);
   const n = r.pick(properReduced(d));
   const w = r.int(1, 5);
@@ -45,18 +45,18 @@ const g6_1: Gen = (r) => {
   return { shape: "juku", type: "fracForm", w: 0, n: w * d + n, d, to: "mixed" };
 };
 
-const G6_2_K = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15];
+const REDUCE_FACTORS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15];
 
-const g6_2: Gen = (r) => {
+const gFracReduce: Gen = (r) => {
   for (;;) {
     const d = r.int(2, 12);
     const n = r.pick(properReduced(d));
-    const k = r.pick(G6_2_K);
+    const k = r.pick(REDUCE_FACTORS);
     if (d * k <= 99) return { shape: "juku", type: "reduce", n: n * k, d: d * k };
   }
 };
 
-const G6_3_DENS: readonly (readonly [number, number])[] = [
+const FRAC_DEC_DENOMINATORS: readonly (readonly [number, number])[] = [
   [2, 2],
   [4, 3],
   [5, 3],
@@ -75,17 +75,17 @@ function fracDec(r: Rng, d: number, wholeShare: number, maxWhole: number): JProb
   return { shape: "juku", type: "decToFrac", v: decText(fracToDec({ n, d }) as Dec) };
 }
 
-const g6_3: Gen = (r) => {
-  const d = wpick(r, G6_3_DENS);
+const gFracDecimal: Gen = (r) => {
+  const d = wpick(r, FRAC_DEC_DENOMINATORS);
   return fracDec(r, d, d <= 5 ? 0.25 : 0, 3);
 };
 
-const g6_4: Gen = (r) => fracDec(r, 8, 0.25, 2);
+const gFracEighths: Gen = (r) => fracDec(r, 8, 0.25, 2);
 
 const EIGHTH_PCTS = ["12.5", "37.5", "62.5", "87.5"];
 const PCT_FRACS = ["50", "25", "75", "20", "40", "60", "80", "12.5", "37.5", "62.5", "87.5", "10", "30", "70", "90", "5"];
 
-const g6_5: Gen = (r) => {
+const gFracPercent: Gen = (r) => {
   const t = r.next();
   if (t < 0.18) {
     const u = r.next();
@@ -118,7 +118,7 @@ const g6_5: Gen = (r) => {
 /** 2–9 or a two-digit number that does not end in 0 */
 const nonRound = (r: Rng) => (r.next() < 0.6 ? r.int(2, 9) : r.int(1, 9) * 10 + r.int(1, 9));
 
-const g6_6: Gen = (r) => {
+const gDecMultiply: Gen = (r) => {
   for (;;) {
     const x = nonRound(r);
     const y = r.int(2, 9);
@@ -135,15 +135,15 @@ const INVERSES: readonly (readonly [readonly [string, number], number])[] = [
   [["0.125", 8], 2],
 ];
 
-const g6_7: Gen = (r) => {
+const gDecDivide: Gen = (r) => {
   const [m, f] = wpick(r, INVERSES);
   if (r.next() < 0.6) return op(String(r.int(2, Math.min(99, Math.floor(999 / f)))), "÷", m);
   const q = r.int(2, f === 2 ? 49 : f === 4 ? 24 : 12);
   return mulEither(r, String(q * f), m, 0.7);
 };
 
-const G6_8 = [g6_1, g6_2, g6_3, g6_4, g6_5, g6_6, g6_7];
-const g6_8: Gen = (r) => r.pick(G6_8)(r);
+const FRAC_MIX = [gFracMixed, gFracReduce, gFracDecimal, gFracEighths, gFracPercent, gDecMultiply, gDecDivide];
+const gFracMix: Gen = (r) => r.pick(FRAC_MIX)(r);
 
 // ---------------- Stage 7 単位の換算 ----------------
 /**
@@ -203,7 +203,7 @@ export const VOLUME_PAIRS: readonly Pair[] = [
   [["mL", "cm³"], 1],
 ];
 
-const g7_1: Gen = (r) => convertFrom(r, LENGTH_WEIGHT_PAIRS, 5);
+const gUnitLengthWeight: Gen = (r) => convertFrom(r, LENGTH_WEIGHT_PAIRS, 5);
 
 /** 0.1–upTo/10 hours (or minutes) in tenths, or a quarter that is not whole */
 function tenthsOrQuarters(r: Rng, maxTenths: number, maxQuarters: number): string {
@@ -219,7 +219,7 @@ function tenthsOrQuarters(r: Rng, maxTenths: number, maxQuarters: number): strin
   }
 }
 
-const g7_2: Gen = (r) => {
+const gUnitTime: Gen = (r) => {
   const t = r.next();
   if (t < 0.25) return time("hToM", tenthsOrQuarters(r, 39, 15));
   if (t < 0.5) {
@@ -248,7 +248,7 @@ const MSEC_KMH = [5, 10, 15, 20, 25, 30];
 
 const speed = (v: string, from: SpeedUnit, to: SpeedUnit): JProblem => ({ shape: "juku", type: "speed", v, from, to });
 
-const g7_3: Gen = (r) => {
+const gUnitSpeed: Gen = (r) => {
   const t = r.next();
   const flip = r.next() < 0.5;
   if (t < 0.5) {
@@ -282,7 +282,7 @@ const trip = (ask: "dist" | "time" | "speed", sp: string, su: SpeedUnit, dist: s
 
 const placesOk = (x: Dec | null, max: number): x is Dec => !!x && x.n > 0 && norm(x).s <= max;
 
-const g7_4: Gen = (r) => {
+const gUnitTrip: Gen = (r) => {
   const ask = r.pick(["dist", "time", "speed"] as const);
   const conv = r.next() < 0.5;
   for (;;) {
@@ -306,20 +306,20 @@ const g7_4: Gen = (r) => {
   }
 };
 
-const g7_5: Gen = (r) => convertFrom(r, AREA_PAIRS, 7);
-const g7_6: Gen = (r) => convertFrom(r, VOLUME_PAIRS, 7);
+const gUnitArea: Gen = (r) => convertFrom(r, AREA_PAIRS, 7);
+const gUnitVolume: Gen = (r) => convertFrom(r, VOLUME_PAIRS, 7);
 
-const G7_7 = [g7_1, g7_2, g7_3, g7_4, g7_5, g7_6];
-const g7_7: Gen = (r) => r.pick(G7_7)(r);
+const UNIT_MIX = [gUnitLengthWeight, gUnitTime, gUnitSpeed, gUnitTrip, gUnitArea, gUnitVolume];
+const gUnitMix: Gen = (r) => r.pick(UNIT_MIX)(r);
 
 // ---------------- Stage 8 円周率の計算 ----------------
 export const PI_TWO_DIGITS = [12, 15, 16, 18, 24, 25, 36];
 /** numbers whose product with 3.14 the stage teaches: the table, tens, a hundred and the frequent two-digit ones */
 export const PI_KNOWN = [...range(1, 9), ...range(10, 90, 10), 100, ...PI_TWO_DIGITS];
 
-const g8_1: Gen = (r) => mulEither(r, PI, String(r.int(1, 9)), 0.6);
+const gPiTable: Gen = (r) => mulEither(r, PI, String(r.int(1, 9)), 0.6);
 
-const g8_2: Gen = (r) => {
+const gPiShift: Gen = (r) => {
   const d = r.int(2, 9);
   const t = r.next();
   if (t < 0.4) return mulEither(r, PI, String(d * 10), 0.7);
@@ -328,10 +328,10 @@ const g8_2: Gen = (r) => {
   return op("314", "×", String(d));
 };
 
-const g8_3: Gen = (r) => mulEither(r, PI, String(r.pick(PI_TWO_DIGITS)), 0.7);
+const gPiTwoDigit: Gen = (r) => mulEither(r, PI, String(r.pick(PI_TWO_DIGITS)), 0.7);
 
-/** the number 3.14 is multiplied by in 8-4: the table (more often), tens, hundreds, frequent two-digit ones */
-const G8_4_K: readonly (readonly [readonly number[], number])[] = [
+/** the number 3.14 is multiplied by in pi-divide: the table (more often), tens, hundreds, frequent two-digit ones */
+const PI_DIVIDE_FACTORS: readonly (readonly [readonly number[], number])[] = [
   [range(1, 9), 3],
   [range(10, 90, 10), 2],
   [PI_TWO_DIGITS, 1],
@@ -340,8 +340,8 @@ const G8_4_K: readonly (readonly [readonly number[], number])[] = [
 
 const piProduct = (k: number) => decText(mulDec(dec(PI), decInt(k)));
 
-const g8_4: Gen = (r) => {
-  const k = r.pick(wpick(r, G8_4_K));
+const gPiDivide: Gen = (r) => {
+  const k = r.pick(wpick(r, PI_DIVIDE_FACTORS));
   const product = piProduct(k);
   if (r.next() < 0.5) return { shape: "juku", type: "missing", known: PI, product, pos: r.next() < 0.5 ? "left" : "right" };
   return op(product, "÷", PI);
@@ -349,7 +349,7 @@ const g8_4: Gen = (r) => {
 
 const piSum = (terms: string[][], signs: ("+" | "-")[]): JProblem => ({ shape: "juku", type: "piSum", terms, signs });
 
-const g8_5: Gen = (r) => {
+const gPiFactor: Gen = (r) => {
   const t = r.next();
   const piFirst = r.next() < 0.6;
   const term = (k: number) => (piFirst ? [PI, String(k)] : [String(k), PI]);
@@ -386,7 +386,7 @@ const g8_5: Gen = (r) => {
 const FIGURE_KS = new Set([...PI_KNOWN, ...range(200, 900, 100)]);
 const SECTOR_ANGLES = [30, 45, 60, 72, 90, 120, 135, 144, 150, 180, 210, 240, 270, 300];
 
-const g8_6: Gen = (r) => {
+const gPiFigure: Gen = (r) => {
   const fig = wpick(r, [
     ["circleArea", 2],
     ["circumference", 2],
@@ -416,11 +416,11 @@ const g8_6: Gen = (r) => {
   }
 };
 
-const G8_7 = [g8_1, g8_2, g8_3, g8_4, g8_5, g8_6];
-const g8_7: Gen = (r) => r.pick(G8_7)(r);
+const PI_MIX = [gPiTable, gPiShift, gPiTwoDigit, gPiDivide, gPiFactor, gPiFigure];
+const gPiMix: Gen = (r) => r.pick(PI_MIX)(r);
 
 // ---------------- Stage 9 見積もり ----------------
-const g9_1: Gen = (r) => {
+const gEstRound: Gen = (r) => {
   const t = r.next();
   if (t < 0.6) {
     const digits = r.pick([3, 3, 4, 4, 5]);
@@ -463,7 +463,7 @@ function tenfoldOptions(r: Rng, right: Dec, min: Dec): { options: string[]; inde
 
 const estimate = (a: string, o: JOp, b: string, options: string[]): JProblem => ({ shape: "juku", type: "estimate", a, op: o, b, options });
 
-const g9_2: Gen = (r) => {
+const gEstMagnitude: Gen = (r) => {
   for (;;) {
     if (r.next() < 0.6) {
       // 2–3 digits × 2 digits (sometimes 3), like 398×51
@@ -499,7 +499,7 @@ function twoSig(r: Rng, lo: number, hi: number): Dec {
   }
 }
 
-const g9_3: Gen = (r) => {
+const gEstDecimal: Gen = (r) => {
   if (r.next() < 0.6) {
     for (;;) {
       const k = r.int(0, 2);
@@ -526,64 +526,64 @@ const g9_3: Gen = (r) => {
   return { shape: "juku", type: "compare", a, op: r.next() < 0.5 ? "×" : "÷", b };
 };
 
-const g9_4: Gen = (r) => ({ shape: "juku", type: "benchmark", item: r.pick(BENCHMARKS).id });
-const g9_5: Gen = (r) => ({ shape: "juku", type: "plausible", item: r.pick(PLAUSIBLES).id });
+const gEstBenchmark: Gen = (r) => ({ shape: "juku", type: "benchmark", item: r.pick(BENCHMARKS).id });
+const gEstPlausible: Gen = (r) => ({ shape: "juku", type: "plausible", item: r.pick(PLAUSIBLES).id });
 
-const G9_6 = [g9_1, g9_2, g9_3, g9_4, g9_5];
-const g9_6: Gen = (r) => r.pick(G9_6)(r);
+const EST_MIX = [gEstRound, gEstMagnitude, gEstDecimal, gEstBenchmark, gEstPlausible];
+const gEstMix: Gen = (r) => r.pick(EST_MIX)(r);
 
 export const JGENERATORS: Record<string, Gen> = {
-  "6-1": g6_1,
-  "6-2": g6_2,
-  "6-3": g6_3,
-  "6-4": g6_4,
-  "6-5": g6_5,
-  "6-6": g6_6,
-  "6-7": g6_7,
-  "6-8": g6_8,
-  "7-1": g7_1,
-  "7-2": g7_2,
-  "7-3": g7_3,
-  "7-4": g7_4,
-  "7-5": g7_5,
-  "7-6": g7_6,
-  "7-7": g7_7,
-  "8-1": g8_1,
-  "8-2": g8_2,
-  "8-3": g8_3,
-  "8-4": g8_4,
-  "8-5": g8_5,
-  "8-6": g8_6,
-  "8-7": g8_7,
-  "9-1": g9_1,
-  "9-2": g9_2,
-  "9-3": g9_3,
-  "9-4": g9_4,
-  "9-5": g9_5,
-  "9-6": g9_6,
+  "frac-mixed": gFracMixed,
+  "frac-reduce": gFracReduce,
+  "frac-decimal": gFracDecimal,
+  "frac-eighths": gFracEighths,
+  "frac-percent": gFracPercent,
+  "dec-multiply": gDecMultiply,
+  "dec-divide": gDecDivide,
+  "frac-mix": gFracMix,
+  "unit-length-weight": gUnitLengthWeight,
+  "unit-time": gUnitTime,
+  "unit-speed": gUnitSpeed,
+  "unit-trip": gUnitTrip,
+  "unit-area": gUnitArea,
+  "unit-volume": gUnitVolume,
+  "unit-mix": gUnitMix,
+  "pi-table": gPiTable,
+  "pi-shift": gPiShift,
+  "pi-two-digit": gPiTwoDigit,
+  "pi-divide": gPiDivide,
+  "pi-factor": gPiFactor,
+  "pi-figure": gPiFigure,
+  "pi-mix": gPiMix,
+  "est-round": gEstRound,
+  "est-magnitude": gEstMagnitude,
+  "est-decimal": gEstDecimal,
+  "est-benchmark": gEstBenchmark,
+  "est-plausible": gEstPlausible,
+  "est-mix": gEstMix,
 };
 
 // ---------------- enumeration (levels with enumerable: true) ----------------
 const both = (a: string, b: string): JProblem[] => [op(a, "×", b), op(b, "×", a)];
 
 const ENUMERATORS: Record<string, () => JProblem[]> = {
-  "6-4": () =>
+  "frac-eighths": () =>
     [1, 3, 5, 7].flatMap((n): JProblem[] => [
       ...[0, 1, 2].map((w): JProblem => ({ shape: "juku", type: "fracToDec", w, n, d: 8 })),
       { shape: "juku", type: "decToFrac", v: decText(fracToDec({ n, d: 8 }) as Dec) },
     ]),
-  "8-1": () => range(1, 9).flatMap((k) => both(PI, String(k))),
-  "8-2": () =>
+  "pi-table": () => range(1, 9).flatMap((k) => both(PI, String(k))),
+  "pi-shift": () =>
     range(2, 9).flatMap((d) => [...both(PI, String(d * 10)), op("31.4", "×", String(d)), op(PI, "×", String(d * 100)), op("314", "×", String(d))]),
-  "8-3": () => PI_TWO_DIGITS.flatMap((k) => both(PI, String(k))),
-  "8-4": () =>
-    G8_4_K.flatMap(([ks]) => ks).flatMap((k): JProblem[] => [
+  "pi-two-digit": () => PI_TWO_DIGITS.flatMap((k) => both(PI, String(k))),
+  "pi-divide": () =>
+    PI_DIVIDE_FACTORS.flatMap(([ks]) => ks).flatMap((k): JProblem[] => [
       { shape: "juku", type: "missing", known: PI, product: piProduct(k), pos: "left" },
       { shape: "juku", type: "missing", known: PI, product: piProduct(k), pos: "right" },
       op(piProduct(k), "÷", PI),
     ]),
-  "9-4": () => BENCHMARKS.map((b): JProblem => ({ shape: "juku", type: "benchmark", item: b.id })),
-  "9-5": () => PLAUSIBLES.map((b): JProblem => ({ shape: "juku", type: "plausible", item: b.id })),
+  "est-benchmark": () => BENCHMARKS.map((b): JProblem => ({ shape: "juku", type: "benchmark", item: b.id })),
+  "est-plausible": () => PLAUSIBLES.map((b): JProblem => ({ shape: "juku", type: "plausible", item: b.id })),
 };
 
 /** Every distinct problem (by its text) an enumerable level can produce; null for the others. */

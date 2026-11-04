@@ -31,6 +31,6 @@ for (const lv of JLEVELS) {
     .replace(/"D": [\d.]+/, `"D": ${d}`)
     .replace(/"approxDistinctProblems": \d+/, `"approxDistinctProblems": ${distinct}`);
   text = text.slice(0, start) + block + text.slice(end);
-  console.log(`${lv.id.padEnd(4)} D ${String(lv.D).padStart(4)} → ${String(d).padStart(4)}   distinct ${lv.approxDistinctProblems} → ${distinct}`);
+  console.log(`${lv.id.padEnd(18)} D ${String(lv.D).padStart(4)} → ${String(d).padStart(4)}   distinct ${lv.approxDistinctProblems} → ${distinct}`);
 }
 writeFileSync(PATH, text);

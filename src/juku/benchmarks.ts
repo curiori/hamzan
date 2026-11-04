@@ -1,4 +1,4 @@
-// Familiar quantities for stage 9 (9-4 量の目安, 9-5 ありえない答え) and the hint cards that show them.
+// Familiar quantities for the estimation stage (est-benchmark 量の目安, est-plausible ありえない答え) and the hint cards that show them.
 import type { Label } from "./units";
 
 export type Part = string | Label;

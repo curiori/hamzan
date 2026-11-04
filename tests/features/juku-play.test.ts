@@ -76,7 +76,7 @@ describe("answer boxes of stages 6–9", () => {
 });
 
 describe("hint mode of stages 6–9", () => {
-  const steps = jScaffoldOf("6-2", { shape: "juku", type: "reduce", n: 18, d: 24 }).steps;
+  const steps = jScaffoldOf("frac-reduce", { shape: "juku", type: "reduce", n: 18, d: 24 }).steps;
 
   test("blanks are filled in order and the problem is right when nothing was revealed", () => {
     let s = initJHint(steps.length);
@@ -99,12 +99,12 @@ describe("hint mode of stages 6–9", () => {
 });
 
 describe("result words for the starting check", () => {
-  const base = { kind: "juku_check", levelId: "8-1", mode: "S", result: null, stars: 0, n: 5, errors: 0, perProblemSec: 1, t2: 3, t3: 2, prevBest: null, events: [], nextMode: null, reviews: [], stageCheck: null, placement: null, challengeBest: null, goalReached: false, newRewards: [], seeds: { lines: [], total: 0, capped: false } } as const;
+  const base = { kind: "juku_check", levelId: "pi-table", mode: "S", result: null, stars: 0, n: 5, errors: 0, perProblemSec: 1, t2: 3, t3: 2, prevBest: null, events: [], nextMode: null, reviews: [], stageCheck: null, placement: null, challengeBest: null, goalReached: false, newRewards: [], seeds: { lines: [], total: 0, capped: false } } as const;
   test("a pass goes on, a stumble says where to start", () => {
-    const pass = { ...base, jukuCheck: { levelId: "8-1", passed: true, unitDone: false, startLevel: null, startMode: null } } as SetSummary;
+    const pass = { ...base, jukuCheck: { levelId: "pi-table", passed: true, unitDone: false, startLevel: null, startMode: null } } as SetSummary;
     expect(headline(pass)).toEqual({ title: "ごうかく！", good: true });
     expect(resultNotes(pass)[0].text).toBe("つぎの レベルへ");
-    const stumble = { ...base, errors: 1, jukuCheck: { levelId: "8-1", passed: false, unitDone: true, startLevel: "8-1", startMode: "H" } } as SetSummary;
+    const stumble = { ...base, errors: 1, jukuCheck: { levelId: "pi-table", passed: false, unitDone: true, startLevel: "pi-table", startMode: "H" } } as SetSummary;
     expect(headline(stumble).title).toBe("チェック おわり");
     expect(resultNotes(stumble)[0].text).toBe("「3.14の だん」の ヒントから はじめよう");
   });

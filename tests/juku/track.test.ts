@@ -25,7 +25,7 @@ describe("opening units", () => {
   test("an opened unit waits for its check; closing it takes it out of practice and the queue", () => {
     const j = openUnit(emptyJuku(), "pi-cylinder", D, {});
     expect(j).toEqual({ open: { "pi-cylinder": D }, checks: ["pi-cylinder"] });
-    expect(nextCheck({}, j)).toEqual({ unitId: "pi-cylinder", levelId: "8-1" });
+    expect(nextCheck({}, j)).toEqual({ unitId: "pi-cylinder", levelId: "pi-table" });
     expect(closeUnit(j, "pi-cylinder")).toEqual(emptyJuku());
   });
 
@@ -33,48 +33,48 @@ describe("opening units", () => {
     let j = openUnit(emptyJuku(), "speed-units", D, {});
     j = openUnit(j, "pi-cylinder", D, {});
     expect(j.checks).toEqual(["pi-cylinder", "speed-units"]);
-    const done = withLevels({ "7-7": { star2At: D } });
+    const done = withLevels({ "unit-mix": { star2At: D } });
     expect(openUnit(emptyJuku(), "unit-mix", D, done).checks).toEqual([]);
   });
 
   test("juku levels stay locked until their unit opens; ★2 levels show as ★2 even when closed", () => {
-    expect(jukuStatus({}, emptyJuku(), "8-1")).toBe("locked");
-    expect(jukuStatus({}, emptyJuku(), "8-1", true)).toBe("available");
+    expect(jukuStatus({}, emptyJuku(), "pi-table")).toBe("locked");
+    expect(jukuStatus({}, emptyJuku(), "pi-table", true)).toBe("available");
     const j = openUnit(emptyJuku(), "pi-cylinder", D, {});
-    expect(jukuStatus({}, j, "8-1")).toBe("available");
-    expect(jukuStatus(withLevels({ "8-1": { star2At: D } }), emptyJuku(), "8-1")).toBe("star2");
+    expect(jukuStatus({}, j, "pi-table")).toBe("available");
+    expect(jukuStatus(withLevels({ "pi-table": { star2At: D } }), emptyJuku(), "pi-table")).toBe("star2");
   });
 });
 
 describe("the starting check", () => {
   test("a clean, fast check gives ★2 and goes on to the next level of the unit", () => {
     const j = openUnit(emptyJuku(), "pi-cylinder", D, {});
-    const o = applyCheck({}, j, { unitId: "pi-cylinder", levelId: "8-1", errors: 0, perProblemSec: 2, t2: 3, date: D });
+    const o = applyCheck({}, j, { unitId: "pi-cylinder", levelId: "pi-table", errors: 0, perProblemSec: 2, t2: 3, date: D });
     expect(o.passed).toBe(true);
     expect(o.unitDone).toBe(false);
     expect(o.star2Given).toBe(1);
-    expect(o.progress["8-1"]).toMatchObject({ star2At: D, mode: "S", practiced: true, bestStars: 2 });
-    expect(nextCheck(o.progress, o.juku)).toEqual({ unitId: "pi-cylinder", levelId: "8-2" });
+    expect(o.progress["pi-table"]).toMatchObject({ star2At: D, mode: "S", practiced: true, bestStars: 2 });
+    expect(nextCheck(o.progress, o.juku)).toEqual({ unitId: "pi-cylinder", levelId: "pi-shift" });
   });
 
   test("a mistake starts the level in hint mode; only slow starts it in speed mode; the unit's check ends", () => {
     const j = openUnit(emptyJuku(), "pi-cylinder", D, {});
-    const miss = applyCheck({}, j, { unitId: "pi-cylinder", levelId: "8-1", errors: 1, perProblemSec: 2, t2: 3, date: D });
-    expect([miss.passed, miss.unitDone, miss.startLevel, miss.progress["8-1"].mode, miss.juku.checks]).toEqual([false, true, "8-1", "H", []]);
-    const slow = applyCheck({}, j, { unitId: "pi-cylinder", levelId: "8-1", errors: 0, perProblemSec: 9, t2: 3, date: D });
-    expect(slow.progress["8-1"].mode).toBe("S");
+    const miss = applyCheck({}, j, { unitId: "pi-cylinder", levelId: "pi-table", errors: 1, perProblemSec: 2, t2: 3, date: D });
+    expect([miss.passed, miss.unitDone, miss.startLevel, miss.progress["pi-table"].mode, miss.juku.checks]).toEqual([false, true, "pi-table", "H", []]);
+    const slow = applyCheck({}, j, { unitId: "pi-cylinder", levelId: "pi-table", errors: 0, perProblemSec: 9, t2: 3, date: D });
+    expect(slow.progress["pi-table"].mode).toBe("S");
   });
 
   test("a level the child already practised keeps its mode after a stumble", () => {
-    const map = withLevels({ "8-1": { practiced: true, mode: "S" } });
+    const map = withLevels({ "pi-table": { practiced: true, mode: "S" } });
     const j = openUnit(emptyJuku(), "pi-cylinder", D, map);
-    expect(applyCheck(map, j, { unitId: "pi-cylinder", levelId: "8-1", errors: 3, perProblemSec: 2, t2: 3, date: D }).progress["8-1"].mode).toBe("S");
+    expect(applyCheck(map, j, { unitId: "pi-cylinder", levelId: "pi-table", errors: 3, perProblemSec: 2, t2: 3, date: D }).progress["pi-table"].mode).toBe("S");
   });
 
   test("passing the last level ends the unit's check", () => {
-    const map = withLevels({ "8-1": { star2At: D }, "8-2": { star2At: D }, "8-3": { star2At: D } });
+    const map = withLevels({ "pi-table": { star2At: D }, "pi-shift": { star2At: D }, "pi-two-digit": { star2At: D } });
     const j = openUnit(emptyJuku(), "pi-cylinder", D, map);
-    const o = applyCheck(map, j, { unitId: "pi-cylinder", levelId: "8-4", errors: 0, perProblemSec: 1, t2: 3, date: D });
+    const o = applyCheck(map, j, { unitId: "pi-cylinder", levelId: "pi-divide", errors: 0, perProblemSec: 1, t2: 3, date: D });
     expect([o.unitDone, o.juku.checks, nextCheck(o.progress, o.juku)]).toEqual([true, [], null]);
   });
 });
@@ -83,26 +83,26 @@ describe("practice in opened units", () => {
   const j = { open: { "pi-cylinder": D }, checks: [] };
 
   test("frontier, then pending, in the order of the levels", () => {
-    const map = withLevels({ "8-1": { star2At: "2026-11-01", mode: "S" }, "8-2": { star2At: "2026-10-30", mode: "S" } });
-    expect(jukuFrontier(map, j)?.id).toBe("8-3");
-    expect(jukuPendingList(map, j).map((l) => l.id)).toEqual(["8-2", "8-1"]);
-    expect(resolveJukuSlot("frontier", map, j)).toEqual({ levelId: "8-3", mode: "H", reason: "frontier" });
-    expect(resolveJukuSlot("pending", map, j)).toEqual({ levelId: "8-2", mode: "S", reason: "pending" });
+    const map = withLevels({ "pi-table": { star2At: "2026-11-01", mode: "S" }, "pi-shift": { star2At: "2026-10-30", mode: "S" } });
+    expect(jukuFrontier(map, j)?.id).toBe("pi-two-digit");
+    expect(jukuPendingList(map, j).map((l) => l.id)).toEqual(["pi-shift", "pi-table"]);
+    expect(resolveJukuSlot("frontier", map, j)).toEqual({ levelId: "pi-two-digit", mode: "H", reason: "frontier" });
+    expect(resolveJukuSlot("pending", map, j)).toEqual({ levelId: "pi-shift", mode: "S", reason: "pending" });
   });
 
   test("after five speed sets without ★2 practice goes back to an unmastered prerequisite, core levels included", () => {
-    const map = withLevels({ "8-1": { mode: "S", practiced: true, speedSetsWithoutStar2: 5 } });
+    const map = withLevels({ "pi-table": { mode: "S", practiced: true, speedSetsWithoutStar2: 5 } });
     expect(jukuTarget(map, j)).toMatchObject({ level: { id: "2-5" }, reason: "prerequisite" });
     // 九九 with no ★2 starts where it stands (speed only: 2-5 has no hint mode)
     expect(resolveJukuSlot("frontier", map, j)).toEqual({ levelId: "2-5", mode: "S", reason: "prerequisite" });
-    const mastered = { ...map, ...withLevels({ "2-5": { masteredAt: D, star2At: D }, "3-10": { masteredAt: D, star2At: D } }) };
-    expect(jukuTarget(mastered, j)).toMatchObject({ level: { id: "8-1" }, reason: "frontier" });
+    const mastered = { ...map, ...withLevels({ "2-5": { masteredAt: D, star2At: D }, "4-8": { masteredAt: D, star2At: D } }) };
+    expect(jukuTarget(mastered, j)).toMatchObject({ level: { id: "pi-table" }, reason: "frontier" });
   });
 
   test("closed units are not practised, and a stage check is due when a whole juku stage has ★2", () => {
-    const map = withLevels({ "8-1": { star2At: D } });
+    const map = withLevels({ "pi-table": { star2At: D } });
     expect(resolveJukuSlot("frontier", map, emptyJuku())).toBeNull();
-    const all = withLevels(Object.fromEntries(["9-1", "9-2", "9-3", "9-4", "9-5", "9-6"].map((id) => [id, { star2At: D }])));
+    const all = withLevels(Object.fromEntries(["est-round", "est-magnitude", "est-decimal", "est-benchmark", "est-plausible", "est-mix"].map((id) => [id, { star2At: D }])));
     expect(jukuStageCheckDue(all, {})).toBe(9);
     expect(jukuStageCheckDue(all, { 9: { date: D, passed: true } })).toBeNull();
   });

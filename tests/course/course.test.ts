@@ -14,7 +14,7 @@ describe("one course of 89 levels", () => {
     expect(ALL_LEVELS.length).toBe(89);
     expect(ALL_STAGES.map((s) => s.id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(ALL_LEVELS.map((l) => l.order)).toEqual(ALL_LEVELS.map((_, i) => i));
-    expect(levelSpec("8-1").name).toBe("3.14の段");
+    expect(levelSpec("pi-table").name).toBe("3.14の段");
   });
 
   test("stage 0–5 sets, warm-ups and targets are exactly those of src/domain", () => {
@@ -28,31 +28,31 @@ describe("one course of 89 levels", () => {
 
   test("juku targets add the reading factor: word problems read longer, estimation stays short", () => {
     // 7-4: 0.5×6 + 0.9×2.5 + 0.5×D
-    const d74 = levelSpec("7-4").D;
-    expect(levelTargetSec("7-4", 2)).toBe(Math.round((0.5 * 6 + 0.9 * 2.5 + 0.5 * d74) * 10) / 10);
-    expect(levelTargetSec("8-1", 2)).toBe(Math.round((0.5 + 0.9 + 0.5 * levelSpec("8-1").D) * 10) / 10);
+    const d74 = levelSpec("unit-trip").D;
+    expect(levelTargetSec("unit-trip", 2)).toBe(Math.round((0.5 * 6 + 0.9 * 2.5 + 0.5 * d74) * 10) / 10);
+    expect(levelTargetSec("pi-table", 2)).toBe(Math.round((0.5 + 0.9 + 0.5 * levelSpec("pi-table").D) * 10) / 10);
     for (const l of JLEVELS) expect(levelTargetSec(l.id, 3)).toBeLessThan(levelTargetSec(l.id, 2));
-    expect(levelTargetSec("9-2", 2)).toBeLessThan(levelTargetSec("8-3", 2));
+    expect(levelTargetSec("est-magnitude", 2)).toBeLessThan(levelTargetSec("pi-two-digit", 2));
   });
 
   test("mixed sets of core and juku levels keep each level's count", () => {
-    const set = buildMixedSet(["3-2", "8-1", "6-2"], [3, 4, 5], 7);
+    const set = buildMixedSet(["3-2", "pi-table", "frac-reduce"], [3, 4, 5], 7);
     const count = (id: string) => set.filter((x) => x.levelId === id).length;
-    expect([count("3-2"), count("8-1"), count("6-2")]).toEqual([3, 4, 5]);
-    expect(buildMixedSet(["3-2", "8-1", "6-2"], [3, 4, 5], 7)).toEqual(set);
+    expect([count("3-2"), count("pi-table"), count("frac-reduce")]).toEqual([3, 4, 5]);
+    expect(buildMixedSet(["3-2", "pi-table", "frac-reduce"], [3, 4, 5], 7)).toEqual(set);
   });
 
   test("juku sets: no fact twice while the level has enough, never twice in a row", () => {
-    const set = buildLevelSet("8-1", 20, 3);
+    const set = buildLevelSet("pi-table", 20, 3);
     expect(set.length).toBe(20);
     expect(new Set(set.slice(0, 9).map((x) => x.factKey)).size).toBe(9);
     expect(set.every((x, i) => i === 0 || x.factKey !== set[i - 1].factKey)).toBe(true);
-    const gen = buildLevelSet("7-1", 20, 3);
+    const gen = buildLevelSet("unit-length-weight", 20, 3);
     expect(new Set(gen.map((x) => x.factKey)).size).toBe(20);
   });
 
   test("yesterday's juku mistakes come first in the warm-up", () => {
-    const miss = makeJInstance("8-1", { shape: "juku", type: "op", a: "3.14", op: "×", b: "7" });
+    const miss = makeJInstance("pi-table", { shape: "juku", type: "op", a: "3.14", op: "×", b: "7" });
     const w = buildWarmupSet(["2-1"], [miss], 5, 20);
     expect(w[0]).toEqual(miss);
     expect(w.length).toBe(20);
@@ -60,14 +60,14 @@ describe("one course of 89 levels", () => {
 
   test("problems, answers and mistakes go to the spec they belong to", () => {
     const core = instanceOf("2-5", { shape: "binary", a: 7, op: "×", b: 8 });
-    const juku = instanceOf("6-2", { shape: "juku", type: "reduce", n: 18, d: 24 });
+    const juku = instanceOf("frac-reduce", { shape: "juku", type: "reduce", n: 18, d: 24 });
     expect(problemText(core.problem)).toBe("7×8＝");
     expect(problemText(juku.problem)).toBe("18/24を 約分");
     expect(judgeAnswer(core.answer, { kind: "number", value: 56 })).toEqual({ correct: true, note: null });
     expect(judgeAnswer(juku.answer, { kind: "frac", w: 0, n: 9, d: 12, mixed: false })).toEqual({ correct: false, note: "やくぶん できるよ" });
     expect(classifyMistake(core, { kind: "number", value: 560 }, 0)).toBe("placeValue");
     expect(classifyMistake(juku, { kind: "frac", w: 0, n: 9, d: 12, mixed: false }, 0)).toBe("reduce");
-    expect(revealOf(instanceOf("7-5", { shape: "juku", type: "convert", v: "0.8", from: "m²", to: "cm²" }), { kind: "dec", v: "80" })).toEqual({
+    expect(revealOf(instanceOf("unit-area", { shape: "juku", type: "convert", v: "0.8", from: "m²", to: "cm²" }), { kind: "dec", v: "80" })).toEqual({
       answer: "8000cm²",
       note: "1m²＝10000cm²",
     });

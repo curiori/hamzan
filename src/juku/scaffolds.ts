@@ -257,7 +257,7 @@ export function jScaffoldOf(levelId: string, p: JProblem): JScaffold {
 export const jHintLines = (levelId: string, p: JProblem): HintLine[] => build(levelId, p).lines;
 
 // ---------------- what the picture hints show ----------------
-/** 9-1: the number line between the two round numbers around v, with the middle */
+/** est-round: the number line between the two round numbers around v, with the middle */
 export function roundingLine(v: string): { lo: string; hi: string; mid: string; v: string; answer: string } {
   const answer = roundTop(v);
   const x = dec(v);
@@ -271,14 +271,14 @@ export function roundingLine(v: string): { lo: string; hi: string; mid: string; 
   return { lo: decText(lo), hi: decText(hi), mid: decText(mid), v: t, answer: decText(answer) };
 }
 
-/** 9-4 and 9-5: the familiar sizes of the problem's kind of quantity */
+/** est-benchmark and est-plausible: the familiar sizes of the problem's kind of quantity */
 export function benchNotes(p: JProblem): { cat: BenchCategory; notes: string[] } | null {
   if (p.type === "benchmark") return { cat: benchmark(p.item).cat, notes: BENCH_NOTES[benchmark(p.item).cat] };
   if (p.type === "plausible") return { cat: plausible(p.item).cat, notes: BENCH_NOTES[plausible(p.item).cat] };
   return null;
 }
 
-/** 8-1 and 8-4: 3.14×1〜9, and the row to look at */
+/** pi-table and pi-divide: 3.14×1〜9, and the row to look at */
 export function piTable(p: JProblem): { rows: { k: number; v: string }[]; mark: number | null; shift: number } {
   const rows = Array.from({ length: 9 }, (_, i) => ({ k: i + 1, v: decText(mulDec(dec(PI), decInt(i + 1))) }));
   // the multiplier the problem is about, and how far the point moved from the table (40 → row 4, shift 1)
