@@ -81,6 +81,16 @@ export interface SessionDay {
   goal: boolean;
 }
 
+/** The child and the course (src/state/reconcile.ts keeps it in step with src/course/course.json on every load). */
+export interface CourseRecord {
+  /** the version of the course these records were last reconciled with (never lowered) */
+  version: number;
+  /** every level the child has met, in the order of the course they last saw; levels the app does not know stay */
+  seen: string[];
+  /** levels waiting for their 5-problem check (they came before where the child already was) */
+  checks: string[];
+}
+
 export interface Profile {
   id: string;
   nickname: string;
@@ -109,6 +119,8 @@ export interface Profile {
   room: RoomSetup;
   /** seed movements, newest last, at most MAX_LEDGER */
   ledger: LedgerEntry[];
+  /** the levels met and the checks waiting (src/state/reconcile.ts) */
+  course: CourseRecord;
   /** 塾の単元 the parent opened and their starting checks (missing in older saves: none opened) */
   juku?: JukuState;
 }

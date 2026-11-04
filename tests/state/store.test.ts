@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { StateStorage } from "zustand/middleware";
+import { freshProgress } from "../../src/domain/progression";
 import type { SessionPart } from "../../src/domain/session";
 import { buildSet } from "../../src/domain/setBuilder";
+import { LEVEL, LEVELS } from "../../src/domain/spec";
 import { emptyWallet } from "../../src/game/economy";
 import { STORAGE_KEY, activeProfile, createAppStore } from "../../src/state/create-store";
 import { RESET_WARNING } from "../../src/i18n/ja";
@@ -88,7 +90,7 @@ describe("app store", () => {
 
   test("data saved with another version is kept", async () => {
     const { data, storage } = memoryStorage({ delayMs: 1 });
-    const newer = JSON.stringify({ ...JSON.parse(saved()), version: 3 });
+    const newer = JSON.stringify({ ...JSON.parse(saved()), version: 4 });
     data.set(STORAGE_KEY, newer);
     const store = createAppStore(storage, { now: () => NOW });
     await sleep(30);
@@ -172,7 +174,7 @@ describe("app store", () => {
     const summary = store.getState().recordSet(run);
     expect(summary.n).toBe(3);
     const stored = JSON.parse(data.get(STORAGE_KEY) ?? "{}");
-    expect(stored.version).toBe(2);
+    expect(stored.version).toBe(3);
     expect(stored.state.profiles[0].sets.length).toBe(1);
     expect(stored.state.hydrated).toBeUndefined();
   });
@@ -219,7 +221,43 @@ describe("app store", () => {
     expect(p?.settings.shop).toBe(true);
     store.getState().addProfile("いもうと", 3);
     await sleep(10);
-    expect(JSON.parse(data.get(STORAGE_KEY) ?? "{}").version).toBe(2);
+    expect(JSON.parse(data.get(STORAGE_KEY) ?? "{}").version).toBe(3);
+    expect(activeProfile(store.getState())?.course.seen.length).toBe(89);
+  });
+
+  test("version 2 data of the 塾 build moves to version 3: one course, today's ids, no 塾 units", async () => {
+    const { data, storage } = memoryStorage({ delayMs: 1 });
+    const today = todayOf(0, NOW);
+    const { course: _c, ...v3 } = newProfile("さくら", 4, { id: "pA", now: NOW });
+    const core = LEVELS.map((l) => l.id);
+    const star2 = (id: string) => ({ ...freshProgress(LEVEL[id]), star2At: "2026-10-20", mode: "S", practiced: true, bestStars: 2 });
+    const v2 = {
+      ...v3,
+      placementDone: true,
+      progress: { ...Object.fromEntries(core.slice(0, core.indexOf("5-3")).map((id) => [id, star2(id)])), "8-1": { ...freshProgress(LEVEL["0-1"]), mode: "H", practiced: true } },
+      reviews: [{ levelId: "8-1", intervalIndex: 0, dueDate: today, consecutiveFails: 0 }],
+      sets: [{ id: "s1", kind: "juku_check", levelId: "8-1", mode: "S", date: today, startedAt: NOW, n: 5, errors: 1, perProblemSec: 3, target2: 3, target3: 2, result: "fail" }],
+      sessions: { [today]: { plan: [{ kind: "warmup" }, { kind: "juku", slot: "frontier" }, { kind: "slot", slot: "pending" }], done: 1, goal: false } },
+      juku: { open: { "pi-cylinder": today }, checks: [] },
+    };
+    data.set(STORAGE_KEY, JSON.stringify({ state: { pin: null, profiles: [v2], activeId: "pA", dev: { dayOffset: 0, unlockAll: false, shortPlacement: false } }, version: 2 }));
+    const store = createAppStore(storage, { now: () => NOW });
+    await sleep(30);
+    expect(store.getState().loadError).toBe(false);
+    const p = activeProfile(store.getState());
+    expect(p && "juku" in p).toBe(false);
+    expect(p?.progress["8-1"]).toBeUndefined();
+    expect(p?.progress["pi-table"]?.practiced).toBe(true);
+    expect(p?.reviews.map((r) => r.levelId)).toEqual(["pi-table"]);
+    expect(p?.sets[0]).toMatchObject({ kind: "check", levelId: "pi-table" });
+    expect(p?.sessions[today].plan).toEqual([{ kind: "warmup" }, { kind: "slot", slot: "frontier" }, { kind: "slot", slot: "pending" }]);
+    // the new stages before 受験の技 wait for their check, except the level the child already practised
+    expect(p?.course.checks).toContain("frac-mixed");
+    expect(p?.course.checks).not.toContain("pi-table");
+    expect(p?.course.checks.length).toBe(21);
+    store.getState().addProfile("いもうと", 3);
+    await sleep(10);
+    expect(JSON.parse(data.get(STORAGE_KEY) ?? "{}").version).toBe(3);
   });
 
   test("giftSeeds adds seeds to the active child and logs a gift", () => {

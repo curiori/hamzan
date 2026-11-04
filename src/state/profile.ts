@@ -11,6 +11,7 @@ import { REWARDS, unlockedRewards, type RewardStats } from "@/game/achievements"
 import { emptyWallet } from "@/game/economy";
 import { GOOD_KIND } from "@/game/room";
 import { SHOP, type ShopKind } from "@/game/shop";
+import { freshCourseRecord } from "./reconcile";
 import { DEFAULT_SETTINGS, type Profile } from "./types";
 
 export const todayOf = (dayOffset: number, nowMs: number = Date.now()): LocalDate => toLocalDate(nowMs + dayOffset * 86400000);
@@ -43,12 +44,14 @@ export function newProfile(nickname: string, grade: number, opts: { id?: string;
     inventory: {},
     room: { layout: {}, wallpaper: null, floor: null, seen: [] },
     ledger: [],
+    course: freshCourseRecord(),
   };
 }
 
 export function rewardStats(p: Profile): RewardStats {
-  // every level of stages 0–9 counts
-  const lps = ALL_LEVELS.map((l) => lpAny(p.progress, l.id));
+  // every level the child has records of counts, including levels a later version retired: rewards never go away
+  // because the course changed
+  const lps = Object.values(p.progress);
   const base = p.rewardBaseline ?? { star2: 0, mastered: 0 };
   return {
     cleanSets: p.sets.filter((s) => s.kind !== "warmup" && s.kind !== "placement" && s.kind !== "juku_check" && s.n > 0 && s.errors === 0).length,

@@ -13,6 +13,7 @@ import { buy, shopItem, type BuyResult } from "@/game/shop";
 import { closeUnit, openUnit } from "@/juku/track";
 import { migrate } from "./migrate";
 import { hashPin, makeSalt } from "./pin";
+import { reconcileProfile } from "./reconcile";
 import { newProfile, ownedGoods, placementOutcome, todayOf } from "./profile";
 import { recordSet as recordSetPure } from "./record-set";
 import type { DevSettings, PinRecord, Profile, SessionDay, SetRun, SetSummary } from "./types";
@@ -248,11 +249,16 @@ export function createAppStore(storage: StateStorage, deps: { now?: () => number
       },
       {
         name: STORAGE_KEY,
-        version: 2,
+        version: 3,
         storage: createJSONStorage(() => guarded),
         partialize: (s) => ({ pin: s.pin, profiles: s.profiles, activeId: s.activeId, dev: s.dev }),
-        // version 1 moves to 2; data from any other version is left untouched (the read counts as failed)
+        // versions 1 and 2 move to 3; data from any other version is left untouched (the read counts as failed)
         migrate: (persisted, version) => migrate(persisted, version) as AppState,
+        // every load meets the course this version has: new levels, renamed ids, levels it does not know (kept)
+        merge: (persisted, current) => {
+          const s = { ...current, ...((persisted ?? {}) as Partial<AppState>) };
+          return { ...s, profiles: (s.profiles ?? []).map((p) => reconcileProfile(p)) };
+        },
         // runs after a successful or failed read, so the app never waits forever on broken data
         onRehydrateStorage: () => (_state, error) => finishLoad(!!error),
       },
