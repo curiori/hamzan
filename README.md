@@ -155,7 +155,7 @@ PC のサーバーなしで遊べる本番版を EAS（Expo のクラウドの�
 3. ファイルは消さずに取っておくと、記録の控えになります
 
 > [!IMPORTANT]
-> アプリ ID（`com.mahori.hamzan`、開発ビルドは `com.mahori.hamzan.dev`）は、最初のビルドのあとは変えられません。別の ID にしたいときは、最初のビルドの前に `app.json` の `expo.ios.bundleIdentifier` を変えます。
+> アプリ ID（`app.curiori.hamzan`、開発ビルドは `app.curiori.hamzan.dev`）は、最初のビルドのあとは変えられません。別の ID にしたいときは、最初のビルドの前に `app.json` の `expo.ios.bundleIdentifier` を変えます。
 
 > [!NOTE]
 > 端末を足したときは、`device:create` で登録してから、もう一度ビルドします（配布用のプロファイルに端末が入るため）。開発ビルド（`--profile development`）は、iCloud 同期の作業で expo-dev-client を入れてから使います。

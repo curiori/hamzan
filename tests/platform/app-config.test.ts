@@ -10,7 +10,7 @@ describe("build variants", () => {
   test("production has the store id and no test tools", () => {
     const c = variantConfig(base(), "production");
     expect(c.name).toBe("ハムざん");
-    expect(c.ios?.bundleIdentifier).toBe("com.mahori.hamzan");
+    expect(c.ios?.bundleIdentifier).toBe("app.curiori.hamzan");
     expect(c.ios?.supportsTablet).toBe(true);
     expect(c.extra?.enableTestTools).toBe(false);
   });
@@ -18,7 +18,7 @@ describe("build variants", () => {
   test("development sits beside it with its own id and the test tools", () => {
     const c = variantConfig(base(), "development");
     expect(c.name).toBe("ハムざん dev");
-    expect(c.ios?.bundleIdentifier).toBe("com.mahori.hamzan.dev");
+    expect(c.ios?.bundleIdentifier).toBe("app.curiori.hamzan.dev");
     expect(c.scheme).toBe("hamzan-dev");
     expect(c.extra?.enableTestTools).toBe(true);
   });

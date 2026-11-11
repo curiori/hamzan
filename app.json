@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mahori.hamzan",
+      "bundleIdentifier": "app.curiori.hamzan",
       "infoPlist": {
         "UISupportedInterfaceOrientations~ipad": [
           "UIInterfaceOrientationPortrait",
