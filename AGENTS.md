@@ -32,9 +32,11 @@ bun test
 bun run test:domain
 bun run export:ios
 APP_VARIANT=production bunx expo config --type public
+bun run scripts/clear-lockfile-urls.ts
+bash scripts/setup-mac.sh
 ```
 
-Run typecheck, lint, `bun test`, and the domain tests before declaring any task done. The last command prints the app config a production build gets (in PowerShell, set `$env:APP_VARIANT = "production"` first).
+Run typecheck, lint, `bun test`, and the domain tests before declaring any task done. The production config command prints the app config a production build gets (in PowerShell, set `$env:APP_VARIANT = "production"` first). The last two keep `bun.lock` free of registry URLs and set up a fresh clone on a Mac.
 
 ## Rules
 
@@ -49,6 +51,7 @@ Run typecheck, lint, `bun test`, and the domain tests before declaring any task 
 * The parent moves records between devices with a file (`src/state/backup.ts`: `backupText`, `readBackup`). The file holds the PIN, every profile and the active child, never the test settings. Reading refuses other files, damaged files and newer save versions, migrates older ones and reconciles every profile. A file replaces the records only through `replaceRecords` after the parent confirms. Only `src/platform/records-file.ts` touches expo-file-system, expo-sharing and expo-document-picker.
 * Build variants come from `APP_VARIANT` in `app.config.ts`, which the `eas.json` profiles set: `production` has no test tools, `development` sits beside it as `app.curiori.hamzan.dev`, and without a variant (Expo Go, the web preview, `expo export`) the app is set up as `app.json` says, with the test tools. Never put `enableTestTools` in `app.json`, and never change `ios.bundleIdentifier` (`app.curiori.hamzan`) once the first EAS build exists.
 * Do not install `expo-dev-client` before the release design's stage ② (iCloud sync) needs a development build; the family's devices run the app through Expo Go until then.
+* `bun.lock` names no registry: the second field of every package is `""`, so each machine installs the same versions from its own registry (npm on a Mac, Expo's npm cache on its build servers, the private registry on a PC whose `.npmrc` sets one), and the public repository shows no private registry. Bun writes that registry's URL into every package whenever it rewrites the lockfile there (`bun add`, `bunx expo install`), so run `bun run scripts/clear-lockfile-urls.ts` before committing; `bun test` fails while a URL is left. A fresh clone on a Mac is set up with `bash scripts/setup-mac.sh`.
 
 ## Changing content
 

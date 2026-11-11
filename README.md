@@ -36,6 +36,40 @@ bunx expo start
 3. 社内ネットワークなどで iPhone からつながらないときは、`bunx expo start --tunnel` を使います
 4. `bun install` が接続エラーで止まるときは、`bun install --network-concurrency 4` で同時に開く接続を減らします
 
+## Mac でクローンして始める
+
+`bun.lock` には、パッケージの版と、中身を確かめる値（integrity）だけを書き、取得先のレジストリの URL は書きません。どの端末も、自分の既定のレジストリから同じ版を取ります。Mac では公開の npm レジストリ（`https://registry.npmjs.org/`）から、EAS のビルドサーバーでは EAS が用意した npm のキャッシュから取ります。
+
+準備（一度だけ）
+
+1. ターミナルで `xcode-select --install` を実行し、git などのコマンドラインツールを入れます（入っていれば要りません）
+2. [Node.js](https://nodejs.org) の LTS 版を入れます
+3. Bun を入れて、ターミナルを開き直します
+
+   ```bash
+   curl -fsSL https://bun.sh/install | bash
+   ```
+
+クローンして準備する
+
+```bash
+git clone https://github.com/curiori/hamzan.git
+cd hamzan
+bash scripts/setup-mac.sh
+```
+
+[scripts/setup-mac.sh](scripts/setup-mac.sh) は、次の順に進めます。
+
+1. Bun（1.3 以上）と Node.js（22 以上）があるかを確かめます
+2. `bun.lock` にレジストリの URL が残っていれば消します。消したときは、最後にコミットするように案内します
+3. 公開の npm レジストリから、`bun.lock` どおりの版を入れます（`bun install --frozen-lockfile`）
+4. 型チェック、ESLint、`bun test`、`bun run test:domain`、`bun run export:ios` を実行します。省くときは `--skip-checks` を付けます
+
+準備ができたら、「動かし方」と同じく `bunx expo start` で Expo Go から開けます。本番版は、「本番版を家族の端末に入れる」の手順を Mac のターミナルで進めます。ビルドは EAS のクラウドで行うので、Xcode は要りません。
+
+> [!NOTE]
+> `.npmrc` などでプライベートのレジストリを設定した PC でパッケージを足したり上げたりすると（`bun add`、`bunx expo install` など）、Bun が `bun.lock` のすべてのパッケージに、そのレジストリの URL を書き込みます。コミットする前に `bun run scripts/clear-lockfile-urls.ts` で消してください。消し忘れると `bun test` が失敗して知らせます。
+
 ## テスト
 
 ```bash
@@ -46,7 +80,7 @@ node node_modules/eslint/bin/eslint.js src tests
 bun run export:ios
 ```
 
-* `bun test` は、記録、たね、ショップ、おへや、ハムスターの動き、効果音、アイコンなどのテストです。小数と分数・円周率・単位・見積もりの 28 レベルの出題、ヒント、判定、ミスの種類と、コースの並び、記録の合わせ込み、新しいレベルのチェック、記録のファイル、ビルドの種類（`app.config.ts` と `eas.json`）もここで確かめます
+* `bun test` は、記録、たね、ショップ、おへや、ハムスターの動き、効果音、アイコンなどのテストです。小数と分数・円周率・単位・見積もりの 28 レベルの出題、ヒント、判定、ミスの種類と、コースの並び、記録の合わせ込み、新しいレベルのチェック、記録のファイル、ビルドの種類（`app.config.ts` と `eas.json`）、`bun.lock` にレジストリの URL がないこともここで確かめます
 * `bun run test:domain` は学習エンジン（ステージ0〜5）のテストです。見本 1,757 問との一致、61 レベルの問題づくり、ヒントの途中式、★の判定などの規則を確かめます。Python 3 があると、添付の Python 参照実装とも突き合わせます
 * `bun run typecheck` は TypeScript の型を、ESLint の行はコードの書き方を確かめます（`bun run lint` でも同じ ESLint が動きます）
 * `bun run export:ios` は、iPhone 用のバンドルが作れることを確かめます
@@ -177,7 +211,7 @@ PC のサーバーなしで遊べる本番版を EAS（Expo のクラウドの�
 | src/ui/           | ボタンやシートなどの共通部品、色、文字                                 |
 | src/i18n/ja.ts    | 子ども向けのレベル名など                                               |
 | tests/            | `bun test` のテスト。tests/domain は学習エンジンのテストと参照ファイル |
-| scripts/          | 効果音を作るスクリプト、juku.json の D を計算し直すスクリプト           |
+| scripts/          | 効果音を作るスクリプト、juku.json の D を計算し直すスクリプト、bun.lock からレジストリの URL を消すスクリプト、Mac の準備のスクリプト |
 | assets/           | アイコンの元の絵（icon）、画像（images）、効果音（sounds）            |
 | docs/superpowers/ | 設計と実装計画                                                         |
 | app.json          | アプリの設定。ビルドの種類（本番と開発）は app.config.ts が決める      |
