@@ -68,7 +68,7 @@ bash scripts/setup-mac.sh
 準備ができたら、「動かし方」と同じく `bunx expo start` で Expo Go から開けます。本番版は、「本番版を家族の端末に入れる」の手順を Mac のターミナルで進めます。ビルドは EAS のクラウドで行うので、Xcode は要りません。
 
 > [!NOTE]
-> `.npmrc` などでプライベートのレジストリを設定した PC でパッケージを足したり上げたりすると（`bun add`、`bunx expo install` など）、Bun が `bun.lock` のすべてのパッケージに、そのレジストリの URL を書き込みます。コミットする前に `bun run scripts/clear-lockfile-urls.ts` で消してください。消し忘れると `bun test` が失敗して知らせます。
+> `.npmrc` などでプライベートのレジストリを設定した PC でパッケージを足したり上げたりすると（`bun add`、`bunx expo install` など）、Bun が `bun.lock` のすべてのパッケージに、そのレジストリの URL を書き込みます。コミットや EAS のビルドの前に、`bun run scripts/clear-lockfile-urls.ts` で消してください。消し忘れると `bun test` が失敗して知らせます。
 
 ## テスト
 
@@ -148,7 +148,7 @@ bun run scripts/make-sounds.ts
 
 ## 本番版を家族の端末に入れる
 
-PC のサーバーなしで遊べる本番版を EAS（Expo のクラウドのビルド）で作り、お子さんの iPhone と iPad に直接入れます（内部配布）。お子さんの Apple アカウントは 13 歳未満の子ども用なので、TestFlight は使いません。
+PC のサーバーなしで遊べる本番版を EAS（Expo のクラウドのビルド）で作り、お子さんの iPhone と iPad に直接入れます（内部配布）。お子さんの Apple アカウントは 13 歳未満の子ども用なので、TestFlight は使いません。ビルドは Expo のクラウドの Mac で行うので、手元に Mac は要らず、Windows の PC からも同じ手順で進められます。EAS CLI は `npx eas-cli@latest` で動かします（`bunx` で入れると、Bun のキャッシュの具合によってパッケージの中身が欠け、動かない PC があるため）。
 
 準備（一度だけ）
 
@@ -156,31 +156,31 @@ PC のサーバーなしで遊べる本番版を EAS（Expo のクラウドの�
 2. PC で EAS にログインします。Expo Go と同じ Expo のアカウントを使います
 
    ```bash
-   bunx eas-cli@latest login
+   npx eas-cli@latest login
    ```
 
 3. プロジェクトを EAS につなぎます。`app.json` の `expo.extra.eas.projectId` に ID が書かれます。書けなかったと出たときは、表示された ID をそこに書きます。書かれた `app.json` はコミットします
 
    ```bash
-   bunx eas-cli@latest init
+   npx eas-cli@latest init
    ```
 
 4. お子さんの iPhone と iPad を登録します。表示されるリンク（または QR コード）を各端末の Safari で開き、案内に従って設定用のプロファイルを入れます
 
    ```bash
-   bunx eas-cli@latest device:create
+   npx eas-cli@latest device:create
    ```
 
 ビルドして入れる
 
-1. 本番版を作ります。初めてのときは Apple のアカウントでサインインし、証明書と配布用のプロファイルを EAS に作ってもらいます。ビルドの番号は EAS が上げます
+1. 本番版を作ります。初めてのときは Apple のアカウントでサインインし、証明書と配布用のプロファイルを EAS に作ってもらいます。ビルドの番号は EAS が上げます。EAS はコミットしていない変更も含めてフォルダの中身を送るので、プライベートのレジストリを使う PC でパッケージを足したり上げたりしたあとは、先に `bun run scripts/clear-lockfile-urls.ts` を実行します
 
    ```bash
-   bunx eas-cli@latest build --platform ios --profile production
+   npx eas-cli@latest build --platform ios --profile production
    ```
 
 2. ビルドが終わると出るリンク（または QR コード）を各端末で開き、アプリを入れます
-3. 初めて開く前に、端末の「設定」→「プライバシーとセキュリティ」→「デベロッパモード」をオンにします（再起動とパスコードが要ります）
+3. 入れたアプリのアイコンを押すと、デベロッパモードをオンにするように出ます。端末の「設定」→「プライバシーとセキュリティ」→「デベロッパモード」をオンにし、再起動のあとに出る確認で「オンにする」を押して、パスコードを入れます（端末ごとに一度だけ）
 
 記録を移す
 
@@ -192,7 +192,7 @@ PC のサーバーなしで遊べる本番版を EAS（Expo のクラウドの�
 > アプリ ID（`app.curiori.hamzan`、開発ビルドは `app.curiori.hamzan.dev`）は、最初のビルドのあとは変えられません。別の ID にしたいときは、最初のビルドの前に `app.json` の `expo.ios.bundleIdentifier` を変えます。
 
 > [!NOTE]
-> 端末を足したときは、`device:create` で登録してから、もう一度ビルドします（配布用のプロファイルに端末が入るため）。開発ビルド（`--profile development`）は、iCloud 同期の作業で expo-dev-client を入れてから使います。
+> 端末を足したときは、`device:create` で登録してから、もう一度ビルドします（配布用のプロファイルに端末が入るため）。Developer Program に登録したばかりのころは、Apple が新しい端末を受け付けるまでに 24〜72 時間かかることがあり、その端末を入れた最初のビルドが失敗することがあります。そのときは、時間をおいてビルドし直します。開発ビルド（`--profile development`）は、iCloud 同期の作業で expo-dev-client を入れてから使います。
 
 ## フォルダの中身
 
