@@ -152,6 +152,7 @@ estimated_reading_time: 15
 * テスト用の設定（`dev`）は書き出さない。読み込んだあとは既定値にする（Expo Go で「すべて解放」などを試していても、本番版に持ち込まない）
 * 使う部品は expo-file-system、expo-sharing、expo-document-picker。どれも Expo Go に入っているので、この機能は Expo Go 版でも動く。今の Expo Go の記録を書き出して、本番版で読み込める
 * 今は iPad と iPhone の Expo Go に、別々の記録がある。引き継ぐのはどちらか 1 つで、保護者が選ぶ（合体はしない）
+* Expo Go は、記録をマニフェストの `scopeKey` ごとの場所（`ExponentExperienceData/<scopeKey>`）に置く。`scopeKey` は、`app.json` に EAS のプロジェクト ID がないあいだは開発サーバーの PC の匿名の ID から作られ（`@anonymous/hamzan-<ID>`）、`eas init` で ID が入ってログインしていると EAS のプロジェクトのものになる。そのため、書き出しは `eas init` の前に行う（2026-11-12 に Expo CLI 58 と Expo Go のソースで確かめた）
 * ②ができるまでは、本番版の iPad と iPhone も別々の記録になる。同じファイルを両方で読み込めば、同じところから始められる
 
 ### 完了の条件
