@@ -50,6 +50,8 @@ describe("words for moving the records", () => {
 
   test("every reason a file is refused has words", () => {
     for (const reason of ["notRecords", "tooNew", "broken", "empty"] as const) expect(READ_ERROR_TEXT[reason].length).toBeGreaterThan(5);
+    // the app's name, as the home screen shows it
+    for (const reason of ["notRecords", "tooNew"] as const) expect(READ_ERROR_TEXT[reason]).toContain("はむ算");
   });
 
   test("the time a file was written reads in the device's time", () => {

@@ -1,6 +1,6 @@
 ---
-title: ハムざん 本番化（App Store 公開、iCloud 同期、アプリ内課金）設計
-description: Expo Go で試しているハムざんを、iCloud で記録を同期し、無料で試してから一度だけ買える iPhone と iPad のアプリとして App Store に公開するための設計と段階
+title: はむ算 本番化（App Store 公開、iCloud 同期、アプリ内課金）設計
+description: Expo Go で試しているはむ算を、iCloud で記録を同期し、無料で試してから一度だけ買える iPhone と iPad のアプリとして App Store に公開するための設計と段階
 author: GitHub Copilot
 ms.date: 2026-11-03
 ms.topic: concept
@@ -18,7 +18,7 @@ estimated_reading_time: 15
 
 ## ねらいと成功の姿
 
-ハムざんを子どもに試してもらったところ、大好評でした。いまは Expo Go で、PC の開発サーバーが動いている間だけ遊べます。これを、iPhone と iPad の App Store で公開するアプリにします。
+はむ算を子どもに試してもらったところ、大好評でした。いまは Expo Go で、PC の開発サーバーが動いている間だけ遊べます。これを、iPhone と iPad の App Store で公開するアプリにします。
 
 子どもは、家では iPad、出先ではスマホで遊びます。どちらで開いても、前回の続きから始まってほしいので、記録を iCloud で同期します。
 
@@ -300,7 +300,7 @@ estimated_reading_time: 15
 
 ### 開発側で用意するもの
 
-* アプリの名前は「ハムざん」。使えないときは、副題を足すなどして決める
+* アプリの名前は「はむ算」（読みは「はむざん」、ローマ字は hamzan）。ホーム画面には「はむ算」と出し、VoiceOver と Siri には「はむざん」と読ませる（`ios.infoPlist.CFBundleSpokenName`）。使えないときは、副題を足すなどして決める
 * 配信する国は日本だけ。アプリは無料で、アプリ内課金が 1 つある
 * カテゴリは「教育」（キッズカテゴリには入れない）
 * 年齢区分の質問への答え

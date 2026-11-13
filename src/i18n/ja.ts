@@ -116,7 +116,7 @@ export const GRADE_LABEL = (g: number) => `小${g}`;
 export const RESET_WARNING = "進み具合・ミスの記録・ごほうび・ひまわりのたね・ショップで買ったもの・おへやの配置が消え、診断からやり直します。元に戻せません。";
 
 export const ja = {
-  appName: "ハムざん",
+  appName: "はむ算",
   today: "きょうの れんしゅう",
   goal: "きょうの ゴール",
   goalDone: "ゴール たっせい！",

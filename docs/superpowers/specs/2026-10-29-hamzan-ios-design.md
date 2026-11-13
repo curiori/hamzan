@@ -1,6 +1,6 @@
 ---
-title: ハムざん iPhone アプリ化（Expo Go）設計と開発計画
-description: Web 版プロトタイプ「ハムざん」を Expo Go で動く iPhone アプリへ作り替えるための設計と段階的な開発計画
+title: はむ算 iPhone アプリ化（Expo Go）設計と開発計画
+description: Web 版プロトタイプ「はむ算」を Expo Go で動く iPhone アプリへ作り替えるための設計と段階的な開発計画
 author: GitHub Copilot
 ms.date: 2026-10-29
 ms.topic: concept
@@ -14,7 +14,7 @@ estimated_reading_time: 20
 
 ## ねらいと成功の姿
 
-Web 版「ハムざん」は、学習エンジン（6 ステージ・61 レベル、ヒント→メモ→スピードの 3 モード、★判定、マスター、復習、診断）が完成しています。テストでも Python の参照実装と完全に一致しました。この資産をそのまま生かして iPhone で毎日使えるアプリにし、まずは Expo Go で実機確認できる状態を目指します。あわせて、練習を続けたくなる仕掛けとして「おへや」と「ショップ」を強化します。
+Web 版「はむ算」は、学習エンジン（6 ステージ・61 レベル、ヒント→メモ→スピードの 3 モード、★判定、マスター、復習、診断）が完成しています。テストでも Python の参照実装と完全に一致しました。この資産をそのまま生かして iPhone で毎日使えるアプリにし、まずは Expo Go で実機確認できる状態を目指します。あわせて、練習を続けたくなる仕掛けとして「おへや」と「ショップ」を強化します。
 
 成功の姿は次のとおりです。
 
@@ -104,7 +104,7 @@ Web 版「ハムざん」は、学習エンジン（6 ステージ・61 レベ�
 
 ```text
 hamzan/
-├─ app.json              Expo 設定（名前「ハムざん」、縦向き、ライトテーマ）
+├─ app.json              Expo 設定（名前「はむ算」、縦向き、ライトテーマ）
 ├─ package.json, bun.lock
 ├─ tsconfig.json         @/* → src/*
 ├─ eslint.config.js      eslint-config-expo

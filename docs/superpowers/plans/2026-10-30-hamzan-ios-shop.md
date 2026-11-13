@@ -1,11 +1,11 @@
 ---
-description: ハムざん Expo 版の段階 5（ひまわりのたねとショップ）の実装計画
+description: はむ算 Expo 版の段階 5（ひまわりのたねとショップ）の実装計画
 author: GitHub Copilot
 ms.date: 2026-10-30
 ms.topic: how-to
 ---
 
-# ハムざん Expo 版 ひまわりのたねとショップ Implementation Plan
+# はむ算 Expo 版 ひまわりのたねとショップ Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

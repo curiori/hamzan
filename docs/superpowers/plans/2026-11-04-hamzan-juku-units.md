@@ -1,5 +1,5 @@
 ---
-title: ハムざん 塾の単元（ステージ6〜9）実装計画
+title: はむ算 塾の単元（ステージ6〜9）実装計画
 description: 塾の単元（4ステージ28レベル）を src/juku と src/course に足し、記録、出題、画面、保護者の画面につなぐ実装計画
 author: GitHub Copilot
 ms.date: 2026-11-04

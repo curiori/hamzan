@@ -1,5 +1,5 @@
 ---
-title: ハムざん 本番化① 家族の端末に入れる準備 実装計画
+title: はむ算 本番化① 家族の端末に入れる準備 実装計画
 description: 記録の書き出しと読み込み、本番と開発のビルドの設定、iPad の設定を作り、持ち主の手続きのあとすぐに EAS で家族の端末へ配れるようにする実装計画
 author: GitHub Copilot
 ms.date: 2026-11-04
@@ -63,7 +63,7 @@ Expo SDK 58、expo-file-system（`File`、`Paths`）、expo-sharing（`shareAsyn
 インタフェース
 
 * 作るもの：`variantConfig(config: ExpoConfig, variant: string | undefined): ExpoConfig`（名前つきの export）と、`({ config }: ConfigContext) => variantConfig(config as ExpoConfig, process.env.APP_VARIANT)`（default export）。`ExpoConfig` と `ConfigContext` は `expo/config` から型だけ読む
-* 値：本番は名前「ハムざん」、`ios.bundleIdentifier` が `com.mahori.hamzan`、`extra.enableTestTools` が `false`。開発は名前「ハムざん dev」、`com.mahori.hamzan.dev`、`scheme` が `hamzan-dev`、テスト用の機能あり。どちらでもないときは `app.json` のまま（テスト用の機能あり）。`extra` はほかの値（あとで `eas init` が書く `extra.eas`）を残して上書きする
+* 値：本番は名前「はむ算」、`ios.bundleIdentifier` が `com.mahori.hamzan`、`extra.enableTestTools` が `false`。開発は名前「はむ算 dev」、`com.mahori.hamzan.dev`、`scheme` が `hamzan-dev`、テスト用の機能あり。どちらでもないときは `app.json` のまま（テスト用の機能あり）。`extra` はほかの値（あとで `eas init` が書く `extra.eas`）を残して上書きする
 
 手順
 
@@ -176,7 +176,7 @@ Expo SDK 58、expo-file-system（`File`、`Paths`）、expo-sharing（`shareAsyn
 
 * データの欄の見出し「記録の書き出しと読み込み」、説明「PIN と、すべてのお子さまの記録を1つのファイルに書き出します。AirDrop やファイル App で保存しておくと、別の端末や新しく入れたアプリで読み込めます。テスト用の設定は書き出しません。」、ボタン「記録を書き出す」「記録を読み込む」
 * 最初の画面（`intro.tsx`）のボタン「書き出した記録を読み込む」（「PINを決める」の下、枠だけのボタン）
-* 断るわけ：`notRecords`「ハムざんの記録のファイルではありません。」、`tooNew`「新しい版のハムざんで書き出した記録です。アプリを新しくしてから読み込んでください。」、`broken`「記録のファイルがこわれているため、読み込めません。」、`empty`「このファイルには、お子さまの記録がありません。」
+* 断るわけ：`notRecords`「はむ算の記録のファイルではありません。」、`tooNew`「新しい版のはむ算で書き出した記録です。アプリを新しくしてから読み込んでください。」、`broken`「記録のファイルがこわれているため、読み込めません。」、`empty`「このファイルには、お子さまの記録がありません。」
 * 確かめの窓：見出し「この記録を読み込みますか？」、ボタン「読み込む」。説明は「{書き出した日時} に書き出した記録です（さくら：セット記録 12件、たろう：セット記録 3件）。」に、端末に子がいれば「この端末の今の記録（はなこ）は消えて、ファイルの記録に置き換わります。元に戻せません。」を続け、最後に「PIN もファイルのものになります。」。端末に子がいるときだけ消すボタンの色にする
 * うまくいかなかったとき：書き出し「書き出せませんでした。もう一度ためしてください。」、ファイルを開けない「ファイルを開けませんでした。」
 * アプリ情報の「データの保存」：「この端末の中に保存します。保護者の画面の「データ」から、ファイルに書き出して別の端末へ移せます。外部への送信、広告、分析ツールはありません。」

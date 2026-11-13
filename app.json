@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ハムざん",
+    "name": "はむ算",
     "slug": "hamzan",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -11,6 +11,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "app.curiori.hamzan",
       "infoPlist": {
+        "CFBundleSpokenName": "はむざん",
         "UISupportedInterfaceOrientations~ipad": [
           "UIInterfaceOrientationPortrait",
           "UIInterfaceOrientationPortraitUpsideDown",

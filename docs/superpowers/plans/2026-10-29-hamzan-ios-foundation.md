@@ -1,11 +1,11 @@
 ---
-description: ハムざん Expo 版の段階 0〜2（Git、Expo SDK 54 の土台、学習ロジックの移植）の実装計画
+description: はむ算 Expo 版の段階 0〜2（Git、Expo SDK 54 の土台、学習ロジックの移植）の実装計画
 author: GitHub Copilot
 ms.date: 2026-10-29
 ms.topic: how-to
 ---
 
-# ハムざん Expo 版 土台とロジック移植 Implementation Plan
+# はむ算 Expo 版 土台とロジック移植 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -69,7 +69,7 @@ ms.topic: how-to
 
 - [ ] **Step 1:** 一時フォルダに `bunx create-expo-app@latest <一時フォルダ> --template default@sdk-54 --no-install` で SDK 54 のテンプレートを作り、package.json、app.json、tsconfig.json、eslint.config.js、.gitignore の中身を確かめる
 - [ ] **Step 2:** 上の Delete の一覧を `git rm -r` で消し、rewards.ts を `git mv` で移す
-- [ ] **Step 3:** テンプレートを元に設定ファイルを書く。app.json は name「ハムざん」、slug `hamzan`、scheme `hamzan`、orientation `portrait`、userInterfaceStyle `light`、`ios.supportsTablet: false`、`extra.enableTestTools: true`。.gitignore は Expo の標準に `.browser-errors.log` などを足す。.gitattributes は `* text=auto eol=lf` と画像、音声のバイナリ指定
+- [ ] **Step 3:** テンプレートを元に設定ファイルを書く。app.json は name「はむ算」、slug `hamzan`、scheme `hamzan`、orientation `portrait`、userInterfaceStyle `light`、`ios.supportsTablet: false`、`extra.enableTestTools: true`。.gitignore は Expo の標準に `.browser-errors.log` などを足す。.gitattributes は `* text=auto eol=lf` と画像、音声のバイナリ指定
 - [ ] **Step 4:** `bun install --network-concurrency 4` のあと、`bunx expo install react-native-svg @react-native-async-storage/async-storage expo-audio expo-keep-awake expo-haptics` と `bun add zustand` を実行する
 - [ ] **Step 5:** 仮の画面を作る。ルートは Stack、`(tabs)` はタブ 3 つ（タイトル「ちず」「おへや」「ショップ」）。各タブはタイトルの文字だけを表示する
 - [ ] **Step 6:** 確認する。`bun run typecheck`、`bun run lint`、`bun run test:domain` が通り、`bun run export:ios` と `bun run export:web` が成功し、`bunx expo-doctor` が問題を出さない

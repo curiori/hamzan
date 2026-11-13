@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import type { ExpoConfig } from "expo/config";
 import { variantConfig } from "../../app.config";
+import { ja } from "../../src/i18n/ja";
 
 const json = (path: string) => JSON.parse(readFileSync(new URL(`../../${path}`, import.meta.url), "utf8"));
 const base = (): ExpoConfig => json("app.json").expo;
@@ -9,7 +10,9 @@ const base = (): ExpoConfig => json("app.json").expo;
 describe("build variants", () => {
   test("production has the store id and no test tools", () => {
     const c = variantConfig(base(), "production");
-    expect(c.name).toBe("ハムざん");
+    expect(c.name).toBe("はむ算");
+    // VoiceOver and Siri may read 算 here as さん
+    expect(c.ios?.infoPlist?.CFBundleSpokenName).toBe("はむざん");
     expect(c.ios?.bundleIdentifier).toBe("app.curiori.hamzan");
     expect(c.ios?.supportsTablet).toBe(true);
     expect(c.extra?.enableTestTools).toBe(false);
@@ -17,7 +20,7 @@ describe("build variants", () => {
 
   test("development sits beside it with its own id and the test tools", () => {
     const c = variantConfig(base(), "development");
-    expect(c.name).toBe("ハムざん dev");
+    expect(c.name).toBe("はむ算 dev");
     expect(c.ios?.bundleIdentifier).toBe("app.curiori.hamzan.dev");
     expect(c.scheme).toBe("hamzan-dev");
     expect(c.extra?.enableTestTools).toBe(true);
@@ -31,6 +34,10 @@ describe("build variants", () => {
     // the project id `eas init` writes into app.json stays in every variant
     const linked = { ...b, extra: { ...b.extra, eas: { projectId: "p-1" } } };
     for (const v of [undefined, "development", "production"]) expect(variantConfig(linked, v).extra?.eas).toEqual({ projectId: "p-1" });
+  });
+
+  test("the app's own texts use the name on the home screen", () => {
+    expect(ja.appName).toBe(base().name);
   });
 
   test("a misspelt variant stops the build", () => {

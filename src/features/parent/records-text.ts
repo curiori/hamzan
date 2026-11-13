@@ -1,10 +1,11 @@
 // Words for moving the records between devices (src/features/parent/records-transfer.ts). Pure, so tests can read them.
+import { ja } from "@/i18n/ja";
 import type { BackupError, Records } from "@/state/backup";
 
 /** why a file was not read, for the parent */
 export const READ_ERROR_TEXT: Record<BackupError, string> = {
-  notRecords: "ハムざんの記録のファイルではありません。",
-  tooNew: "新しい版のハムざんで書き出した記録です。アプリを新しくしてから読み込んでください。",
+  notRecords: `${ja.appName}の記録のファイルではありません。`,
+  tooNew: `新しい版の${ja.appName}で書き出した記録です。アプリを新しくしてから読み込んでください。`,
   broken: "記録のファイルがこわれているため、読み込めません。",
   empty: "このファイルには、お子さまの記録がありません。",
 };
