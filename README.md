@@ -176,7 +176,7 @@ PC のサーバーなしで遊べる本番版を EAS（Expo のクラウドの�
 
 ビルドして入れる
 
-1. 本番版を作ります。初めてのときは Apple のアカウントでサインインし、証明書と配布用のプロファイルを EAS に作ってもらいます。ビルドの番号は EAS が上げます。EAS はコミットしていない変更も含めてフォルダの中身を送るので、プライベートのレジストリを使う PC でパッケージを足したり上げたりしたあとは、先に `bun run scripts/clear-lockfile-urls.ts` を実行します
+1. 本番版を作ります。初めてのときは Apple のアカウントでサインインし、証明書と配布用のプロファイルを EAS に作ってもらいます。アプリ ID（`app.curiori.hamzan`）は、Apple Developer のサイトになければ EAS が登録し、あればそれを使います。アプリ ID の機能（Capabilities）も、Apple にサインインしてビルドするときに EAS がアプリの設定に合わせるので、サイトで設定する必要はありません。ビルドの番号は EAS が上げます。EAS はコミットしていない変更も含めてフォルダの中身を送るので、プライベートのレジストリを使う PC でパッケージを足したり上げたりしたあとは、先に `bun run scripts/clear-lockfile-urls.ts` を実行します
 
    ```bash
    npx eas-cli@latest build --platform ios --profile production
