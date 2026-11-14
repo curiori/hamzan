@@ -13,6 +13,8 @@ describe("build variants", () => {
     expect(c.name).toBe("はむ算");
     // VoiceOver and Siri may read 算 here as さん
     expect(c.ios?.infoPlist?.CFBundleSpokenName).toBe("はむざん");
+    // without it, eas build asks and writes the resolved ios config back into app.json, doubling its arrays
+    expect(c.ios?.infoPlist?.ITSAppUsesNonExemptEncryption).toBe(false);
     expect(c.ios?.bundleIdentifier).toBe("app.curiori.hamzan");
     expect(c.ios?.supportsTablet).toBe(true);
     expect(c.extra?.enableTestTools).toBe(false);

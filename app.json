@@ -12,6 +12,7 @@
       "bundleIdentifier": "app.curiori.hamzan",
       "infoPlist": {
         "CFBundleSpokenName": "はむざん",
+        "ITSAppUsesNonExemptEncryption": false,
         "UISupportedInterfaceOrientations~ipad": [
           "UIInterfaceOrientationPortrait",
           "UIInterfaceOrientationPortraitUpsideDown",
