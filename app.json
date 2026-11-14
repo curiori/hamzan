@@ -52,6 +52,12 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "75cd7b60-854c-410e-a9d0-3379aafc6a24"
+      }
+    },
+    "owner": "mahori"
   }
 }

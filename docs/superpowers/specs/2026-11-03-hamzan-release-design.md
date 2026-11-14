@@ -129,6 +129,8 @@ estimated_reading_time: 15
 > 2026-11-04 に、開発側の作業（ビルドの種類、アプリ ID、iPad、本番でテスト用の機能を出さないこと、記録の書き出しと読み込み）を済ませました（[実装計画](../plans/2026-11-04-hamzan-release-1.md)）。残りは持ち主の手続き（Apple Developer Program への登録、EAS へのつなぎこみ、端末の登録、ビルド、配布）と、実機での確かめです。手順は README の「本番版を家族の端末に入れる」にあります。開発ビルドの設定（`eas.json` の `development`）は作ってありますが、使うのは②で expo-dev-client を入れてからです。
 >
 > 2026-11-11 に、最初のビルドの前に、アプリ ID を `com.mahori.hamzan` から `app.curiori.hamzan` に変えました。実装計画には、前の ID が残っています。
+>
+> 2026-11-14 に、EAS へのつなぎこみを済ませました。プロジェクトは、Expo Go と同じ個人のアカウントに `@mahori/hamzan` として作り、`app.json` に `owner` とプロジェクト ID（`extra.eas.projectId`）が入りました（私の判断。チームの `mahoris-team` もあるが、どちらも無料プランで違いがないため）。Apple Developer Program への登録と、アプリ ID の登録も済んでいます。最初のビルドで EAS が暗号化の使い方を聞いて `app.json` を書き換えないよう、`ios.infoPlist.ITSAppUsesNonExemptEncryption` を `false` にしました。残りは、端末の登録、ビルド、配布と、実機での確かめです。
 
 ### 作業
 
